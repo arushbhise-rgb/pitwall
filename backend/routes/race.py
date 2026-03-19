@@ -62,7 +62,7 @@ def get_h2h(year: int, driver1: str, driver2: str):
     }
 
     try:
-        r = requests.get(f'http://ergast.com/api/f1/{year}/results.json?limit=500', timeout=10)
+        r = requests.get(f'https://api.jolpi.ca/ergast/f1/{year}/results/?limit=500', timeout=30)
         data = r.json()
         races = data['MRData']['RaceTable']['Races']
 
@@ -86,7 +86,7 @@ def get_h2h(year: int, driver1: str, driver2: str):
                     results[driver].append(20)
                     stats[driver]['positions'].append(20)
 
-        r2 = requests.get(f'http://ergast.com/api/f1/{year}/qualifying.json?limit=500', timeout=10)
+        r2 = requests.get(f'https://api.jolpi.ca/ergast/f1/{year}/qualifying/?limit=500', timeout=30)
         qdata = r2.json()
         for race in qdata['MRData']['RaceTable']['Races']:
             for res in race['QualifyingResults']:
