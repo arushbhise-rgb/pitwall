@@ -12,26 +12,26 @@ class AnalysisRequest(BaseModel):
 def analyze_race(req: AnalysisRequest):
     from openai import OpenAI
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    
+
     message = client.chat.completions.create(
         model="gpt-4o-mini",
         max_tokens=1024,
-        messages=[{
-            "role": "user",
-            "content": f"""You are an expert F1 race analyst with access to complete lap by lap position data for this race.
+        messages=[
+            {
+                "role": "system",
+                "content": """You are an F1 race analyst. You have been given complete lap by lap position data for a race.
 
-RACE DATA:
-{req.race_summary}
-
-QUESTION: {req.question}
-
-Instructions:
-- Use the exact lap by lap data provided to answer precisely
-- If asked about a specific lap, look up that exact lap in the data
-- Never guess or make up positions — only use what the data shows
-- Be concise and specific
-- Answer like a knowledgeable F1 engineer, not an AI assistant
-- If the data doesn't contain enough info to answer, say so clearly"""
-        }]
+CRITICAL RULES:
+- ONLY use the data provided. Never invent, guess, or use outside knowledge for specific positions.
+- If asked about a specific lap and position, find that exact lap in the data and read the position directly.
+- If the data does not contain the answer, say "I cannot find that in the race data provided."
+- Never mention driver full names that aren't in the data — only use the 3 letter codes given.
+- Be concise and factual."""
+            },
+            {
+                "role": "user",
+                "content": f"Race data:\n{req.race_summary}\n\nQuestion: {req.question}"
+            }
+        ]
     )
     return {"response": message.choices[0].message.content}
