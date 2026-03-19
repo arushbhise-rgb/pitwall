@@ -50,6 +50,9 @@ export default function HeadToHead() {
 
   return (
     <div style={{ padding: '24px', maxWidth: '900px', margin: '0 auto' }}>
+      <style>{`
+        @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+      `}</style>
       <div style={{ fontSize: '20px', fontWeight: '700', marginBottom: '4px' }}>Head to Head</div>
       <div style={{ fontSize: '13px', color: '#666', marginBottom: '24px' }}>Real F1 data — compare any two drivers across a full season</div>
 
@@ -108,6 +111,68 @@ export default function HeadToHead() {
           </div>
         </div>
       </div>
+      {!loading && !data && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+          <div style={{ background: '#111', border: '0.5px solid #1e1e1e', borderRadius: '12px', padding: '24px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '300px', height: '200px', background: 'radial-gradient(ellipse, rgba(225,6,0,0.05), transparent 70%)', pointerEvents: 'none' }}/>
+            <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚔️</div>
+            <div style={{ fontSize: '15px', fontWeight: '700', marginBottom: '8px' }}>Pick your drivers</div>
+            <div style={{ fontSize: '13px', color: '#555', lineHeight: '1.7', maxWidth: '340px', margin: '0 auto' }}>
+              Select any two drivers from the dropdowns above and hit <span style={{ color: '#e10600', fontWeight: '600' }}>Compare</span> to see the full season battle
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            {[
+              { title: 'Championship points', desc: 'Who scored more across the season', icon: '🏆' },
+              { title: 'Race wins', desc: 'Head to head win count', icon: '🥇' },
+              { title: 'Qualifying battle', desc: 'Who out-qualified who', icon: '⚡' },
+              { title: 'Race by race', desc: 'Visual breakdown every GP', icon: '📊' },
+              { title: 'Podiums & poles', desc: 'Full season stats', icon: '🏅' },
+              { title: 'DNF comparison', desc: 'Reliability battle', icon: '🔧' },
+            ].map((f, i) => (
+              <div key={i} style={{
+                background: '#0f0f0f', border: '0.5px solid #1a1a1a',
+                borderRadius: '10px', padding: '14px',
+                animation: `fadeUp .3s ease ${i * 0.05}s both`
+              }}>
+                <div style={{ fontSize: '18px', marginBottom: '6px' }}>{f.icon}</div>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: '#aaa', marginBottom: '3px' }}>{f.title}</div>
+                <div style={{ fontSize: '11px', color: '#444', lineHeight: '1.5' }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: '#0f0f0f', border: '0.5px solid #1a1a1a', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ fontSize: '11px', color: '#333', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: '12px' }}>Classic matchups to try</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {[
+                { d1: 'VER', d2: 'NOR', year: '2024', label: 'Verstappen vs Norris — 2024' },
+                { d1: 'LEC', d2: 'SAI', year: '2024', label: 'Leclerc vs Sainz — Teammates 2024' },
+                { d1: 'HAM', d2: 'RUS', year: '2023', label: 'Hamilton vs Russell — Mercedes 2023' },
+                { d1: 'VER', d2: 'LEC', year: '2022', label: 'Verstappen vs Leclerc — 2022' },
+              ].map((m, i) => (
+                <div key={i} onClick={() => {
+                  setD1Code(m.d1)
+                  setD2Code(m.d2)
+                  setYear(m.year)
+                }} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '9px 12px', background: '#111', border: '0.5px solid #1e1e1e',
+                  borderRadius: '8px', cursor: 'pointer', transition: 'all .2s'
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(225,6,0,0.3)'; e.currentTarget.style.background = 'rgba(225,6,0,0.04)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#1e1e1e'; e.currentTarget.style.background = '#111' }}
+                >
+                  <div style={{ fontSize: '12px', color: '#aaa', fontWeight: '500' }}>{m.label}</div>
+                  <div style={{ fontSize: '11px', color: '#e10600', background: 'rgba(225,6,0,0.08)', padding: '3px 8px', borderRadius: '6px' }}>Try this →</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>

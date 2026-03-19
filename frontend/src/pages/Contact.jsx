@@ -6,7 +6,7 @@ export default function Contact() {
   const [hovered, setHovered] = useState(null)
 
   function copyEmail() {
-    navigator.clipboard.writeText('arush.bhise@unb.ca')
+    navigator.clipboard.writeText('m3gkr@unb.ca')
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -15,7 +15,7 @@ export default function Contact() {
     {
       icon: '✉️',
       title: 'Email',
-      value: 'arush.bhise@unb.ca',
+      value: 'm3gkr@unb.ca',
       sub: 'I reply within 24 hours',
       action: copyEmail,
       actionLabel: copied ? 'Copied!' : 'Copy email',
