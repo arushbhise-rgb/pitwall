@@ -26,7 +26,7 @@ const ALL_DRIVERS = [
 ]
 
 export default function HeadToHead() {
-  const [year, setYear] = useState('2024')
+  const [year, setYear] = useState('2026')
   const [d1Code, setD1Code] = useState('VER')
   const [d2Code, setD2Code] = useState('LEC')
   const [data, setData] = useState(null)
@@ -56,7 +56,7 @@ export default function HeadToHead() {
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'center' }}>
         <select value={year} onChange={e => { setYear(e.target.value); setData(null) }}
           style={{ background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '7px', color: '#fff', padding: '8px 12px', fontSize: '13px' }}>
-          {['2024','2023','2022','2021','2020'].map(y => <option key={y}>{y}</option>)}
+          {['2026','2025','2024','2023','2022','2021','2020','2019','2018'].map(y => <option key={y}>{y}</option>)}
         </select>
         <div style={{ fontSize: '12px', color: '#555' }}>season</div>
       </div>

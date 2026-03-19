@@ -3,16 +3,16 @@ import { Link, useLocation } from 'react-router-dom'
 export default function Navbar() {
   const loc = useLocation()
   const tabs = [
-  { label: 'Race replay', path: '/replay' },
-  { label: 'Head to head', path: '/h2h' },
-]
+    { label: 'Race replay', path: '/replay' },
+    { label: 'Head to head', path: '/h2h' },
+  ]
   return (
     <nav style={{
       background: '#e10600', padding: '0 24px',
       height: '52px', display: 'flex',
       alignItems: 'center', justifyContent: 'space-between'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
         <div style={{
           width: '32px', height: '32px', background: '#fff',
           borderRadius: '7px', display: 'flex', alignItems: 'center',
@@ -23,7 +23,7 @@ export default function Navbar() {
           <div style={{ color: '#fff', fontSize: '15px', fontWeight: '600' }}>PitWall</div>
           <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '10px' }}>F1 Race Analyzer</div>
         </div>
-      </div>
+      </Link>
       <div style={{ display: 'flex', gap: '4px' }}>
         {tabs.map(t => (
           <Link key={t.path} to={t.path} style={{

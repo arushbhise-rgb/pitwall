@@ -34,7 +34,7 @@ const TIRE_COLORS = {
 }
 
 export default function RaceReplay() {
-  const [year, setYear] = useState('2024')
+  const [year, setYear] = useState('2026')
   const [gp, setGp] = useState('')
   const [races, setRaces] = useState([])
   const [raceData, setRaceData] = useState(null)
@@ -108,7 +108,7 @@ export default function RaceReplay() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <select value={year} onChange={e => setYear(e.target.value)}
             style={{ background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '7px', color: '#fff', padding: '8px', fontSize: '13px' }}>
-            {['2024','2023','2022'].map(y => <option key={y}>{y}</option>)}
+            {['2026','2025','2024','2023','2022','2021','2020','2019','2018'].map(y => <option key={y}>{y}</option>)}
           </select>
           <select value={gp} onChange={e => setGp(e.target.value)}
             style={{ background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '7px', color: '#fff', padding: '8px', fontSize: '13px' }}>
