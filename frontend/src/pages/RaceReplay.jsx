@@ -238,10 +238,20 @@ export default function RaceReplay() {
         )}
 
         {loading && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ width: '32px', height: '32px', border: '2.5px solid #333', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite' }}></div>
-            <div style={{ fontSize: '13px', color: '#666' }}>Loading race data — first load takes ~30 seconds</div>
-            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ position: 'relative', width: '48px', height: '48px' }}>
+              <div style={{ width: '48px', height: '48px', border: '2px solid #1a1a1a', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite', position: 'absolute' }}></div>
+              <div style={{ width: '32px', height: '32px', border: '2px solid #1a1a1a', borderBottomColor: '#e10600', borderRadius: '50%', animation: 'spin 1s linear infinite reverse', position: 'absolute', top: '8px', left: '8px' }}></div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '14px', color: '#fff', fontWeight: '600', marginBottom: '4px' }}>Loading race data</div>
+              <div style={{ fontSize: '12px', color: '#444' }}>First load takes ~30 seconds · subsequent loads are instant</div>
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {['Fetching telemetry', 'Processing laps', 'Building charts'].map((step, i) => (
+                <div key={i} style={{ fontSize: '10px', color: '#333', background: '#111', border: '0.5px solid #1e1e1e', padding: '4px 10px', borderRadius: '10px', animation: `pulse 1.5s infinite ${i * 0.3}s` }}>{step}</div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -249,9 +259,17 @@ export default function RaceReplay() {
           <>
             <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ fontSize: '15px', fontWeight: '600' }}>{raceData.gp} Grand Prix {raceData.year}</div>
-                <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>{raceData.total_laps} laps · {raceData.drivers.length} drivers</div>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ fontSize: '15px', fontWeight: '700', letterSpacing: '-0.3px' }}>{raceData.gp} Grand Prix {raceData.year}</div>
+                {raceData.year >= 2026 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(225,6,0,0.1)', border: '0.5px solid rgba(225,6,0,0.3)', padding: '2px 8px', borderRadius: '10px' }}>
+                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#e10600', animation: 'pulse 1.5s infinite' }}></div>
+                    <span style={{ fontSize: '10px', color: '#e10600', fontWeight: '600' }}>LIVE</span>
+                  </div>
+                )}
               </div>
+              <div style={{ fontSize: '12px', color: '#555', marginTop: '3px' }}>{raceData.total_laps} laps · {raceData.drivers.length} drivers</div>
+                            </div>
               <div style={{ display: 'flex', gap: '6px' }}>
                 {['positions','laptimes','tires','gap','sectors'].map(tab => (
                   <button key={tab} onClick={() => setActiveTab(tab)} style={{
