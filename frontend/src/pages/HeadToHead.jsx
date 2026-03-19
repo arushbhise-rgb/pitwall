@@ -19,7 +19,6 @@ const ALL_DRIVERS = [
   { code: 'TSU', name: 'Yuki Tsunoda', team: 'RB', color: '#6692ff', initials: 'YT', number: 22 },
   { code: 'RIC', name: 'Daniel Ricciardo', team: 'RB', color: '#6692ff', initials: 'DR', number: 3 },
   { code: 'ALB', name: 'Alexander Albon', team: 'Williams', color: '#005aff', initials: 'AA', number: 23 },
-  { code: 'SAR', name: 'Logan Sargeant', team: 'Williams', color: '#005aff', initials: 'LS', number: 2 },
   { code: 'MAG', name: 'Kevin Magnussen', team: 'Haas', color: '#b6babd', initials: 'KM', number: 20 },
   { code: 'HUL', name: 'Nico Hulkenberg', team: 'Haas', color: '#b6babd', initials: 'NH', number: 27 },
   { code: 'ZHO', name: 'Guanyu Zhou', team: 'Sauber', color: '#c92d4b', initials: 'GZ', number: 24 },
@@ -47,12 +46,12 @@ export default function HeadToHead() {
     setLoading(false)
   }
 
-  const cardStyle = { background: '#111', border: '0.5px solid #222', borderRadius: '12px', padding: '20px' }
+  const cardStyle = { background: '#111', border: '0.5px solid #222', borderRadius: '12px', padding: '20px', marginBottom: '14px' }
 
   return (
     <div style={{ padding: '24px', maxWidth: '900px', margin: '0 auto' }}>
       <div style={{ fontSize: '20px', fontWeight: '700', marginBottom: '4px' }}>Head to Head</div>
-      <div style={{ fontSize: '13px', color: '#666', marginBottom: '24px' }}>Real F1 data — compare any two drivers</div>
+      <div style={{ fontSize: '13px', color: '#666', marginBottom: '24px' }}>Real F1 data — compare any two drivers across a full season</div>
 
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'center' }}>
         <select value={year} onChange={e => { setYear(e.target.value); setData(null) }}
@@ -113,41 +112,46 @@ export default function HeadToHead() {
       {loading && (
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
           <div style={{ width: '32px', height: '32px', border: '2.5px solid #333', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite', margin: '0 auto 12px' }}></div>
-          <div style={{ fontSize: '13px' }}>Loading real F1 data — this takes about a minute first time</div>
+          <div style={{ fontSize: '13px' }}>Loading F1 data...</div>
+          <div style={{ fontSize: '11px', color: '#555', marginTop: '6px' }}>Usually takes 2-3 seconds</div>
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </div>
       )}
 
-      {data && (
+      {data && !data.error && (
         <>
-          <div style={{ ...cardStyle, marginBottom: '14px' }}>
+          <div style={cardStyle}>
             <div style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '16px' }}>Season battle — {year}</div>
             {[
               { label: 'Championship points', v1: data.stats[d1Code].points, v2: data.stats[d2Code].points, higher: true, fmt: v => Math.round(v) },
               { label: 'Race wins', v1: data.stats[d1Code].wins, v2: data.stats[d2Code].wins, higher: true },
               { label: 'Podiums', v1: data.stats[d1Code].podiums, v2: data.stats[d2Code].podiums, higher: true },
               { label: 'Pole positions', v1: data.stats[d1Code].poles, v2: data.stats[d2Code].poles, higher: true },
-              { label: 'Avg finish', v1: data.stats[d1Code].avgFinish, v2: data.stats[d2Code].avgFinish, higher: false, fmt: v => `P${v}` },
+              { label: 'Avg finish position', v1: data.stats[d1Code].avgFinish, v2: data.stats[d2Code].avgFinish, higher: false, fmt: v => `P${v}` },
               { label: 'DNFs', v1: data.stats[d1Code].dnfs, v2: data.stats[d2Code].dnfs, higher: false },
-              { label: 'H2H race wins', v1: data.h2h_wins[d1Code], v2: data.h2h_wins[d2Code], higher: true },
+              { label: 'Head to head wins', v1: data.h2h_wins[d1Code], v2: data.h2h_wins[d2Code], higher: true },
             ].map((stat, i) => {
-              const w = stat.higher ? (stat.v1 > stat.v2 ? 'left' : 'right') : (stat.v1 < stat.v2 ? 'left' : 'right')
+              const w = stat.higher
+                ? (stat.v1 > stat.v2 ? 'left' : stat.v1 < stat.v2 ? 'right' : 'tie')
+                : (stat.v1 < stat.v2 ? 'left' : stat.v1 > stat.v2 ? 'right' : 'tie')
               const total = stat.v1 + stat.v2 || 1
-              const pct1 = stat.higher ? (stat.v1 / total * 100).toFixed(0) : ((1 - stat.v1 / total) * 100).toFixed(0)
+              const pct1 = stat.higher
+                ? (stat.v1 / total * 100).toFixed(0)
+                : ((1 - stat.v1 / total) * 100).toFixed(0)
               const fmt = stat.fmt || (v => v)
               return (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '12px', alignItems: 'center', marginBottom: '14px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '700', color: w === 'left' ? d1.color : '#666' }}>{fmt(stat.v1)}</div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: w === 'left' ? d1.color : '#555' }}>{fmt(stat.v1)}</div>
                     <div style={{ width: '100%', height: '5px', background: '#1a1a1a', borderRadius: '3px', overflow: 'hidden', direction: 'rtl' }}>
-                      <div style={{ width: `${pct1}%`, height: '100%', background: d1.color, borderRadius: '3px' }}></div>
+                      <div style={{ width: `${pct1}%`, height: '100%', background: d1.color, borderRadius: '3px', transition: 'width .6s ease' }}></div>
                     </div>
                   </div>
-                  <div style={{ fontSize: '11px', color: '#555', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '130px' }}>{stat.label}</div>
+                  <div style={{ fontSize: '11px', color: '#555', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '140px' }}>{stat.label}</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '700', color: w === 'right' ? d2.color : '#666' }}>{fmt(stat.v2)}</div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: w === 'right' ? d2.color : '#555' }}>{fmt(stat.v2)}</div>
                     <div style={{ width: '100%', height: '5px', background: '#1a1a1a', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: `${100 - pct1}%`, height: '100%', background: d2.color, borderRadius: '3px' }}></div>
+                      <div style={{ width: `${100 - pct1}%`, height: '100%', background: d2.color, borderRadius: '3px', transition: 'width .6s ease' }}></div>
                     </div>
                   </div>
                 </div>
@@ -155,17 +159,17 @@ export default function HeadToHead() {
             })}
           </div>
 
-          <div style={{ ...cardStyle, marginBottom: '14px' }}>
+          <div style={cardStyle}>
             <div style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '14px' }}>Race by race — {year}</div>
             <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', height: '80px' }}>
               {data.race_names.map((race, i) => {
-                const r1 = data.results[d1Code][i]
-                const r2 = data.results[d2Code][i]
+                const r1 = data.results[d1Code][i] || 20
+                const r2 = data.results[d2Code][i] || 20
                 const d1won = r1 < r2
                 return (
-                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1px', alignItems: 'center' }} title={`${race}: ${d1Code} P${r1} vs ${d2Code} P${r2}`}>
-                    <div style={{ width: '100%', height: `${(1 - r1/20) * 34 + 4}px`, background: d1.color, borderRadius: '1px', opacity: d1won ? 1 : 0.35 }}></div>
-                    <div style={{ width: '100%', height: `${(1 - r2/20) * 34 + 4}px`, background: d2.color, borderRadius: '1px', opacity: !d1won ? 1 : 0.35 }}></div>
+                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1px' }} title={`${race}: ${d1Code} P${r1} vs ${d2Code} P${r2}`}>
+                    <div style={{ width: '100%', height: `${(1 - r1/20) * 34 + 4}px`, background: d1.color, borderRadius: '1px', opacity: d1won ? 1 : 0.3 }}></div>
+                    <div style={{ width: '100%', height: `${(1 - r2/20) * 34 + 4}px`, background: d2.color, borderRadius: '1px', opacity: !d1won ? 1 : 0.3 }}></div>
                   </div>
                 )
               })}
@@ -173,17 +177,17 @@ export default function HeadToHead() {
             <div style={{ display: 'flex', gap: '14px', marginTop: '10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#666' }}>
                 <div style={{ width: '12px', height: '4px', borderRadius: '2px', background: d1.color }}></div>
-                {d1.short || d1.name.split(' ')[1]} ({data.h2h_wins[d1Code]} wins)
+                {d1.name.split(' ')[1]} ({data.h2h_wins[d1Code]} wins)
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#666' }}>
                 <div style={{ width: '12px', height: '4px', borderRadius: '2px', background: d2.color }}></div>
-                {d2.short || d2.name.split(' ')[1]} ({data.h2h_wins[d2Code]} wins)
+                {d2.name.split(' ')[1]} ({data.h2h_wins[d2Code]} wins)
               </div>
             </div>
           </div>
 
           <div style={{
-            background: 'linear-gradient(135deg, #1a0000, #0a0a0a)',
+            background: '#0a0a0a',
             border: `0.5px solid ${data.h2h_wins[d1Code] >= data.h2h_wins[d2Code] ? d1.color : d2.color}`,
             borderRadius: '12px', padding: '24px', textAlign: 'center'
           }}>
@@ -202,13 +206,19 @@ export default function HeadToHead() {
                     <div style={{ fontSize: '36px', fontWeight: '800', color: d2.color }}>{data.h2h_wins[d2Code]}</div>
                   </div>
                   <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.6' }}>
-                    {winner.name} won <strong style={{ color: winner.color }}>{Math.max(data.h2h_wins[d1Code], data.h2h_wins[d2Code])} of {data.race_names.length} head to head battles</strong> in {year}
+                    {winner.name} won <strong style={{ color: winner.color }}>{Math.max(data.h2h_wins[d1Code], data.h2h_wins[d2Code])} of {data.race_names.length} head to head battles</strong> and outscored {loser.name} by <strong style={{ color: winner.color }}>{Math.abs(data.stats[d1Code].points - data.stats[d2Code].points).toFixed(0)} championship points</strong> in {year}
                   </div>
                 </>
               )
             })()}
           </div>
         </>
+      )}
+
+      {data && data.error && (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#666', fontSize: '13px' }}>
+          Failed to load data — try again
+        </div>
       )}
     </div>
   )
