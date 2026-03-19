@@ -224,3 +224,49 @@ def get_sectors(year: int, gp: str):
         "sector_data": sector_data,
         "total_laps": int(laps['LapNumber'].max())
     }
+
+@router.get("/standings/drivers")
+def get_driver_standings(year: int):
+    import requests as req
+    try:
+        r = req.get(f'https://api.jolpi.ca/ergast/f1/{year}/driverStandings/?limit=30', timeout=15)
+        data = r.json()
+        standings = data['MRData']['StandingsTable']['StandingsLists']
+        if not standings:
+            return {"standings": []}
+        drivers = []
+        for d in standings[0]['DriverStandings']:
+            drivers.append({
+                'position': int(d['position']),
+                'name': f"{d['Driver']['givenName']} {d['Driver']['familyName']}",
+                'code': d['Driver'].get('code', d['Driver']['driverId'][:3].upper()),
+                'team': d['Constructors'][0]['name'] if d['Constructors'] else 'Unknown',
+                'points': float(d['points']),
+                'wins': int(d['wins']),
+                'nationality': d['Driver']['nationality'],
+            })
+        return {"standings": drivers, "year": year, "round": standings[0].get('round', '?')}
+    except Exception as e:
+        return {"error": str(e)}
+
+@router.get("/standings/constructors")
+def get_constructor_standings(year: int):
+    import requests as req
+    try:
+        r = req.get(f'https://api.jolpi.ca/ergast/f1/{year}/constructorStandings/?limit=15', timeout=15)
+        data = r.json()
+        standings = data['MRData']['StandingsTable']['StandingsLists']
+        if not standings:
+            return {"standings": []}
+        teams = []
+        for t in standings[0]['ConstructorStandings']:
+            teams.append({
+                'position': int(t['position']),
+                'name': t['Constructor']['name'],
+                'nationality': t['Constructor']['nationality'],
+                'points': float(t['points']),
+                'wins': int(t['wins']),
+            })
+        return {"standings": teams, "year": year, "round": standings[0].get('round', '?')}
+    except Exception as e:
+        return {"error": str(e)}

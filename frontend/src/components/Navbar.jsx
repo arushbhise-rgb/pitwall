@@ -5,6 +5,7 @@ export default function Navbar() {
   const tabs = [
     { label: 'Race replay', path: '/replay' },
     { label: 'Head to head', path: '/h2h' },
+    { label: 'Standings', path: '/standings' },
     { label: 'Support', path: '/support' },
     { label: 'Contact', path: '/contact' },
   ]
