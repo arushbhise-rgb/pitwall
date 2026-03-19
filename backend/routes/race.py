@@ -102,13 +102,28 @@ def get_h2h(year: int, driver1: str, driver2: str):
                     results[driver].append(20)
                     stats[driver]['positions'].append(20)
 
-        r2 = req.get(f'https://api.jolpi.ca/ergast/f1/{year}/qualifying/?limit=500', timeout=30)
-        qdata = r2.json()
-        for race in qdata['MRData']['RaceTable']['Races']:
+        all_quali = []
+        offset = 0
+        while True:
+            r2 = req.get(f'https://api.jolpi.ca/ergast/f1/{year}/qualifying/?limit=30&offset={offset}', timeout=30)
+            qdata = r2.json()
+            batch = qdata['MRData']['RaceTable']['Races']
+            if not batch:
+                break
+            all_quali.extend(batch)
+            total = int(qdata['MRData']['total'])
+            offset += 30
+            if offset >= total:
+                break
+        for race in all_quali:
             for res in race['QualifyingResults']:
-                code = res['Driver'].get('code', res['Driver']['driverId'][:3].upper())
-                if code in [driver1, driver2] and res['position'] == '1':
-                    stats[code]['poles'] += 1
+                code = res['Driver'].get('code','').upper()
+                driver_id = res['Driver'].get('driverId','')
+                matched = None
+                if code == driver1 or driver_id.upper().startswith(driver1[:3].lower()): matched = driver1
+                elif code == driver2 or driver_id.upper().startswith(driver2[:3].lower()): matched = driver2
+                if matched and res['position'] == '1':
+                    stats[matched]['poles'] += 1
 
     except Exception as e:
         print(f"Error: {e}")
