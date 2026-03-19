@@ -1,10 +1,8 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from openai import OpenAI
 import os
 
 router = APIRouter()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class AnalysisRequest(BaseModel):
     race_summary: str
@@ -12,6 +10,9 @@ class AnalysisRequest(BaseModel):
 
 @router.post("/analyze")
 def analyze_race(req: AnalysisRequest):
+    from openai import OpenAI
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    
     message = client.chat.completions.create(
         model="gpt-4o-mini",
         max_tokens=1024,
