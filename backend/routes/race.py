@@ -52,61 +52,60 @@ def get_races(year: int):
 
 @router.get("/h2h")
 def get_h2h(year: int, driver1: str, driver2: str):
-    schedule = fastf1.get_event_schedule(year)
-    races = schedule[schedule['EventFormat'] != 'testing']
+    import requests
     
     results = {driver1: [], driver2: []}
     race_names = []
     stats = {
-        driver1: {'points': 0, 'wins': 0, 'podiums': 0, 'poles': 0, 'fastestLaps': 0, 'dnfs': 0, 'positions': []},
-        driver2: {'points': 0, 'wins': 0, 'podiums': 0, 'poles': 0, 'fastestLaps': 0, 'dnfs': 0, 'positions': []}
+        driver1: {'points': 0, 'wins': 0, 'podiums': 0, 'poles': 0, 'dnfs': 0, 'positions': []},
+        driver2: {'points': 0, 'wins': 0, 'podiums': 0, 'poles': 0, 'dnfs': 0, 'positions': []}
     }
 
-    for _, event in races.iterrows():
-        try:
-            session = fastf1.get_session(year, event['EventName'], 'R')
-            session.load(telemetry=False, weather=False, messages=False)
-            res = session.results
+    try:
+        r = requests.get(f'http://ergast.com/api/f1/{year}/results.json?limit=500', timeout=10)
+        data = r.json()
+        races = data['MRData']['RaceTable']['Races']
 
+        for race in races:
+            race_names.append(race['raceName'].replace(' Grand Prix','').replace(' Grande Prémio',''))
+            race_results = {r['Driver']['code']: r for r in race['Results']}
+            
             for driver in [driver1, driver2]:
-                row = res[res['Abbreviation'] == driver]
-                if not row.empty:
-                    pos = int(row['Position'].values[0]) if pd.notna(row['Position'].values[0]) else 20
-                    status = str(row['Status'].values[0])
-                    pts = float(row['Points'].values[0]) if pd.notna(row['Points'].values[0]) else 0
+                if driver in race_results:
+                    res = race_results[driver]
+                    pos = int(res['position'])
+                    pts = float(res['points'])
+                    status = res['status']
                     results[driver].append(pos)
-                    stats[driver]['points'] += pts
                     stats[driver]['positions'].append(pos)
+                    stats[driver]['points'] += pts
                     if pos == 1: stats[driver]['wins'] += 1
                     if pos <= 3: stats[driver]['podiums'] += 1
-                    if 'DNF' in status or 'Retired' in status: stats[driver]['dnfs'] += 1
+                    if 'Retired' in status or '+' not in status and pos > 3: stats[driver]['dnfs'] += 1
                 else:
                     results[driver].append(20)
                     stats[driver]['positions'].append(20)
 
-            quali = fastf1.get_session(year, event['EventName'], 'Q')
-            quali.load(telemetry=False, weather=False, messages=False)
-            qres = quali.results
-            for driver in [driver1, driver2]:
-                row = qres[qres['Abbreviation'] == driver]
-                if not row.empty:
-                    qpos = int(row['Position'].values[0]) if pd.notna(row['Position'].values[0]) else 20
-                    if qpos == 1: stats[driver]['poles'] += 1
+        r2 = requests.get(f'http://ergast.com/api/f1/{year}/qualifying.json?limit=500', timeout=10)
+        qdata = r2.json()
+        for race in qdata['MRData']['RaceTable']['Races']:
+            for res in race['QualifyingResults']:
+                if res['Driver']['code'] in [driver1, driver2]:
+                    if res['position'] == '1':
+                        stats[res['Driver']['code']]['poles'] += 1
 
-            race_names.append(event['EventName'].replace(' Grand Prix','').replace(' Grande Prémio',''))
-        except Exception as e:
-            print(f"Skipping {event['EventName']}: {e}")
-            continue
+    except Exception as e:
+        print(f"Ergast error: {e}")
+        return {"error": "Failed to load data"}
 
     for driver in [driver1, driver2]:
         positions = stats[driver]['positions']
         stats[driver]['avgFinish'] = round(sum(positions) / len(positions), 1) if positions else 0
 
     h2h_wins = {driver1: 0, driver2: 0}
-    for i in range(len(results[driver1])):
-        if i < len(results[driver2]):
-            if results[driver1][i] < results[driver2][i]: h2h_wins[driver1] += 1
-            elif results[driver2][i] < results[driver1][i]: h2h_wins[driver2] += 1
+    for i in range(min(len(results[driver1]), len(results[driver2]))):
+        if results[driver1][i] < results[driver2][i]: h2h_wins[driver1] += 1
+        elif results[driver2][i] < results[driver1][i]: h2h_wins[driver2] += 1
 
     return {
         "driver1": driver1,
