@@ -34,7 +34,22 @@ const TIRE_COLORS = {
 }
 
 export default function RaceReplay() {
-  const [year, setYear] = useState('2026')
+  const RACES_2026 = ['Australian Grand Prix', 'Chinese Grand Prix']
+  const RACES_2025 = ['Australian Grand Prix','Chinese Grand Prix','Japanese Grand Prix','Bahrain Grand Prix','Saudi Arabian Grand Prix','Miami Grand Prix','Emilia Romagna Grand Prix','Monaco Grand Prix','Spanish Grand Prix','Canadian Grand Prix','Austrian Grand Prix','British Grand Prix','Belgian Grand Prix','Hungarian Grand Prix','Dutch Grand Prix','Italian Grand Prix','Azerbaijan Grand Prix','Singapore Grand Prix','United States Grand Prix','Mexico City Grand Prix','São Paulo Grand Prix','Las Vegas Grand Prix','Qatar Grand Prix','Abu Dhabi Grand Prix']
+  const RACES_2024 = ['Bahrain Grand Prix','Saudi Arabian Grand Prix','Australian Grand Prix','Japanese Grand Prix','Chinese Grand Prix','Miami Grand Prix','Emilia Romagna Grand Prix','Monaco Grand Prix','Canadian Grand Prix','Spanish Grand Prix','Austrian Grand Prix','British Grand Prix','Hungarian Grand Prix','Belgian Grand Prix','Dutch Grand Prix','Italian Grand Prix','Azerbaijan Grand Prix','Singapore Grand Prix','United States Grand Prix','Mexico City Grand Prix','São Paulo Grand Prix','Las Vegas Grand Prix','Qatar Grand Prix','Abu Dhabi Grand Prix']
+  const RACES_2023 = ['Bahrain Grand Prix','Saudi Arabian Grand Prix','Australian Grand Prix','Azerbaijan Grand Prix','Miami Grand Prix','Monaco Grand Prix','Spanish Grand Prix','Canadian Grand Prix','Austrian Grand Prix','British Grand Prix','Hungarian Grand Prix','Belgian Grand Prix','Dutch Grand Prix','Italian Grand Prix','Singapore Grand Prix','Japanese Grand Prix','Qatar Grand Prix','United States Grand Prix','Mexico City Grand Prix','São Paulo Grand Prix','Las Vegas Grand Prix','Abu Dhabi Grand Prix']
+
+  const FALLBACK_RACES = {
+    '2026': RACES_2026,
+    '2025': RACES_2025,
+    '2024': RACES_2024,
+    '2023': RACES_2023,
+    '2022': RACES_2024,
+    '2021': RACES_2023,
+    '2020': RACES_2023,
+    '2019': RACES_2023,
+    '2018': RACES_2023,
+  }
   const [gp, setGp] = useState('')
   const [races, setRaces] = useState([])
   const [raceData, setRaceData] = useState(null)
@@ -46,10 +61,18 @@ export default function RaceReplay() {
   const [activeTab, setActiveTab] = useState('positions')
 
   useEffect(() => {
-    axios.get(`${API}/races?year=${year}`)
-      .then(r => { setRaces(r.data.races); setGp(r.data.races[0] || '') })
-      .catch(() => setRaces(['Monaco','Bahrain','Silverstone']))
-  }, [year])
+      const fallback = FALLBACK_RACES[year] || RACES_2024
+      setRaces(fallback)
+      setGp(fallback[0])
+      axios.get(`${API}/races?year=${year}`)
+        .then(r => {
+          if (r.data.races && r.data.races.length > 0) {
+            setRaces(r.data.races)
+            setGp(r.data.races[0])
+          }
+        })
+        .catch(() => {})
+    }, [year])
 
   async function loadRace() {
     setLoading(true)
