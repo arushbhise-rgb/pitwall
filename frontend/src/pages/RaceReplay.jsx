@@ -1,32 +1,37 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Line, Bar } from 'react-chartjs-2'
+import { Line } from 'react-chartjs-2'
 import {
-  Chart, LineElement, BarElement, PointElement,
+  Chart, LineElement, PointElement,
   LinearScale, CategoryScale, Tooltip, Legend
 } from 'chart.js'
-Chart.register(LineElement, BarElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend)
+Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend)
 
 const API = 'https://pitwall-production-c292.up.railway.app'
+
 const DRIVER_COLORS = {
   VER: '#3671c6', PER: '#3671c6',
   LEC: '#e8002d', SAI: '#e8002d', BEA: '#e8002d',
   NOR: '#ff8000', PIA: '#ff8000',
   HAM: '#00d2be', RUS: '#00d2be',
   ALO: '#52e252', STR: '#52e252',
-  VET: '#52e252', HUL: '#ffffff',
   GAS: '#0093cc', OCO: '#0093cc',
   TSU: '#6692ff', RIC: '#6692ff',
   ALB: '#005aff', SAR: '#005aff',
-  MAG: '#b6babd', HUL2: '#b6babd',
+  MAG: '#b6babd', HUL: '#b6babd',
   ZHO: '#c92d4b', BOT: '#c92d4b',
-  DEV: '#6692ff', LAW: '#6692ff',
 }
 
+const FALLBACK = ['#3671c6','#e8002d','#ff8000','#00d2be','#52e252','#c92d4b','#9b59b6','#f39c12']
+
 function getDriverColor(code, index) {
-  return DRIVER_COLORS[code] || ['#3671c6','#e8002d','#ff8000','#00d2be','#52e252','#c92d4b','#9b59b6','#f39c12'][index % 8]
+  return DRIVER_COLORS[code] || FALLBACK[index % FALLBACK.length]
 }
-const TIRE_COLORS = { SOFT: '#e8002d', MEDIUM: '#f5c842', HARD: '#ccc', INTERMEDIATE: '#52e252', WET: '#3671c6' }
+
+const TIRE_COLORS = {
+  SOFT: '#e8002d', MEDIUM: '#f5c842',
+  HARD: '#ccc', INTERMEDIATE: '#52e252', WET: '#3671c6'
+}
 
 export default function RaceReplay() {
   const [year, setYear] = useState('2024')
@@ -75,8 +80,6 @@ export default function RaceReplay() {
     )
   }
 
-  const laps = raceData ? Array.from({length: raceData.total_laps}, (_, i) => i + 1) : []
-
   function getTireStints(driver) {
     if (!raceData || !raceData.tire_data[driver]) return []
     const tires = raceData.tire_data[driver]
@@ -92,10 +95,8 @@ export default function RaceReplay() {
     return stints
   }
 
-  const cardStyle = {
-    background: '#111', border: '0.5px solid #222',
-    borderRadius: '10px', padding: '16px'
-  }
+  const laps = raceData ? Array.from({length: raceData.total_laps}, (_, i) => i + 1) : []
+  const cardStyle = { background: '#111', border: '0.5px solid #222', borderRadius: '10px', padding: '16px' }
 
   return (
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 52px)' }}>
@@ -122,19 +123,18 @@ export default function RaceReplay() {
 
         {raceData && (
           <>
-            <div style={{ fontSize: '10px', color: '#555', letterSpacing: '.5px', textTransform: 'uppercase', marginTop: '4px' }}>Drivers</div>
+            <div style={{ fontSize: '10px', color: '#555', letterSpacing: '.5px', textTransform: 'uppercase' }}>Drivers</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
               {raceData.drivers.map((d, i) => (
-                <div key={d} onClick={() => toggleDriver(d)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '5px 8px', borderRadius: '7px', cursor: 'pointer',
-                    background: selectedDrivers.includes(d) ? '#1a1a1a' : 'transparent',
-                    border: `0.5px solid ${selectedDrivers.includes(d) ? '#333' : 'transparent'}`,
-                    opacity: selectedDrivers.includes(d) ? 1 : 0.4,
-                    transition: 'all .12s'
-                  }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: COLORS[i % COLORS.length], flexShrink: 0 }}></div>
+                <div key={d} onClick={() => toggleDriver(d)} style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '5px 8px', borderRadius: '7px', cursor: 'pointer',
+                  background: selectedDrivers.includes(d) ? '#1a1a1a' : 'transparent',
+                  border: `0.5px solid ${selectedDrivers.includes(d) ? '#333' : 'transparent'}`,
+                  opacity: selectedDrivers.includes(d) ? 1 : 0.4,
+                  transition: 'all .12s'
+                }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: getDriverColor(d, i), flexShrink: 0 }}></div>
                   <div style={{ fontSize: '12px', fontWeight: '500', color: '#fff', flex: 1 }}>{d}</div>
                 </div>
               ))}
@@ -145,7 +145,7 @@ export default function RaceReplay() {
 
       <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', overflow: 'auto' }}>
         {!raceData && !loading && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px', color: '#444' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px' }}>
             <div style={{ fontSize: '32px' }}>🏎</div>
             <div style={{ fontSize: '14px', color: '#555' }}>Select a race and click Load race data</div>
           </div>
@@ -180,7 +180,7 @@ export default function RaceReplay() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
               {[
-                { val: `P1`, lbl: 'Winner', sub: raceData.drivers[0] },
+                { val: raceData.drivers[0], lbl: 'Race winner', sub: 'P1 finisher' },
                 { val: raceData.total_laps, lbl: 'Total laps', sub: 'Race distance' },
                 { val: raceData.drivers.length, lbl: 'Drivers', sub: 'Started race' },
                 { val: selectedDrivers.length, lbl: 'Shown', sub: 'Click to toggle' },
@@ -200,21 +200,21 @@ export default function RaceReplay() {
                   data={{
                     labels: laps,
                     datasets: raceData.drivers.map((d, i) => ({
-                    label: d,
-                    data: raceData.position_data[d],
-                    borderColor: getDriverColor(d, i),
-                    backgroundColor: 'transparent',
-                    borderWidth: selectedDrivers.includes(d) ? 2.5 : 0.5,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                    tension: .3,
-                    hidden: !selectedDrivers.includes(d)
-                  }))
+                      label: d,
+                      data: raceData.position_data[d],
+                      borderColor: getDriverColor(d, i),
+                      backgroundColor: 'transparent',
+                      borderWidth: selectedDrivers.includes(d) ? 2.5 : 0.5,
+                      pointRadius: 0,
+                      pointHoverRadius: 4,
+                      tension: .3,
+                      hidden: !selectedDrivers.includes(d)
+                    }))
                   }}
                   options={{
                     responsive: true,
                     plugins: {
-                      legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } },
+                      legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 12, filter: (item) => selectedDrivers.includes(item.text) } },
                       tooltip: { mode: 'index', intersect: false, callbacks: { label: c => `${c.dataset.label}: P${c.raw}` } }
                     },
                     scales: {
@@ -233,23 +233,22 @@ export default function RaceReplay() {
                   data={{
                     labels: laps,
                     datasets: raceData.drivers.map((d, i) => ({
-                    label: d,
-                    data: raceData.lap_time_data[d],
-                    borderColor: getDriverColor(d, i),
-                    backgroundColor: 'transparent',
-                    borderWidth: selectedDrivers.includes(d) ? 1.8 : 0.5,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                    tension: .25,
-                    borderDash: i > 0 ? [4, 2] : [],
-                    spanGaps: false,
-                    hidden: !selectedDrivers.includes(d)
-                  }))
+                      label: d,
+                      data: raceData.lap_time_data[d],
+                      borderColor: getDriverColor(d, i),
+                      backgroundColor: 'transparent',
+                      borderWidth: selectedDrivers.includes(d) ? 1.8 : 0.5,
+                      pointRadius: 0,
+                      pointHoverRadius: 4,
+                      tension: .25,
+                      spanGaps: false,
+                      hidden: !selectedDrivers.includes(d)
+                    }))
                   }}
                   options={{
                     responsive: true,
                     plugins: {
-                      legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } },
+                      legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 12, filter: (item) => selectedDrivers.includes(item.text) } },
                       tooltip: { mode: 'index', intersect: false, callbacks: { label: c => c.raw ? `${c.dataset.label}: ${c.raw.toFixed(3)}s` : null, filter: i => i.raw !== null } }
                     },
                     scales: {
@@ -269,7 +268,7 @@ export default function RaceReplay() {
                   const driverIndex = raceData.drivers.indexOf(d)
                   return (
                     <div key={d} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                      <div style={{ width: '32px', fontSize: '11px', fontWeight: '600', color: COLORS[driverIndex % COLORS.length] }}>{d}</div>
+                      <div style={{ width: '32px', fontSize: '11px', fontWeight: '600', color: getDriverColor(d, driverIndex) }}>{d}</div>
                       <div style={{ display: 'flex', gap: '2px', flex: 1, height: '24px' }}>
                         {stints.map((s, i) => {
                           const pct = ((s.end - s.start + 1) / raceData.total_laps * 100).toFixed(0)
@@ -277,9 +276,8 @@ export default function RaceReplay() {
                           return (
                             <div key={i} style={{
                               flex: pct, background: color + '33',
-                              border: `1px solid ${color}`,
-                              borderRadius: '3px', display: 'flex',
-                              alignItems: 'center', justifyContent: 'center',
+                              border: `1px solid ${color}`, borderRadius: '3px',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
                               fontSize: '9px', color: color, fontWeight: '600'
                             }}>
                               {s.compound?.[0]} {s.start}-{s.end}
@@ -310,7 +308,7 @@ export default function RaceReplay() {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input value={question} onChange={e => setQuestion(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && askAI()}
-                  placeholder="Ask about the race... e.g. was the strategy correct?"
+                  placeholder="Ask about the race..."
                   style={{ flex: 1, background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '7px', color: '#fff', padding: '8px 12px', fontSize: '13px' }}
                 />
                 <button onClick={askAI} disabled={aiLoading} style={{
