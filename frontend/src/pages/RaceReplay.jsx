@@ -8,7 +8,24 @@ import {
 Chart.register(LineElement, BarElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend)
 
 const API = 'https://pitwall-production-c292.up.railway.app'
-const COLORS = ['#3671c6','#e8002d','#ff8000','#00d2be','#52e252','#c92d4b','#9b59b6','#f39c12']
+const DRIVER_COLORS = {
+  VER: '#3671c6', PER: '#3671c6',
+  LEC: '#e8002d', SAI: '#e8002d', BEA: '#e8002d',
+  NOR: '#ff8000', PIA: '#ff8000',
+  HAM: '#00d2be', RUS: '#00d2be',
+  ALO: '#52e252', STR: '#52e252',
+  VET: '#52e252', HUL: '#ffffff',
+  GAS: '#0093cc', OCO: '#0093cc',
+  TSU: '#6692ff', RIC: '#6692ff',
+  ALB: '#005aff', SAR: '#005aff',
+  MAG: '#b6babd', HUL2: '#b6babd',
+  ZHO: '#c92d4b', BOT: '#c92d4b',
+  DEV: '#6692ff', LAW: '#6692ff',
+}
+
+function getDriverColor(code, index) {
+  return DRIVER_COLORS[code] || ['#3671c6','#e8002d','#ff8000','#00d2be','#52e252','#c92d4b','#9b59b6','#f39c12'][index % 8]
+}
 const TIRE_COLORS = { SOFT: '#e8002d', MEDIUM: '#f5c842', HARD: '#ccc', INTERMEDIATE: '#52e252', WET: '#3671c6' }
 
 export default function RaceReplay() {
@@ -182,13 +199,17 @@ export default function RaceReplay() {
                 <Line
                   data={{
                     labels: laps,
-                    datasets: selectedDrivers.map((d, i) => ({
-                      label: d,
-                      data: raceData.position_data[d],
-                      borderColor: COLORS[raceData.drivers.indexOf(d) % COLORS.length],
-                      backgroundColor: 'transparent',
-                      borderWidth: 2.5, pointRadius: 0, tension: .3
-                    }))
+                    datasets: raceData.drivers.map((d, i) => ({
+                    label: d,
+                    data: raceData.position_data[d],
+                    borderColor: getDriverColor(d, i),
+                    backgroundColor: 'transparent',
+                    borderWidth: selectedDrivers.includes(d) ? 2.5 : 0.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    tension: .3,
+                    hidden: !selectedDrivers.includes(d)
+                  }))
                   }}
                   options={{
                     responsive: true,
@@ -211,15 +232,19 @@ export default function RaceReplay() {
                 <Line
                   data={{
                     labels: laps,
-                    datasets: selectedDrivers.map((d, i) => ({
-                      label: d,
-                      data: raceData.lap_time_data[d],
-                      borderColor: COLORS[raceData.drivers.indexOf(d) % COLORS.length],
-                      backgroundColor: 'transparent',
-                      borderWidth: 1.8, pointRadius: 0, tension: .25,
-                      borderDash: i > 0 ? [4, 2] : [],
-                      spanGaps: false
-                    }))
+                    datasets: raceData.drivers.map((d, i) => ({
+                    label: d,
+                    data: raceData.lap_time_data[d],
+                    borderColor: getDriverColor(d, i),
+                    backgroundColor: 'transparent',
+                    borderWidth: selectedDrivers.includes(d) ? 1.8 : 0.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    tension: .25,
+                    borderDash: i > 0 ? [4, 2] : [],
+                    spanGaps: false,
+                    hidden: !selectedDrivers.includes(d)
+                  }))
                   }}
                   options={{
                     responsive: true,
