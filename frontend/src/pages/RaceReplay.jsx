@@ -180,7 +180,22 @@ export default function RaceReplay() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
               {[
-                { val: raceData.drivers[0], lbl: 'Race winner', sub: 'P1 finisher' },
+                { val: (() => {
+                    const drivers = raceData.drivers
+                    let winner = drivers[0]
+                    let bestPos = 999
+                    for (const d of drivers) {
+                      const positions = raceData.position_data[d]
+                      if (positions && positions.length > 0) {
+                        const lastPos = positions[positions.length - 1]
+                        if (lastPos > 0 && lastPos < bestPos) {
+                          bestPos = lastPos
+                          winner = d
+                        }
+                      }
+                    }
+                    return winner
+                  })(), lbl: 'Race winner', sub: 'P1 finisher' },
                 { val: raceData.total_laps, lbl: 'Total laps', sub: 'Race distance' },
                 { val: raceData.drivers.length, lbl: 'Drivers', sub: 'Started race' },
                 { val: selectedDrivers.length, lbl: 'Shown', sub: 'Click to toggle' },
