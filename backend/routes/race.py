@@ -75,7 +75,12 @@ def get_h2h(year: int, driver1: str, driver2: str):
             offset += 30
             if offset >= total:
                 break
-        races = all_races
+        seen = set()
+        races = []
+        for r in all_races:
+            if r['raceName'] not in seen:
+                seen.add(r['raceName'])
+                races.append(r)
 
         for race in races:
             name = race['raceName'].replace(' Grand Prix','').replace(' Grande Prémio','')
@@ -115,7 +120,13 @@ def get_h2h(year: int, driver1: str, driver2: str):
             offset += 30
             if offset >= total:
                 break
-        for race in all_quali:
+        seen_q = set()
+        deduped_quali = []
+        for r in all_quali:
+            if r['raceName'] not in seen_q:
+                seen_q.add(r['raceName'])
+                deduped_quali.append(r)
+        for race in deduped_quali:
             for res in race['QualifyingResults']:
                 code = res['Driver'].get('code','').upper()
                 driver_id = res['Driver'].get('driverId','')
