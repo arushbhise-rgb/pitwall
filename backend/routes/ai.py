@@ -34,4 +34,4 @@ Instructions:
 - If the data doesn't contain enough info to answer, say so clearly"""
         }]
     )
-    return {{"response": message.choices[0].message.content}}
+    return {"response": message.choices[0].message.content}
