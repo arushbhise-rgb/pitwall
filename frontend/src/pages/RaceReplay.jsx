@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Line } from 'react-chartjs-2'
-import { Chart, LineElement, PointElement, LinearScale,
-         CategoryScale, Tooltip, Legend } from 'chart.js'
-Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend)
+import { Line, Bar } from 'react-chartjs-2'
+import {
+  Chart, LineElement, BarElement, PointElement,
+  LinearScale, CategoryScale, Tooltip, Legend
+} from 'chart.js'
+Chart.register(LineElement, BarElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend)
 
 const API = 'https://pitwall-production-c292.up.railway.app'
+const COLORS = ['#3671c6','#e8002d','#ff8000','#00d2be','#52e252','#c92d4b','#9b59b6','#f39c12']
+const TIRE_COLORS = { SOFT: '#e8002d', MEDIUM: '#f5c842', HARD: '#ccc', INTERMEDIATE: '#52e252', WET: '#3671c6' }
 
 export default function RaceReplay() {
   const [year, setYear] = useState('2024')
@@ -16,6 +20,8 @@ export default function RaceReplay() {
   const [question, setQuestion] = useState('')
   const [aiReply, setAiReply] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  const [selectedDrivers, setSelectedDrivers] = useState([])
+  const [activeTab, setActiveTab] = useState('positions')
 
   useEffect(() => {
     axios.get(`${API}/races?year=${year}`)
@@ -26,10 +32,12 @@ export default function RaceReplay() {
   async function loadRace() {
     setLoading(true)
     setRaceData(null)
+    setAiReply('')
     try {
       const r = await axios.get(`${API}/race?year=${year}&gp=${encodeURIComponent(gp)}`)
       setRaceData(r.data)
-    } catch(e) { alert('Error loading race — make sure backend is running') }
+      setSelectedDrivers(r.data.drivers.slice(0, 6))
+    } catch(e) { alert('Error loading race') }
     setLoading(false)
   }
 
@@ -44,15 +52,39 @@ export default function RaceReplay() {
     setAiLoading(false)
   }
 
-  const topDrivers = raceData ? raceData.drivers.slice(0, 6) : []
-  const colors = ['#3671c6','#e8002d','#ff8000','#00d2be','#52e252','#c92d4b']
+  function toggleDriver(d) {
+    setSelectedDrivers(prev =>
+      prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]
+    )
+  }
+
   const laps = raceData ? Array.from({length: raceData.total_laps}, (_, i) => i + 1) : []
+
+  function getTireStints(driver) {
+    if (!raceData || !raceData.tire_data[driver]) return []
+    const tires = raceData.tire_data[driver]
+    const stints = []
+    let current = tires[0], start = 0
+    for (let i = 1; i <= tires.length; i++) {
+      if (tires[i] !== current || i === tires.length) {
+        stints.push({ compound: current, start: start + 1, end: i })
+        current = tires[i]
+        start = i
+      }
+    }
+    return stints
+  }
+
+  const cardStyle = {
+    background: '#111', border: '0.5px solid #222',
+    borderRadius: '10px', padding: '16px'
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 52px)' }}>
       <div style={{
         width: '230px', background: '#111', borderRight: '0.5px solid #222',
-        padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px'
+        padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px', flexShrink: 0
       }}>
         <div style={{ fontSize: '10px', color: '#555', letterSpacing: '.5px', textTransform: 'uppercase' }}>Race selector</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -70,60 +102,196 @@ export default function RaceReplay() {
           padding: '10px', borderRadius: '8px', fontSize: '13px',
           fontWeight: '600', cursor: 'pointer', opacity: loading ? .6 : 1
         }}>{loading ? 'Loading...' : 'Load race data'}</button>
-      </div>
 
-      <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {!raceData && !loading && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', fontSize: '14px' }}>
-            Select a race and click Load race data
-          </div>
-        )}
-        {loading && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: '14px' }}>
-            Loading race data — this takes a minute first time...
-          </div>
-        )}
         {raceData && (
           <>
-            <div style={{ background: '#111', border: '0.5px solid #222', borderRadius: '10px', padding: '14px 18px' }}>
-              <div style={{ fontSize: '15px', fontWeight: '600' }}>{raceData.gp} Grand Prix {raceData.year}</div>
-              <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>{raceData.total_laps} laps · {raceData.drivers.length} drivers</div>
+            <div style={{ fontSize: '10px', color: '#555', letterSpacing: '.5px', textTransform: 'uppercase', marginTop: '4px' }}>Drivers</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              {raceData.drivers.map((d, i) => (
+                <div key={d} onClick={() => toggleDriver(d)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '5px 8px', borderRadius: '7px', cursor: 'pointer',
+                    background: selectedDrivers.includes(d) ? '#1a1a1a' : 'transparent',
+                    border: `0.5px solid ${selectedDrivers.includes(d) ? '#333' : 'transparent'}`,
+                    opacity: selectedDrivers.includes(d) ? 1 : 0.4,
+                    transition: 'all .12s'
+                  }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: COLORS[i % COLORS.length], flexShrink: 0 }}></div>
+                  <div style={{ fontSize: '12px', fontWeight: '500', color: '#fff', flex: 1 }}>{d}</div>
+                </div>
+              ))}
             </div>
-            <div style={{ background: '#111', border: '0.5px solid #222', borderRadius: '10px', padding: '16px' }}>
-              <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px' }}>Position changes</div>
-              <Line
-                data={{
-                  labels: laps,
-                  datasets: topDrivers.map((d, i) => ({
-                    label: d,
-                    data: raceData.position_data[d],
-                    borderColor: colors[i],
-                    backgroundColor: 'transparent',
-                    borderWidth: 2.5, pointRadius: 0, tension: .3
-                  }))
-                }}
-                options={{
-                  responsive: true,
-                  plugins: { legend: { labels: { color: '#888', font: { size: 11 } } }, tooltip: { mode: 'index', intersect: false } },
-                  scales: {
-                    x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', maxTicksLimit: 12, font: { size: 10 } } },
-                    y: { reverse: true, min: 1, max: 20, grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', stepSize: 2, font: { size: 10 } } }
-                  }
-                }}
-              />
+          </>
+        )}
+      </div>
+
+      <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', overflow: 'auto' }}>
+        {!raceData && !loading && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px', color: '#444' }}>
+            <div style={{ fontSize: '32px' }}>🏎</div>
+            <div style={{ fontSize: '14px', color: '#555' }}>Select a race and click Load race data</div>
+          </div>
+        )}
+
+        {loading && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ width: '32px', height: '32px', border: '2.5px solid #333', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite' }}></div>
+            <div style={{ fontSize: '13px', color: '#666' }}>Loading race data — first load takes ~30 seconds</div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+          </div>
+        )}
+
+        {raceData && (
+          <>
+            <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: '600' }}>{raceData.gp} Grand Prix {raceData.year}</div>
+                <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>{raceData.total_laps} laps · {raceData.drivers.length} drivers</div>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {['positions','laptimes','tires'].map(tab => (
+                  <button key={tab} onClick={() => setActiveTab(tab)} style={{
+                    background: activeTab === tab ? '#e10600' : '#1a1a1a',
+                    color: '#fff', border: '0.5px solid #333',
+                    padding: '5px 12px', borderRadius: '6px',
+                    fontSize: '11px', cursor: 'pointer', textTransform: 'capitalize'
+                  }}>{tab}</button>
+                ))}
+              </div>
             </div>
-            <div style={{ background: '#111', border: '0.5px solid #222', borderRadius: '10px', padding: '16px' }}>
-              <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '10px' }}>AI race analyst</div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
+              {[
+                { val: `P1`, lbl: 'Winner', sub: raceData.drivers[0] },
+                { val: raceData.total_laps, lbl: 'Total laps', sub: 'Race distance' },
+                { val: raceData.drivers.length, lbl: 'Drivers', sub: 'Started race' },
+                { val: selectedDrivers.length, lbl: 'Shown', sub: 'Click to toggle' },
+              ].map((s, i) => (
+                <div key={i} style={{ background: '#1a1a1a', borderRadius: '8px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '20px', fontWeight: '600' }}>{s.val}</div>
+                  <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>{s.lbl}</div>
+                  <div style={{ fontSize: '10px', color: '#555', marginTop: '1px' }}>{s.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {activeTab === 'positions' && (
+              <div style={cardStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px' }}>Position changes — every lap</div>
+                <Line
+                  data={{
+                    labels: laps,
+                    datasets: selectedDrivers.map((d, i) => ({
+                      label: d,
+                      data: raceData.position_data[d],
+                      borderColor: COLORS[raceData.drivers.indexOf(d) % COLORS.length],
+                      backgroundColor: 'transparent',
+                      borderWidth: 2.5, pointRadius: 0, tension: .3
+                    }))
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } },
+                      tooltip: { mode: 'index', intersect: false, callbacks: { label: c => `${c.dataset.label}: P${c.raw}` } }
+                    },
+                    scales: {
+                      x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', maxTicksLimit: 12, font: { size: 10 } }, title: { display: true, text: 'Lap', color: '#555', font: { size: 10 } } },
+                      y: { reverse: true, min: 1, max: 20, grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', stepSize: 2, font: { size: 10 } }, title: { display: true, text: 'Position', color: '#555', font: { size: 10 } } }
+                    }
+                  }}
+                />
+              </div>
+            )}
+
+            {activeTab === 'laptimes' && (
+              <div style={cardStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px' }}>Lap times comparison</div>
+                <Line
+                  data={{
+                    labels: laps,
+                    datasets: selectedDrivers.map((d, i) => ({
+                      label: d,
+                      data: raceData.lap_time_data[d],
+                      borderColor: COLORS[raceData.drivers.indexOf(d) % COLORS.length],
+                      backgroundColor: 'transparent',
+                      borderWidth: 1.8, pointRadius: 0, tension: .25,
+                      borderDash: i > 0 ? [4, 2] : [],
+                      spanGaps: false
+                    }))
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } },
+                      tooltip: { mode: 'index', intersect: false, callbacks: { label: c => c.raw ? `${c.dataset.label}: ${c.raw.toFixed(3)}s` : null, filter: i => i.raw !== null } }
+                    },
+                    scales: {
+                      x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', maxTicksLimit: 12, font: { size: 10 } } },
+                      y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', font: { size: 10 }, callback: v => `${v.toFixed(1)}s` }, title: { display: true, text: 'Lap time (s)', color: '#555', font: { size: 10 } } }
+                    }
+                  }}
+                />
+              </div>
+            )}
+
+            {activeTab === 'tires' && (
+              <div style={cardStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '14px' }}>Tire strategy</div>
+                {selectedDrivers.map(d => {
+                  const stints = getTireStints(d)
+                  const driverIndex = raceData.drivers.indexOf(d)
+                  return (
+                    <div key={d} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                      <div style={{ width: '32px', fontSize: '11px', fontWeight: '600', color: COLORS[driverIndex % COLORS.length] }}>{d}</div>
+                      <div style={{ display: 'flex', gap: '2px', flex: 1, height: '24px' }}>
+                        {stints.map((s, i) => {
+                          const pct = ((s.end - s.start + 1) / raceData.total_laps * 100).toFixed(0)
+                          const color = TIRE_COLORS[s.compound] || '#888'
+                          return (
+                            <div key={i} style={{
+                              flex: pct, background: color + '33',
+                              border: `1px solid ${color}`,
+                              borderRadius: '3px', display: 'flex',
+                              alignItems: 'center', justifyContent: 'center',
+                              fontSize: '9px', color: color, fontWeight: '600'
+                            }}>
+                              {s.compound?.[0]} {s.start}-{s.end}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+                <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                  {Object.entries(TIRE_COLORS).map(([name, color]) => (
+                    <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: color + '33', border: `1px solid ${color}` }}></div>
+                      <span style={{ fontSize: '10px', color: '#666' }}>{name[0] + name.slice(1).toLowerCase()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px' }}>
+                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#e10600' }}></div>
+                <div style={{ fontSize: '12px', fontWeight: '600' }}>AI race analyst</div>
+                <div style={{ fontSize: '10px', color: '#555', background: '#1a1a1a', padding: '2px 8px', borderRadius: '8px', marginLeft: 'auto' }}>GPT-4o-mini</div>
+              </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input value={question} onChange={e => setQuestion(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && askAI()}
-                  placeholder="Ask about the race..."
+                  placeholder="Ask about the race... e.g. was the strategy correct?"
                   style={{ flex: 1, background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '7px', color: '#fff', padding: '8px 12px', fontSize: '13px' }}
                 />
                 <button onClick={askAI} disabled={aiLoading} style={{
                   background: '#e10600', color: '#fff', border: 'none',
                   padding: '8px 16px', borderRadius: '7px', fontSize: '13px',
-                  fontWeight: '600', cursor: 'pointer'
+                  fontWeight: '600', cursor: 'pointer', opacity: aiLoading ? .6 : 1
                 }}>{aiLoading ? '...' : 'Ask'}</button>
               </div>
               {aiReply && (
