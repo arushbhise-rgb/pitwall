@@ -62,9 +62,21 @@ def get_h2h(year: int, driver1: str, driver2: str):
     }
 
     try:
-        r = requests.get(f'https://api.jolpi.ca/ergast/f1/{year}/results/?limit=500', timeout=30)
+        all_races = []
+        offset = 0
+        while True:
+            r = requests.get(f'https://api.jolpi.ca/ergast/f1/{year}/results/?limit=100&offset={offset}', timeout=30)
+            rdata = r.json()
+            batch = rdata['MRData']['RaceTable']['Races']
+            if not batch:
+                break
+            all_races.extend(batch)
+            offset += 100
+            if offset >= int(rdata['MRData']['total']):
+                break
+        races = all_races
         data = r.json()
-        races = data['MRData']['RaceTable']['Races']
+        
 
         for race in races:
             race_names.append(race['raceName'].replace(' Grand Prix','').replace(' Grande Prémio',''))
@@ -86,9 +98,9 @@ def get_h2h(year: int, driver1: str, driver2: str):
                     results[driver].append(20)
                     stats[driver]['positions'].append(20)
 
-        r2 = requests.get(f'https://api.jolpi.ca/ergast/f1/{year}/qualifying/?limit=500', timeout=30)
-        qdata = r2.json()
-        for race in qdata['MRData']['RaceTable']['Races']:
+            r2 = requests.get(f'https://api.jolpi.ca/ergast/f1/{year}/qualifying/?limit=100', timeout=30)
+            qdata = r2.json()
+            for race in qdata['MRData']['RaceTable']['Races']:
             for res in race['QualifyingResults']:
                 if res['Driver']['code'] in [driver1, driver2]:
                     if res['position'] == '1':
