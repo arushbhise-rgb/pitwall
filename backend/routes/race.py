@@ -101,10 +101,10 @@ def get_h2h(year: int, driver1: str, driver2: str):
             r2 = requests.get(f'https://api.jolpi.ca/ergast/f1/{year}/qualifying/?limit=100', timeout=30)
             qdata = r2.json()
             for race in qdata['MRData']['RaceTable']['Races']:
-            for res in race['QualifyingResults']:
-                if res['Driver']['code'] in [driver1, driver2]:
-                    if res['position'] == '1':
-                        stats[res['Driver']['code']]['poles'] += 1
+                for res in race['QualifyingResults']:
+                    if res['Driver']['code'] in [driver1, driver2]:
+                        if res['position'] == '1':
+                            stats[res['Driver']['code']]['poles'] += 1
 
     except Exception as e:
         print(f"Ergast error: {e}")
