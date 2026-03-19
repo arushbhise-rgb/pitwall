@@ -50,6 +50,7 @@ export default function RaceReplay() {
     '2019': RACES_2023,
     '2018': RACES_2023,
   }
+  const [year, setYear] = useState('2026')
   const [gp, setGp] = useState('')
   const [races, setRaces] = useState([])
   const [raceData, setRaceData] = useState(null)
