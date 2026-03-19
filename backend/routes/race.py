@@ -166,30 +166,40 @@ def get_gap_to_leader(year: int, gp: str):
     laps = session.laps
 
     drivers = laps['Driver'].unique().tolist()
-    gap_data = {}
+    total_laps = int(laps['LapNumber'].max())
 
+    leader_times = {}
+    for lap_num in range(1, total_laps + 1):
+        lap_data = laps[laps['LapNumber'] == lap_num]
+        if lap_data.empty:
+            continue
+        valid = lap_data.dropna(subset=['LapTime'])
+        if valid.empty:
+            continue
+        fastest = valid.loc[valid['LapTime'].idxmin()]
+        leader_times[lap_num] = fastest['LapTime'].total_seconds()
+
+    gap_data = {}
     for driver in drivers:
         dl = laps.pick_driver(driver)
-        cumulative_times = dl['LapTime'].dt.total_seconds().cumsum()
-        gap_data[driver] = [round(x, 3) if pd.notna(x) else None for x in cumulative_times]
-
-    leader = drivers[0]
-    leader_times = gap_data[leader]
-
-    relative_gaps = {}
-    for driver in drivers:
         gaps = []
-        for i, t in enumerate(gap_data[driver]):
-            if t is None or i >= len(leader_times) or leader_times[i] is None:
+        for lap_num in range(1, total_laps + 1):
+            driver_lap = dl[dl['LapNumber'] == lap_num]
+            if driver_lap.empty or lap_num not in leader_times:
                 gaps.append(None)
-            else:
-                gaps.append(round(t - leader_times[i], 3))
-        relative_gaps[driver] = gaps
+                continue
+            lap_time = driver_lap['LapTime'].values[0]
+            if pd.isna(lap_time):
+                gaps.append(None)
+                continue
+            diff = pd.Timedelta(lap_time).total_seconds() - leader_times[lap_num]
+            gaps.append(round(diff, 3))
+        gap_data[driver] = gaps
 
     return {
         "drivers": drivers,
-        "gap_data": relative_gaps,
-        "total_laps": int(laps['LapNumber'].max())
+        "gap_data": gap_data,
+        "total_laps": total_laps
     }
 
 @router.get("/sectors")
