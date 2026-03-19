@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from functools import lru_cache
+import os
 
 load_dotenv()
 
@@ -21,3 +23,7 @@ app.add_middleware(
 from routes import race, ai
 app.include_router(race.router)
 app.include_router(ai.router)
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
