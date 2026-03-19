@@ -161,8 +161,10 @@ export default function Landing() {
           }}>PW</div>
           <span style={{ fontSize: '13px', color: '#555' }}>PitWall — F1 Race Analyzer</span>
         </div>
-        <div style={{ fontSize: '12px', color: '#333' }}>
-          Data from FastF1 and Jolpica. Not affiliated with Formula 1.
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <a href="/support" style={{ fontSize: '12px', color: '#555', textDecoration: 'none' }}>Support</a>
+          <a href="/contact" style={{ fontSize: '12px', color: '#555', textDecoration: 'none' }}>Contact</a>
+          <span style={{ fontSize: '12px', color: '#333' }}>Data from FastF1 and Jolpica. Not affiliated with Formula 1.</span>
         </div>
       </div>
     </div>

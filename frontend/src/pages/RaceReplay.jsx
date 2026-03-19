@@ -88,55 +88,47 @@ export default function RaceReplay() {
   }
 
   async function askAI() {
-    if (!question || !raceData) return
-    setAiLoading(true)
+  if (!question || !raceData) return
+  setAiLoading(true)
 
-    const topDrivers = selectedDrivers.slice(0, 6)
-    const positionSummary = topDrivers.map(d => {
-      const positions = raceData.position_data[d]
-      if (!positions) return ''
-      const finalPos = positions[positions.length - 1]
-      const bestPos = Math.min(...positions.filter(p => p > 0))
-      return `${d}: finished P${finalPos}, best position P${bestPos}`
-    }).join('\n')
-
-    const lapPositions = {}
-    for (let lap = 1; lap <= raceData.total_laps; lap++) {
-      const lapData = topDrivers.map(d => {
-        const pos = raceData.position_data[d]?.[lap - 1]
-        return pos ? `${d}:P${pos}` : null
-      }).filter(Boolean).sort((a, b) => {
-        const pa = parseInt(a.split(':P')[1])
-        const pb = parseInt(b.split(':P')[1])
-        return pa - pb
-      })
-      if (lap % 10 === 0 || lap === 1 || lap === raceData.total_laps) {
-        lapPositions[`Lap ${lap}`] = lapData.join(', ')
-      }
-    }
-
-    const lapSummary = Object.entries(lapPositions)
-      .map(([lap, pos]) => `${lap}: ${pos}`)
-      .join('\n')
-
-    const summary = `
-  Race: ${raceData.gp} Grand Prix ${raceData.year}
-  Total laps: ${raceData.total_laps}
-  All drivers: ${raceData.drivers.join(', ')}
-
-  Final results for top drivers:
-  ${positionSummary}
-
-  Position snapshots every 10 laps:
-  ${lapSummary}
-    `.trim()
-
-    try {
-      const r = await axios.post(`${API}/analyze`, { race_summary: summary, question })
-      setAiReply(r.data.response)
-    } catch(e) { setAiReply('AI unavailable right now.') }
-    setAiLoading(false)
+  const allLapPositions = []
+  for (let lap = 1; lap <= raceData.total_laps; lap++) {
+    const lapData = raceData.drivers.map(d => {
+      const pos = raceData.position_data[d]?.[lap - 1]
+      return pos && pos > 0 ? { driver: d, pos } : null
+    }).filter(Boolean).sort((a, b) => a.pos - b.pos)
+    allLapPositions.push(`Lap ${lap}: ${lapData.map(x => `${x.driver}(P${x.pos})`).join(' ')}`)
   }
+
+  const finalResults = raceData.drivers.map(d => {
+    const positions = raceData.position_data[d]
+    if (!positions || positions.length === 0) return null
+    const finalPos = [...positions].reverse().find(p => p > 0)
+    return finalPos ? `${d}: P${finalPos}` : null
+  }).filter(Boolean).sort((a, b) => {
+    const pa = parseInt(a.split('P')[1])
+    const pb = parseInt(b.split('P')[1])
+    return pa - pb
+  })
+
+  const summary = `
+Race: ${raceData.gp} Grand Prix ${raceData.year}
+Total laps: ${raceData.total_laps}
+Drivers: ${raceData.drivers.join(', ')}
+
+FINAL RESULTS:
+${finalResults.join('\n')}
+
+FULL LAP BY LAP POSITIONS:
+${allLapPositions.join('\n')}
+  `.trim()
+
+  try {
+    const r = await axios.post(`${API}/analyze`, { race_summary: summary, question })
+    setAiReply(r.data.response)
+  } catch(e) { setAiReply('AI unavailable right now.') }
+  setAiLoading(false)
+}
 
   function toggleDriver(d) {
     setSelectedDrivers(prev =>

@@ -167,7 +167,27 @@ export default function HeadToHead() {
                 const r2 = data.results[d2Code][i] || 20
                 const d1won = r1 < r2
                 return (
-                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1px' }} title={`${race}: ${d1Code} P${r1} vs ${d2Code} P${r2}`}>
+                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1px', position: 'relative', cursor: 'pointer' }}
+                    onMouseEnter={e => {
+                      const tip = e.currentTarget.querySelector('.tip')
+                      if (tip) tip.style.display = 'block'
+                    }}
+                    onMouseLeave={e => {
+                      const tip = e.currentTarget.querySelector('.tip')
+                      if (tip) tip.style.display = 'none'
+                    }}>
+                    <div className="tip" style={{
+                      display: 'none', position: 'absolute', bottom: '100%',
+                      left: '50%', transform: 'translateX(-50%)',
+                      background: '#1a1a1a', border: '0.5px solid #333',
+                      borderRadius: '6px', padding: '6px 10px',
+                      fontSize: '10px', whiteSpace: 'nowrap', zIndex: 10,
+                      marginBottom: '4px', pointerEvents: 'none'
+                    }}>
+                      <div style={{ color: '#888', marginBottom: '3px' }}>{race}</div>
+                      <div style={{ color: d1.color }}>{d1Code}: P{r1}</div>
+                      <div style={{ color: d2.color }}>{d2Code}: P{r2}</div>
+                    </div>
                     <div style={{ width: '100%', height: `${(1 - r1/20) * 34 + 4}px`, background: d1.color, borderRadius: '1px', opacity: d1won ? 1 : 0.3 }}></div>
                     <div style={{ width: '100%', height: `${(1 - r2/20) * 34 + 4}px`, background: d2.color, borderRadius: '1px', opacity: !d1won ? 1 : 0.3 }}></div>
                   </div>

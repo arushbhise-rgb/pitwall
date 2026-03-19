@@ -18,14 +18,20 @@ def analyze_race(req: AnalysisRequest):
         max_tokens=1024,
         messages=[{
             "role": "user",
-            "content": f"""You are an expert F1 race analyst. You have access to the following race data:
+            "content": f"""You are an expert F1 race analyst with access to complete lap by lap position data for this race.
 
+RACE DATA:
 {req.race_summary}
 
-Answer this question from an F1 fan: {req.question}
+QUESTION: {req.question}
 
-Be specific, use the data provided, keep your answer under 150 words.
-Write like a knowledgeable F1 analyst, not an AI."""
+Instructions:
+- Use the exact lap by lap data provided to answer precisely
+- If asked about a specific lap, look up that exact lap in the data
+- Never guess or make up positions — only use what the data shows
+- Be concise and specific
+- Answer like a knowledgeable F1 engineer, not an AI assistant
+- If the data doesn't contain enough info to answer, say so clearly"""
         }]
     )
-    return {"response": message.choices[0].message.content}
+    return {{"response": message.choices[0].message.content}}
