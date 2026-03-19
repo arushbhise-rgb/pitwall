@@ -3,9 +3,9 @@ import { Link, useLocation } from 'react-router-dom'
 export default function Navbar() {
   const loc = useLocation()
   const tabs = [
-    { label: 'Race replay', path: '/' },
-    { label: 'Head to head', path: '/h2h' },
-  ]
+  { label: 'Race replay', path: '/replay' },
+  { label: 'Head to head', path: '/h2h' },
+]
   return (
     <nav style={{
       background: '#e10600', padding: '0 24px',
