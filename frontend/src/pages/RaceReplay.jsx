@@ -167,7 +167,7 @@ export default function RaceReplay() {
                 <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>{raceData.total_laps} laps · {raceData.drivers.length} drivers</div>
               </div>
               <div style={{ display: 'flex', gap: '6px' }}>
-                {['positions','laptimes','tires'].map(tab => (
+                {['positions','laptimes','tires','gap','sectors'].map(tab => (
                   <button key={tab} onClick={() => setActiveTab(tab)} style={{
                     background: activeTab === tab ? '#e10600' : '#1a1a1a',
                     color: '#fff', border: '0.5px solid #333',
@@ -307,7 +307,19 @@ export default function RaceReplay() {
                 </div>
               </div>
             )}
+            {activeTab === 'gap' && (
+              <div style={cardStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px' }}>Gap to race leader — seconds</div>
+                <GapChart raceData={raceData} selectedDrivers={selectedDrivers} getDriverColor={getDriverColor} API={API} />
+              </div>
+            )}
 
+            {activeTab === 'sectors' && (
+              <div style={cardStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px' }}>Sector times</div>
+                <SectorChart raceData={raceData} selectedDrivers={selectedDrivers} getDriverColor={getDriverColor} API={API} />
+              </div>
+            )}
             <div style={cardStyle}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px' }}>
                 <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#e10600' }}></div>
@@ -336,5 +348,111 @@ export default function RaceReplay() {
         )}
       </div>
     </div>
+  )
+}
+
+function GapChart({ raceData, selectedDrivers, getDriverColor, API }) {
+  const [gapData, setGapData] = useState(null)
+
+  useEffect(() => {
+    if (!raceData) return
+    axios.get(`${API}/gap-to-leader?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`)
+      .then(r => setGapData(r.data))
+      .catch(e => console.error(e))
+  }, [raceData])
+
+  if (!gapData) return <div style={{ color: '#555', fontSize: '13px' }}>Loading gap data...</div>
+
+  const laps = Array.from({length: gapData.total_laps}, (_, i) => i + 1)
+
+  return (
+    <Line
+      data={{
+        labels: laps,
+        datasets: gapData.drivers.map((d, i) => ({
+          label: d,
+          data: gapData.gap_data[d],
+          borderColor: getDriverColor(d, i),
+          backgroundColor: 'transparent',
+          borderWidth: selectedDrivers.includes(d) ? 2 : 0.5,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          tension: .3,
+          spanGaps: false,
+          hidden: !selectedDrivers.includes(d)
+        }))
+      }}
+      options={{
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 12, filter: item => selectedDrivers.includes(item.text) } },
+          tooltip: { mode: 'index', intersect: false, itemSort: (a, b) => a.raw - b.raw, callbacks: { title: items => `Lap ${items[0].label}`, label: c => c.raw !== null ? `${c.dataset.label}: +${c.raw.toFixed(3)}s` : null, filter: i => i.raw !== null } }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', maxTicksLimit: 12, font: { size: 10 } }, title: { display: true, text: 'Lap', color: '#555', font: { size: 10 } } },
+          y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', font: { size: 10 }, callback: v => `+${v.toFixed(1)}s` }, title: { display: true, text: 'Gap to leader', color: '#555', font: { size: 10 } } }
+        }
+      }}
+    />
+  )
+}
+
+function SectorChart({ raceData, selectedDrivers, getDriverColor, API }) {
+  const [sectorData, setSectorData] = useState(null)
+  const [activeSector, setActiveSector] = useState('s1')
+
+  useEffect(() => {
+    if (!raceData) return
+    axios.get(`${API}/sectors?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`)
+      .then(r => setSectorData(r.data))
+      .catch(e => console.error(e))
+  }, [raceData])
+
+  if (!sectorData) return <div style={{ color: '#555', fontSize: '13px' }}>Loading sector data...</div>
+
+  const laps = Array.from({length: sectorData.total_laps}, (_, i) => i + 1)
+  const sectorLabels = { s1: 'Sector 1', s2: 'Sector 2', s3: 'Sector 3' }
+
+  return (
+    <>
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+        {['s1','s2','s3'].map(s => (
+          <button key={s} onClick={() => setActiveSector(s)} style={{
+            background: activeSector === s ? '#e10600' : '#1a1a1a',
+            color: '#fff', border: '0.5px solid #333',
+            padding: '4px 12px', borderRadius: '6px',
+            fontSize: '11px', cursor: 'pointer'
+          }}>{sectorLabels[s]}</button>
+        ))}
+      </div>
+      <Line
+        data={{
+          labels: laps,
+          datasets: sectorData.drivers.map((d, i) => ({
+            label: d,
+            data: sectorData.sector_data[d]?.[activeSector],
+            borderColor: getDriverColor(d, i),
+            backgroundColor: 'transparent',
+            borderWidth: selectedDrivers.includes(d) ? 2 : 0.5,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            tension: .25,
+            spanGaps: false,
+            hidden: !selectedDrivers.includes(d)
+          }))
+        }}
+        options={{
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 12, filter: item => selectedDrivers.includes(item.text) } },
+            tooltip: { mode: 'index', intersect: false, callbacks: { title: items => `Lap ${items[0].label}`, label: c => c.raw ? `${c.dataset.label}: ${c.raw.toFixed(3)}s` : null, filter: i => i.raw !== null } }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', maxTicksLimit: 12, font: { size: 10 } } },
+            y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', font: { size: 10 }, callback: v => `${v.toFixed(2)}s` }, title: { display: true, text: 'Sector time (s)', color: '#555', font: { size: 10 } } }
+          }
+        }}
+      />
+    </>
   )
 }
