@@ -109,7 +109,8 @@ export default function RaceReplay() {
 
         const driverAtPos = lapPositions.find(x => x.pos === posNum)
         if (driverAtPos) {
-          setAiReply(`On lap ${lapNum}, ${driverAtPos.driver} was in P${posNum}.\n\nFull order on lap ${lapNum}:\n${lapPositions.map(x => `P${x.pos}: ${x.driver}`).join('\n')}`)
+          const fullOrder = lapPositions.map(x => `P${x.pos}: ${x.driver}`).join('\n')
+          setAiReply(`On lap ${lapNum} of the ${raceData.gp} Grand Prix, ${driverAtPos.driver} held P${posNum}.\n\nFull order at lap ${lapNum}:\n${fullOrder}\n\nWant to know more about this moment in the race? Ask a follow up question.`)
           setAiLoading(false)
           return
         }
@@ -439,8 +440,16 @@ export default function RaceReplay() {
                 }}>{aiLoading ? '...' : 'Ask'}</button>
               </div>
               {aiReply && (
-                <div style={{ marginTop: '10px', background: '#1a1a1a', borderRadius: '7px', padding: '12px', fontSize: '13px', color: '#aaa', lineHeight: '1.7' }}>
-                  {aiReply}
+                <div style={{ marginTop: '10px', background: '#1a1a1a', borderRadius: '7px', padding: '14px', fontSize: '13px', color: '#aaa', lineHeight: '1.8' }}>
+                  {aiReply.split('\n').map((line, i) => (
+                    line.trim() === '' 
+                      ? <div key={i} style={{ height: '8px' }} />
+                      : <div key={i} style={{ 
+                          marginBottom: '4px',
+                          color: line.startsWith('P') && line.includes(':') ? '#fff' : '#aaa',
+                          fontWeight: line.startsWith('P') && line.includes(':') ? '600' : '400'
+                        }}>{line}</div>
+                  ))}
                 </div>
               )}
             </div>
