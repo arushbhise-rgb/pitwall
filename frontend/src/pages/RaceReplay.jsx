@@ -231,9 +231,82 @@ export default function RaceReplay() {
 
       <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', overflow: 'auto' }}>
         {!raceData && !loading && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ fontSize: '32px' }}>🏎</div>
-            <div style={{ fontSize: '14px', color: '#555' }}>Select a race and click Load race data</div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '0', padding: '40px 20px', position: 'relative', overflow: 'hidden' }}>
+            <style>{`
+              @keyframes gridMove { from { transform: translateY(0); } to { transform: translateY(60px); } }
+              @keyframes orbitSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+              @keyframes orbitSpinR { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+              @keyframes glowPulse { 0%,100% { opacity:0.4; transform: scale(1); } 50% { opacity:0.8; transform: scale(1.05); } }
+              @keyframes tagFloat { 0%,100% { transform: translateY(0px); opacity:0.6; } 50% { transform: translateY(-6px); opacity:1; } }
+              @keyndef blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+            `}</style>
+
+            {/* Animated grid background */}
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', opacity: 0.4 }}>
+              <svg width="100%" height="100%" style={{ position: 'absolute' }}>
+                <defs>
+                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(225,6,0,0.15)" strokeWidth="0.5"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" style={{ animation: 'gridMove 3s linear infinite' }}/>
+              </svg>
+              {/* Radial glow */}
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(225,6,0,0.06), transparent 70%)', animation: 'glowPulse 3s ease-in-out infinite' }}/>
+            </div>
+
+            {/* Orbit rings */}
+            <div style={{ position: 'relative', width: '160px', height: '160px', marginBottom: '32px' }}>
+              <div style={{ position: 'absolute', inset: 0, border: '1px solid rgba(225,6,0,0.15)', borderRadius: '50%', animation: 'orbitSpin 8s linear infinite' }}>
+                <div style={{ position: 'absolute', top: '-4px', left: '50%', width: '8px', height: '8px', background: '#e10600', borderRadius: '50%', transform: 'translateX(-50%)', boxShadow: '0 0 8px rgba(225,6,0,0.8)' }}/>
+              </div>
+              <div style={{ position: 'absolute', inset: '20px', border: '1px solid rgba(225,6,0,0.1)', borderRadius: '50%', animation: 'orbitSpinR 5s linear infinite' }}>
+                <div style={{ position: 'absolute', bottom: '-4px', left: '50%', width: '6px', height: '6px', background: '#ff4040', borderRadius: '50%', transform: 'translateX(-50%)', boxShadow: '0 0 6px rgba(255,64,64,0.8)' }}/>
+              </div>
+              <div style={{ position: 'absolute', inset: '40px', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '50%', animation: 'orbitSpin 3s linear infinite' }}>
+                <div style={{ position: 'absolute', top: '-3px', right: '8px', width: '6px', height: '6px', background: '#3671c6', borderRadius: '50%', boxShadow: '0 0 6px rgba(54,113,198,0.8)' }}/>
+              </div>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '50px', height: '50px', background: 'linear-gradient(135deg, #e10600, #b30500)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: '#fff', fontSize: '16px', boxShadow: '0 0 20px rgba(225,6,0,0.4)' }}>PW</div>
+              </div>
+            </div>
+
+            <div style={{ position: 'relative', textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ fontSize: '20px', fontWeight: '800', marginBottom: '8px', letterSpacing: '-0.5px' }}>Ready to analyze</div>
+              <div style={{ fontSize: '13px', color: '#444', lineHeight: '1.7', maxWidth: '280px' }}>
+                Pick a season and Grand Prix from the sidebar then hit <span style={{ color: '#e10600', fontWeight: '600' }}>Load race data</span>
+              </div>
+            </div>
+
+            {/* Quick pick suggestions */}
+            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '320px' }}>
+              <div style={{ fontSize: '10px', color: '#333', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center', marginBottom: '4px' }}>Popular races</div>
+              {[
+                { year: '2026', race: 'Chinese Grand Prix', label: '2026 Chinese GP', tag: 'Live season' },
+                { year: '2024', race: 'Monaco Grand Prix', label: '2024 Monaco GP', tag: 'Classic' },
+                { year: '2023', race: 'British Grand Prix', label: '2023 British GP', tag: 'Fan favourite' },
+              ].map((r, i) => (
+                <div key={i} onClick={() => {
+                  setYear(r.year)
+                  setGp(r.race)
+                }} style={{
+                  background: '#111', border: '0.5px solid #1e1e1e',
+                  borderRadius: '10px', padding: '10px 14px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  cursor: 'pointer', transition: 'all .2s',
+                  animation: `tagFloat ${2 + i * 0.3}s ease-in-out infinite`,
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(225,6,0,0.3)'; e.currentTarget.style.background = 'rgba(225,6,0,0.05)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#1e1e1e'; e.currentTarget.style.background = '#111' }}
+                >
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>{r.label}</div>
+                    <div style={{ fontSize: '10px', color: '#444', marginTop: '2px' }}>Click to select</div>
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#e10600', background: 'rgba(225,6,0,0.1)', border: '0.5px solid rgba(225,6,0,0.2)', padding: '3px 8px', borderRadius: '8px' }}>{r.tag}</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
