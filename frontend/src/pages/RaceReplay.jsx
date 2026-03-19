@@ -90,7 +90,47 @@ export default function RaceReplay() {
   async function askAI() {
     if (!question || !raceData) return
     setAiLoading(true)
-    const summary = `Race: ${raceData.gp} ${raceData.year}, Total laps: ${raceData.total_laps}, Drivers: ${raceData.drivers.join(', ')}`
+
+    const topDrivers = selectedDrivers.slice(0, 6)
+    const positionSummary = topDrivers.map(d => {
+      const positions = raceData.position_data[d]
+      if (!positions) return ''
+      const finalPos = positions[positions.length - 1]
+      const bestPos = Math.min(...positions.filter(p => p > 0))
+      return `${d}: finished P${finalPos}, best position P${bestPos}`
+    }).join('\n')
+
+    const lapPositions = {}
+    for (let lap = 1; lap <= raceData.total_laps; lap++) {
+      const lapData = topDrivers.map(d => {
+        const pos = raceData.position_data[d]?.[lap - 1]
+        return pos ? `${d}:P${pos}` : null
+      }).filter(Boolean).sort((a, b) => {
+        const pa = parseInt(a.split(':P')[1])
+        const pb = parseInt(b.split(':P')[1])
+        return pa - pb
+      })
+      if (lap % 10 === 0 || lap === 1 || lap === raceData.total_laps) {
+        lapPositions[`Lap ${lap}`] = lapData.join(', ')
+      }
+    }
+
+    const lapSummary = Object.entries(lapPositions)
+      .map(([lap, pos]) => `${lap}: ${pos}`)
+      .join('\n')
+
+    const summary = `
+  Race: ${raceData.gp} Grand Prix ${raceData.year}
+  Total laps: ${raceData.total_laps}
+  All drivers: ${raceData.drivers.join(', ')}
+
+  Final results for top drivers:
+  ${positionSummary}
+
+  Position snapshots every 10 laps:
+  ${lapSummary}
+    `.trim()
+
     try {
       const r = await axios.post(`${API}/analyze`, { race_summary: summary, question })
       setAiReply(r.data.response)
