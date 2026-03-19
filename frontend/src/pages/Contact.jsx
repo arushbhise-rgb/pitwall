@@ -8,7 +8,7 @@ export default function Contact() {
         <div style={{ background: '#111', border: '0.5px solid #222', borderRadius: '12px', padding: '20px' }}>
           <div style={{ fontSize: '12px', color: '#555', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '8px' }}>Email</div>
           <a href="mailto:m3gkr@unb.ca" style={{ color: '#e10600', fontSize: '15px', textDecoration: 'none', fontWeight: '600' }}>
-            arush.bhise@unb.ca
+            m3gkr@unb.ca
           </a>
           <div style={{ fontSize: '12px', color: '#555', marginTop: '6px' }}>I read every email and reply within 24 hours</div>
         </div>
