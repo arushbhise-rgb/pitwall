@@ -62,9 +62,20 @@ def get_h2h(year: int, driver1: str, driver2: str):
     }
 
     try:
-        r = req.get(f'https://api.jolpi.ca/ergast/f1/{year}/results/?limit=500', timeout=30)
-        data = r.json()
-        races = data['MRData']['RaceTable']['Races']
+        all_races = []
+        offset = 0
+        while True:
+            r = req.get(f'https://api.jolpi.ca/ergast/f1/{year}/results/?limit=30&offset={offset}', timeout=30)
+            data = r.json()
+            batch = data['MRData']['RaceTable']['Races']
+            if not batch:
+                break
+            all_races.extend(batch)
+            total = int(data['MRData']['total'])
+            offset += 30
+            if offset >= total:
+                break
+        races = all_races
 
         for race in races:
             name = race['raceName'].replace(' Grand Prix','').replace(' Grande Prémio','')
