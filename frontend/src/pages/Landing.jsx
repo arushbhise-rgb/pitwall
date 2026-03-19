@@ -97,14 +97,14 @@ function Particles() {
     let frame;
     const particles = Array.from({ length: 40 }, () => ({
       x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight * 3,
+      y: Math.random() * window.innerHeight,
       r: Math.random() * 1.5 + 0.5,
       speed: Math.random() * 0.3 + 0.1,
       opacity: Math.random() * 0.4 + 0.1,
     }));
     function resize() {
       canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight * 3;
+      canvas.height = window.innerHeight;
     }
     resize();
     window.addEventListener("resize", resize);
@@ -123,7 +123,7 @@ function Particles() {
     draw();
     return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); };
   }, []);
-  return <canvas ref={canvasRef} style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
+  return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
 }
 
 function FeatureCard({ icon, title, desc, color, delay, visible }) {
@@ -258,7 +258,8 @@ export default function Landing() {
       color: "#fff",
       fontFamily: "'Outfit', sans-serif",
       position: "relative",
-      overflowX: "hidden",
+      overflow: "hidden",
+      minHeight: "100vh",
     }}>
       <style>{`
         @keyframes fadeInUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
