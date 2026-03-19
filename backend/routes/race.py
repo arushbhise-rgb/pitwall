@@ -52,8 +52,8 @@ def get_races(year: int):
 
 @router.get("/h2h")
 def get_h2h(year: int, driver1: str, driver2: str):
-    import requests
-    
+    import requests as req
+
     results = {driver1: [], driver2: []}
     race_names = []
     stats = {
@@ -62,26 +62,18 @@ def get_h2h(year: int, driver1: str, driver2: str):
     }
 
     try:
-        all_races = []
-        offset = 0
-        while True:
-            r = requests.get(f'https://api.jolpi.ca/ergast/f1/{year}/results/?limit=100&offset={offset}', timeout=30)
-            rdata = r.json()
-            batch = rdata['MRData']['RaceTable']['Races']
-            if not batch:
-                break
-            all_races.extend(batch)
-            offset += 100
-            if offset >= int(rdata['MRData']['total']):
-                break
-        races = all_races
+        r = req.get(f'https://api.jolpi.ca/ergast/f1/{year}/results/?limit=500', timeout=30)
         data = r.json()
-        
+        races = data['MRData']['RaceTable']['Races']
 
         for race in races:
-            race_names.append(race['raceName'].replace(' Grand Prix','').replace(' Grande Prémio',''))
-            race_results = {r['Driver']['code']: r for r in race['Results']}
-            
+            name = race['raceName'].replace(' Grand Prix','').replace(' Grande Prémio','')
+            race_names.append(name)
+            race_results = {}
+            for res in race['Results']:
+                code = res['Driver'].get('code', res['Driver']['driverId'][:3].upper())
+                race_results[code] = res
+
             for driver in [driver1, driver2]:
                 if driver in race_results:
                     res = race_results[driver]
@@ -93,25 +85,26 @@ def get_h2h(year: int, driver1: str, driver2: str):
                     stats[driver]['points'] += pts
                     if pos == 1: stats[driver]['wins'] += 1
                     if pos <= 3: stats[driver]['podiums'] += 1
-                    if 'Retired' in status or '+' not in status and pos > 3: stats[driver]['dnfs'] += 1
+                    if status not in ['Finished'] and '+' not in status:
+                        stats[driver]['dnfs'] += 1
                 else:
                     results[driver].append(20)
                     stats[driver]['positions'].append(20)
 
-            r2 = requests.get(f'https://api.jolpi.ca/ergast/f1/{year}/qualifying/?limit=100', timeout=30)
-            qdata = r2.json()
-            for race in qdata['MRData']['RaceTable']['Races']:
-                for res in race['QualifyingResults']:
-                    if res['Driver']['code'] in [driver1, driver2]:
-                        if res['position'] == '1':
-                            stats[res['Driver']['code']]['poles'] += 1
+        r2 = req.get(f'https://api.jolpi.ca/ergast/f1/{year}/qualifying/?limit=500', timeout=30)
+        qdata = r2.json()
+        for race in qdata['MRData']['RaceTable']['Races']:
+            for res in race['QualifyingResults']:
+                code = res['Driver'].get('code', res['Driver']['driverId'][:3].upper())
+                if code in [driver1, driver2] and res['position'] == '1':
+                    stats[code]['poles'] += 1
 
     except Exception as e:
-        print(f"Ergast error: {e}")
-        return {"error": "Failed to load data"}
+        print(f"Error: {e}")
+        return {"error": str(e)}
 
     for driver in [driver1, driver2]:
-        positions = stats[driver]['positions']
+        positions = [p for p in stats[driver]['positions'] if p < 20]
         stats[driver]['avgFinish'] = round(sum(positions) / len(positions), 1) if positions else 0
 
     h2h_wins = {driver1: 0, driver2: 0}

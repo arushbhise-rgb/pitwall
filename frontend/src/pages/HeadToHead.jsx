@@ -113,7 +113,7 @@ export default function HeadToHead() {
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
           <div style={{ width: '32px', height: '32px', border: '2.5px solid #333', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite', margin: '0 auto 12px' }}></div>
           <div style={{ fontSize: '13px' }}>Loading F1 data...</div>
-          <div style={{ fontSize: '11px', color: '#555', marginTop: '6px' }}>Usually takes 2-3 seconds</div>
+          <div style={{ fontSize: '11px', color: '#555', marginTop: '6px' }}>Usually takes 10-30 seconds</div>
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </div>
       )}
