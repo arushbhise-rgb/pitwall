@@ -215,7 +215,16 @@ export default function RaceReplay() {
                     responsive: true,
                     plugins: {
                       legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 12, filter: (item) => selectedDrivers.includes(item.text) } },
-                      tooltip: { mode: 'index', intersect: false, callbacks: { label: c => `${c.dataset.label}: P${c.raw}` } }
+                      tooltip: {
+                          mode: 'index',
+                          intersect: false,
+                          callbacks: {
+                            title: (items) => `Lap ${items[0].label}`,
+                            label: (c) => `${c.dataset.label}: P${c.raw}`,
+                            afterBody: () => '',
+                          },
+                          itemSort: (a, b) => a.raw - b.raw
+                      }
                     },
                     scales: {
                       x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#555', maxTicksLimit: 12, font: { size: 10 } }, title: { display: true, text: 'Lap', color: '#555', font: { size: 10 } } },
