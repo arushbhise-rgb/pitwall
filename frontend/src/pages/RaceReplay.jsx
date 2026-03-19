@@ -5,7 +5,7 @@ import { Chart, LineElement, PointElement, LinearScale,
          CategoryScale, Tooltip, Legend } from 'chart.js'
 Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend)
 
-const API = 'http://localhost:8000'
+const API = 'pitwall-production-c292.up.railway.app'
 
 export default function RaceReplay() {
   const [year, setYear] = useState('2024')
