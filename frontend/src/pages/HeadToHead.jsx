@@ -1,96 +1,7 @@
 import { useState } from 'react'
 import axios from 'axios'
-
-const API = 'https://pitwall-production-c292.up.railway.app'
-
-const DRIVER_COLORS_BY_YEAR = {
-  '2026': {
-    VER: '#3671c6', HAD: '#3671c6',
-    LEC: '#e8002d', HAM: '#e8002d', BEA: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000', DOO: '#ff8000',
-    RUS: '#00d2be', ANT: '#00d2be',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', COL: '#0093cc',
-    TSU: '#6692ff', LAW: '#6692ff',
-    ALB: '#005aff', SAI: '#005aff',
-    OCO: '#b6babd', MAG: '#b6babd',
-    HUL: '#c92d4b', BOR: '#c92d4b',
-    PER: '#ffffff', BOT: '#ffffff',
-  },
-  '2025': {
-    VER: '#3671c6', LAW: '#3671c6',
-    LEC: '#e8002d', HAM: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000',
-    RUS: '#00d2be', ANT: '#00d2be',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', DOO: '#0093cc',
-    TSU: '#6692ff', HAD: '#6692ff',
-    ALB: '#005aff', SAI: '#005aff',
-    MAG: '#b6babd', OCO: '#b6babd',
-    HUL: '#c92d4b', BOR: '#c92d4b',
-    BEA: '#b6babd',
-  },
-  '2024': {
-    VER: '#3671c6', PER: '#3671c6',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000',
-    HAM: '#00d2be', RUS: '#00d2be',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', OCO: '#0093cc',
-    TSU: '#6692ff', RIC: '#6692ff',
-    ALB: '#005aff', SAR: '#005aff',
-    MAG: '#b6babd', HUL: '#b6babd',
-    ZHO: '#c92d4b', BOT: '#c92d4b',
-  },
-  '2023': {
-    VER: '#3671c6', PER: '#3671c6',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000',
-    HAM: '#00d2be', RUS: '#00d2be',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', OCO: '#0093cc',
-    TSU: '#6692ff', DEV: '#6692ff',
-    ALB: '#005aff', SAR: '#005aff',
-    MAG: '#b6babd', HUL: '#b6babd',
-    ZHO: '#c92d4b', BOT: '#c92d4b',
-  },
-  '2022': {
-    VER: '#3671c6', PER: '#3671c6',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', RIC: '#ff8000',
-    HAM: '#00d2be', RUS: '#00d2be',
-    ALO: '#0093cc', OCO: '#0093cc',
-    VET: '#52e252', STR: '#52e252',
-    GAS: '#6692ff', TSU: '#6692ff',
-    ALB: '#005aff', LAT: '#005aff',
-    MAG: '#b6babd', MSC: '#b6babd',
-    ZHO: '#c92d4b', BOT: '#c92d4b',
-  },
-  '2021': {
-    VER: '#3671c6', PER: '#3671c6',
-    HAM: '#00d2be', BOT: '#00d2be',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', RIC: '#ff8000',
-    VET: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', ALO: '#0093cc',
-    TSU: '#6692ff', HAR: '#6692ff',
-    RAI: '#c92d4b', GIO: '#c92d4b',
-    RUS: '#005aff', LAT: '#005aff',
-    MAZ: '#b6babd', SCH: '#b6babd',
-  },
-  '2020': {
-    HAM: '#00d2be', BOT: '#00d2be',
-    VER: '#3671c6', ALB: '#3671c6',
-    LEC: '#e8002d', VET: '#e8002d',
-    NOR: '#ff8000', SAI: '#ff8000',
-    PER: '#c92d4b', STR: '#52e252',
-    OCO: '#0093cc', RIC: '#0093cc',
-    GAS: '#6692ff', KVY: '#6692ff',
-    GRO: '#b6babd', MAG: '#b6babd',
-    RAI: '#c92d4b', GIO: '#c92d4b',
-    RUS: '#005aff', LAT: '#005aff',
-  },
-}
+import { getDriverColor } from '../constants/driverData'
+import { API } from '../config'
 
 const DRIVER_TEAMS_BY_YEAR = {
   '2026': {
@@ -339,10 +250,6 @@ const ALL_DRIVERS_BY_YEAR = {
   ],
 }
 
-function getDriverColor(code, year) {
-  const colors = DRIVER_COLORS_BY_YEAR[String(year)] || DRIVER_COLORS_BY_YEAR['2024']
-  return colors[code] || '#888'
-}
 
 function getDriverTeam(code, year) {
   const teams = DRIVER_TEAMS_BY_YEAR[String(year)] || DRIVER_TEAMS_BY_YEAR['2024']
@@ -363,8 +270,8 @@ export default function HeadToHead() {
   const drivers = getDriversForYear(year)
   const d1 = drivers.find(d => d.code === d1Code) || drivers[0]
   const d2 = drivers.find(d => d.code === d2Code) || drivers[1]
-  const d1Color = getDriverColor(d1Code, year)
-  const d2Color = getDriverColor(d2Code, year)
+  const d1Color = getDriverColor(d1Code, 0, year)
+  const d2Color = getDriverColor(d2Code, 0, year)
   const d1Team = getDriverTeam(d1Code, year)
   const d2Team = getDriverTeam(d2Code, year)
 
@@ -511,8 +418,8 @@ export default function HeadToHead() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ display: 'flex', gap: '4px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: getDriverColor(m.d1, m.year) }}></div>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: getDriverColor(m.d2, m.year) }}></div>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: getDriverColor(m.d1, 0, m.year) }}></div>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: getDriverColor(m.d2, 0, m.year) }}></div>
                 </div>
                 <div style={{ fontSize: '13px', color: '#aaa', fontWeight: '500' }}>{m.label}</div>
               </div>

@@ -1,127 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-
-const API = 'https://pitwall-production-c292.up.railway.app'
-
-// Team colors by constructor name
-const CONSTRUCTOR_COLORS = {
-  'red bull': '#3671c6', 'red bull racing': '#3671c6',
-  'ferrari': '#e8002d', 'scuderia ferrari': '#e8002d',
-  'mclaren': '#ff8000', 'mclaren f1 team': '#ff8000',
-  'mercedes': '#00d2be', 'mercedes-amg': '#00d2be', 'mercedes-amg petronas': '#00d2be',
-  'aston martin': '#52e252', 'aston martin f1': '#52e252',
-  'alpine': '#0093cc', 'alpine f1': '#0093cc',
-  'williams': '#005aff', 'williams racing': '#005aff',
-  'alphatauri': '#6692ff', 'rb': '#6692ff', 'racing bulls': '#6692ff', 'visa cash app rb': '#6692ff',
-  'alfa romeo': '#c92d4b', 'sauber': '#c92d4b', 'kick sauber': '#c92d4b', 'stake f1': '#c92d4b',
-  'haas': '#b6babd', 'haas f1 team': '#b6babd', 'moneygram haas': '#b6babd',
-  'audi': '#e8002d',
-  'cadillac': '#ffffff', 'andretti': '#ffffff',
-}
-
-function getConstructorColor(name) {
-  if (!name) return '#888'
-  const lower = name.toLowerCase()
-  for (const [key, color] of Object.entries(CONSTRUCTOR_COLORS)) {
-    if (lower.includes(key)) return color
-  }
-  return '#888'
-}
-
-// Driver colors per season
-const DRIVER_COLORS_BY_YEAR = {
-  '2026': {
-    VER: '#3671c6', HAD: '#3671c6',
-    LEC: '#e8002d', HAM: '#e8002d', BEA: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000', DOO: '#ff8000',
-    RUS: '#00d2be', ANT: '#00d2be',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', COL: '#0093cc',
-    TSU: '#6692ff', LAW: '#6692ff',
-    ALB: '#005aff', SAI: '#005aff',
-    OCO: '#b6babd', MAG: '#b6babd',
-    HUL: '#c92d4b', BOR: '#c92d4b',
-    PER: '#ffffff', BOT: '#ffffff',
-  },
-  '2025': {
-    VER: '#3671c6', LAW: '#3671c6',
-    LEC: '#e8002d', HAM: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000',
-    RUS: '#00d2be', ANT: '#00d2be',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', DOO: '#0093cc',
-    TSU: '#6692ff', HAD: '#6692ff',
-    ALB: '#005aff', SAI: '#005aff',
-    MAG: '#b6babd', OCO: '#b6babd',
-    HUL: '#c92d4b', BOR: '#c92d4b',
-    BEA: '#b6babd',
-  },
-  '2024': {
-    VER: '#3671c6', PER: '#3671c6',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000',
-    HAM: '#00d2be', RUS: '#00d2be',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', OCO: '#0093cc',
-    TSU: '#6692ff', RIC: '#6692ff',
-    ALB: '#005aff', SAR: '#005aff',
-    MAG: '#b6babd', HUL: '#b6babd',
-    ZHO: '#c92d4b', BOT: '#c92d4b',
-  },
-  '2023': {
-    VER: '#3671c6', PER: '#3671c6',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000',
-    HAM: '#00d2be', RUS: '#00d2be',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', OCO: '#0093cc',
-    TSU: '#6692ff', DEV: '#6692ff',
-    ALB: '#005aff', SAR: '#005aff',
-    MAG: '#b6babd', HUL: '#b6babd',
-    ZHO: '#c92d4b', BOT: '#c92d4b',
-  },
-  '2022': {
-    VER: '#3671c6', PER: '#3671c6',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', RIC: '#ff8000',
-    HAM: '#00d2be', RUS: '#00d2be',
-    ALO: '#0093cc', OCO: '#0093cc',
-    VET: '#52e252', STR: '#52e252',
-    GAS: '#6692ff', TSU: '#6692ff',
-    ALB: '#005aff', LAT: '#005aff',
-    MAG: '#b6babd', MSC: '#b6babd',
-    ZHO: '#c92d4b', BOT: '#c92d4b',
-  },
-  '2021': {
-    VER: '#3671c6', PER: '#3671c6',
-    HAM: '#00d2be', BOT: '#00d2be',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', RIC: '#ff8000',
-    GAS: '#0093cc', ALO: '#0093cc',
-    VET: '#52e252', STR: '#52e252',
-    TSU: '#6692ff', HAR: '#6692ff',
-    RUS: '#005aff', LAT: '#005aff',
-    MAZ: '#c92d4b', RAI: '#c92d4b',
-    MAG: '#b6babd', SCH: '#b6babd',
-  },
-  '2020': {
-    HAM: '#00d2be', BOT: '#00d2be',
-    VER: '#3671c6', ALB: '#3671c6',
-    LEC: '#e8002d', VET: '#e8002d',
-    NOR: '#ff8000', SAI: '#ff8000',
-    PER: '#c92d4b', STR: '#c92d4b',
-    OCO: '#0093cc', RIC: '#0093cc',
-    GAS: '#6692ff', KVY: '#6692ff',
-    GRO: '#b6babd', MAG: '#b6babd',
-    RAI: '#c92d4b', GIO: '#c92d4b',
-    RUS: '#005aff', LAT: '#005aff',
-  },
-}
-
-function getDriverColor(code, year) {
-  const colors = DRIVER_COLORS_BY_YEAR[String(year)] || DRIVER_COLORS_BY_YEAR['2024']
-  return colors[code] || '#888'
-}
+import { getDriverColor, getConstructorColor } from '../constants/driverData'
+import { API } from '../config'
 
 export default function Standings() {
   const [year, setYear] = useState('2026')
@@ -207,7 +87,7 @@ export default function Standings() {
         {!loading && tab === 'drivers' && drivers?.standings && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {drivers.standings.map((d, i) => {
-              const color = getDriverColor(d.code, year)
+              const color = getDriverColor(d.code, 0, year)
               const pct = (d.points / maxDriverPoints * 100).toFixed(1)
               return (
                 <div key={i} className="s-row standings-row-driver" style={{

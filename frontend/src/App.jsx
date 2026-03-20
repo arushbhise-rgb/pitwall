@@ -1,23 +1,57 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Suspense, lazy } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Landing from './pages/Landing'
-import RaceReplay from './pages/RaceReplay'
-import HeadToHead from './pages/HeadToHead'
-import Contact from './pages/Contact'
-import Support from './pages/Support'
-import Standings from './pages/Standings'
+
+const RaceReplay = lazy(() => import('./pages/RaceReplay'))
+const HeadToHead = lazy(() => import('./pages/HeadToHead'))
+const Standings = lazy(() => import('./pages/Standings'))
+const Contact = lazy(() => import('./pages/Contact'))
+const Support = lazy(() => import('./pages/Support'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+
+function PageLoader() {
+  return (
+    <div style={{ minHeight: 'calc(100vh - 52px)', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '28px', height: '28px', border: '2px solid #1a1a1a', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite' }}></div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+    </div>
+  )
+}
 
 export default function App() {
   return (
-    <div>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/replay" element={<><Navbar /><RaceReplay /></>} />
-        <Route path="/h2h" element={<><Navbar /><HeadToHead /></>} />
-        <Route path="/standings" element={<><Navbar /><Standings /></>} />
-        <Route path="/contact" element={<><Navbar /><Contact /></>} />
-        <Route path="/support" element={<><Navbar /><Support /></>} />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/replay" element={
+        <Suspense fallback={<PageLoader />}>
+          <Navbar /><RaceReplay />
+        </Suspense>
+      } />
+      <Route path="/h2h" element={
+        <Suspense fallback={<PageLoader />}>
+          <Navbar /><HeadToHead />
+        </Suspense>
+      } />
+      <Route path="/standings" element={
+        <Suspense fallback={<PageLoader />}>
+          <Navbar /><Standings />
+        </Suspense>
+      } />
+      <Route path="/contact" element={
+        <Suspense fallback={<PageLoader />}>
+          <Navbar /><Contact />
+        </Suspense>
+      } />
+      <Route path="/support" element={
+        <Suspense fallback={<PageLoader />}>
+          <Navbar /><Support />
+        </Suspense>
+      } />
+      <Route path="*" element={
+        <Suspense fallback={<PageLoader />}>
+          <NotFound />
+        </Suspense>
+      } />
+    </Routes>
   )
 }

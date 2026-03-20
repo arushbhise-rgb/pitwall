@@ -7,78 +7,9 @@ import {
 } from 'chart.js'
 Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend)
 
-const API = 'https://pitwall-production-c292.up.railway.app'
+import { API } from '../config'
 
-const DRIVER_COLORS_BY_SEASON = {
-  '2026': {
-    NOR: '#ff8000', PIA: '#ff8000',
-    LEC: '#e8002d', HAM: '#e8002d',
-    RUS: '#00d2be', ANT: '#00d2be',
-    VER: '#3671c6', HAD: '#3671c6',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', COL: '#0093cc',
-    TSU: '#6692ff', LAW: '#6692ff',
-    ALB: '#005aff', SAI: '#005aff',
-    MAG: '#b6babd', OCO: '#b6babd',
-    HUL: '#c92d4b', BOR: '#c92d4b',
-    DOO: '#ff8000', BEA: '#e8002d',
-  },
-  '2025': {
-    NOR: '#ff8000', PIA: '#ff8000',
-    LEC: '#e8002d', HAM: '#e8002d',
-    RUS: '#00d2be', ANT: '#00d2be',
-    VER: '#3671c6', LAW: '#3671c6',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', DOO: '#0093cc',
-    TSU: '#6692ff', HAD: '#6692ff',
-    ALB: '#005aff', SAI: '#005aff',
-    MAG: '#b6babd', OCO: '#b6babd',
-    HUL: '#c92d4b', BOR: '#c92d4b',
-  },
-  '2024': {
-    VER: '#3671c6', PER: '#3671c6',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000',
-    HAM: '#00d2be', RUS: '#00d2be',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', OCO: '#0093cc',
-    TSU: '#6692ff', RIC: '#6692ff',
-    ALB: '#005aff', SAR: '#005aff',
-    MAG: '#b6babd', HUL: '#b6babd',
-    ZHO: '#c92d4b', BOT: '#c92d4b',
-  },
-  '2023': {
-    VER: '#3671c6', PER: '#3671c6',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000',
-    HAM: '#00d2be', RUS: '#00d2be',
-    ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', OCO: '#0093cc',
-    TSU: '#6692ff', DEV: '#6692ff',
-    ALB: '#005aff', SAR: '#005aff',
-    MAG: '#b6babd', HUL: '#b6babd',
-    ZHO: '#c92d4b', BOT: '#c92d4b',
-  },
-  '2022': {
-    VER: '#3671c6', PER: '#3671c6',
-    LEC: '#e8002d', SAI: '#e8002d',
-    NOR: '#ff8000', RIC: '#ff8000',
-    HAM: '#00d2be', RUS: '#00d2be',
-    ALO: '#0093cc', OCO: '#0093cc',
-    VET: '#52e252', STR: '#52e252',
-    GAS: '#6692ff', TSU: '#6692ff',
-    ALB: '#005aff', LAT: '#005aff',
-    MAG: '#b6babd', MSC: '#b6babd',
-    ZHO: '#c92d4b', BOT: '#c92d4b',
-  },
-}
-
-const FALLBACK_COLORS = ['#3671c6','#e8002d','#ff8000','#00d2be','#52e252','#c92d4b','#9b59b6','#f39c12']
-
-function getDriverColor(code, index, seasonYear) {
-  const seasonColors = DRIVER_COLORS_BY_SEASON[String(seasonYear)] || DRIVER_COLORS_BY_SEASON['2024']
-  return seasonColors[code] || FALLBACK_COLORS[index % FALLBACK_COLORS.length]
-}
+import { getDriverColor } from '../constants/driverData'
 
 const TIRE_COLORS = {
   SOFT: '#e8002d', MEDIUM: '#f5c842',
