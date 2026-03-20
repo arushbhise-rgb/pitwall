@@ -212,7 +212,7 @@ export default function RaceReplay() {
   const cardStyle = { background: '#111', border: '0.5px solid #1e1e1e', borderRadius: '12px', padding: '16px' }
 
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 52px)', background: '#0a0a0a', flexDirection: 'column' }} className="race-layout">
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - 52px)', background: '#0a0a0a' }} className="race-layout">
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
@@ -377,7 +377,11 @@ export default function RaceReplay() {
                 { y: '2024', r: 'Monaco Grand Prix', label: '2024 Monaco GP', tag: 'Classic', tagColor: '#f5c842' },
                 { y: '2023', r: 'British Grand Prix', label: '2023 British GP', tag: 'Fan favourite', tagColor: '#3671c6' },
               ].map((item, i) => (
-                <div key={i} onClick={() => { setYear(item.y); setGp(item.r) }} style={{
+                <div key={i} onClick={() => {
+                                setYear(item.y)
+                                setRaces(RACES_BY_YEAR[item.y] || RACES_BY_YEAR['2024'])
+                                setGp(item.r)
+                              }} style={{
                   background: '#111', border: '0.5px solid #1e1e1e',
                   borderRadius: '10px', padding: '10px 14px',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
