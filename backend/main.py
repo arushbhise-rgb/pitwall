@@ -34,6 +34,7 @@ def health():
     return {"status": "ok"}
 
 POPULAR_RACES = [
+    (2026, 'Australian Grand Prix'),
     (2026, 'Chinese Grand Prix'),
     (2024, 'Monaco Grand Prix'),
     (2024, 'British Grand Prix'),

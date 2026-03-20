@@ -6,17 +6,35 @@ import requests as req
 
 _cache = {}
 _cache_lock = threading.Lock()
+_fetch_locks = {}
+_fetch_locks_lock = threading.Lock()
 
 def get_cached(key, fn):
+    # Check cache first
     with _cache_lock:
         if key in _cache:
             print(f"Cache hit: {key}")
             return _cache[key]
-    print(f"Cache miss: {key} — fetching...")
-    result = fn()
-    with _cache_lock:
-        _cache[key] = result
-    return result
+
+    # Get or create a per-key lock
+    with _fetch_locks_lock:
+        if key not in _fetch_locks:
+            _fetch_locks[key] = threading.Lock()
+        key_lock = _fetch_locks[key]
+
+    # Only one thread fetches at a time per key
+    with key_lock:
+        # Check cache again after acquiring lock
+        with _cache_lock:
+            if key in _cache:
+                print(f"Cache hit (after lock): {key}")
+                return _cache[key]
+
+        print(f"Cache miss: {key} — fetching...")
+        result = fn()
+        with _cache_lock:
+            _cache[key] = result
+        return result
 
 fastf1.Cache.enable_cache('cache')
 router = APIRouter()
