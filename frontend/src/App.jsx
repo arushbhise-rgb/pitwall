@@ -1,4 +1,5 @@
-import { Routes, Route, Suspense, lazy } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
 import Navbar from './components/Navbar'
 import Landing from './pages/Landing'
 
