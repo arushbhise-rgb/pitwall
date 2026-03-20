@@ -93,6 +93,7 @@ function Particles() {
   const canvasRef = useRef(null);
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     let frame;
     const particles = Array.from({ length: 40 }, () => ({
@@ -234,10 +235,19 @@ export default function Landing() {
   const [statRef, statVisible] = useInView(0.2);
   const [ctaRef, ctaVisible] = useInView(0.2);
   const [previewRef, previewVisible] = useInView(0.1);
-  const [scrollY, setScrollY] = useState(0);
+  const [scrolledPast, setScrolledPast] = useState(false);
 
   useEffect(() => {
-    const handler = () => setScrollY(window.scrollY);
+    let ticking = false;
+    const handler = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrolledPast(window.scrollY > 50);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);
@@ -259,7 +269,6 @@ export default function Landing() {
       fontFamily: "'Outfit', sans-serif",
       position: "relative",
       overflow: "hidden",
-      minHeight: "100vh",
     }}>
       <style>{`
         @keyframes fadeInUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
@@ -289,10 +298,10 @@ export default function Landing() {
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
         padding: "0 40px", height: "64px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: scrollY > 50 ? "rgba(5,5,5,0.9)" : "transparent",
-        backdropFilter: scrollY > 50 ? "blur(20px)" : "none",
-        WebkitBackdropFilter: scrollY > 50 ? "blur(20px)" : "none",
-        borderBottom: scrollY > 50 ? "1px solid rgba(255,255,255,0.05)" : "1px solid transparent",
+        background: scrolledPast ? "rgba(5,5,5,0.9)" : "transparent",
+        backdropFilter: scrolledPast ? "blur(20px)" : "none",
+        WebkitBackdropFilter: scrolledPast ? "blur(20px)" : "none",
+        borderBottom: scrolledPast ? "1px solid rgba(255,255,255,0.05)" : "1px solid transparent",
         transition: "all 0.4s",
       }}>
         <div onClick={() => navigate("/")} style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}>

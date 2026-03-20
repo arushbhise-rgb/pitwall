@@ -147,7 +147,7 @@ export default function RaceReplay() {
           setGp(r.data.races[0])
         }
       })
-      .catch(() => {})
+      .catch(err => console.warn('Failed to fetch races:', err))
   }, [year])
 
   async function loadRace() {
@@ -225,15 +225,17 @@ export default function RaceReplay() {
   function getTireStints(driver) {
     if (!raceData || !raceData.tire_data[driver]) return []
     const tires = raceData.tire_data[driver]
+    if (tires.length === 0) return []
     const stints = []
     let current = tires[0], start = 0
-    for (let i = 1; i <= tires.length; i++) {
-      if (tires[i] !== current || i === tires.length) {
+    for (let i = 1; i < tires.length; i++) {
+      if (tires[i] !== current) {
         stints.push({ compound: current, start: start + 1, end: i })
         current = tires[i]
         start = i
       }
     }
+    stints.push({ compound: current, start: start + 1, end: tires.length })
     return stints
   }
 
