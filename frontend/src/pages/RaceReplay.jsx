@@ -377,11 +377,20 @@ export default function RaceReplay() {
                 { y: '2024', r: 'Monaco Grand Prix', label: '2024 Monaco GP', tag: 'Classic', tagColor: '#f5c842' },
                 { y: '2023', r: 'British Grand Prix', label: '2023 British GP', tag: 'Fan favourite', tagColor: '#3671c6' },
               ].map((item, i) => (
-                <div key={i} onClick={() => {
-                                setYear(item.y)
-                                setRaces(RACES_BY_YEAR[item.y] || RACES_BY_YEAR['2024'])
-                                setGp(item.r)
-                              }} style={{
+                <div key={i}onClick={async () => {
+                    setYear(item.y)
+                    setRaces(RACES_BY_YEAR[item.y] || RACES_BY_YEAR['2024'])
+                    setGp(item.r)
+                    setLoading(true)
+                    setRaceData(null)
+                    setAiReply('')
+                    try {
+                      const r = await axios.get(`${API}/race?year=${item.y}&gp=${encodeURIComponent(item.r)}`)
+                      setRaceData(r.data)
+                      setSelectedDrivers(r.data.drivers.slice(0, 6))
+                    } catch(e) { alert('Error loading race') }
+                    setLoading(false)
+                  }} style={{
                   background: '#111', border: '0.5px solid #1e1e1e',
                   borderRadius: '10px', padding: '10px 14px',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
