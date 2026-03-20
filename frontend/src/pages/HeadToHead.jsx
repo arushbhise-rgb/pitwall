@@ -3,37 +3,304 @@ import axios from 'axios'
 
 const API = 'https://pitwall-production-c292.up.railway.app'
 
-const ALL_DRIVERS = [
-  { code: 'VER', name: 'Max Verstappen', team: 'Red Bull', color: '#3671c6', initials: 'MV', number: 1 },
-  { code: 'PER', name: 'Sergio Perez', team: 'Red Bull', color: '#3671c6', initials: 'SP', number: 11 },
-  { code: 'LEC', name: 'Charles Leclerc', team: 'Ferrari', color: '#e8002d', initials: 'CL', number: 16 },
-  { code: 'SAI', name: 'Carlos Sainz', team: 'Ferrari', color: '#e8002d', initials: 'CS', number: 55 },
-  { code: 'NOR', name: 'Lando Norris', team: 'McLaren', color: '#ff8000', initials: 'LN', number: 4 },
-  { code: 'PIA', name: 'Oscar Piastri', team: 'McLaren', color: '#ff8000', initials: 'OP', number: 81 },
-  { code: 'HAM', name: 'Lewis Hamilton', team: 'Mercedes', color: '#00d2be', initials: 'LH', number: 44 },
-  { code: 'RUS', name: 'George Russell', team: 'Mercedes', color: '#00d2be', initials: 'GR', number: 63 },
-  { code: 'ALO', name: 'Fernando Alonso', team: 'Aston Martin', color: '#52e252', initials: 'FA', number: 14 },
-  { code: 'STR', name: 'Lance Stroll', team: 'Aston Martin', color: '#52e252', initials: 'LS', number: 18 },
-  { code: 'GAS', name: 'Pierre Gasly', team: 'Alpine', color: '#0093cc', initials: 'PG', number: 10 },
-  { code: 'OCO', name: 'Esteban Ocon', team: 'Alpine', color: '#0093cc', initials: 'EO', number: 31 },
-  { code: 'TSU', name: 'Yuki Tsunoda', team: 'RB', color: '#6692ff', initials: 'YT', number: 22 },
-  { code: 'RIC', name: 'Daniel Ricciardo', team: 'RB', color: '#6692ff', initials: 'DR', number: 3 },
-  { code: 'ALB', name: 'Alexander Albon', team: 'Williams', color: '#005aff', initials: 'AA', number: 23 },
-  { code: 'MAG', name: 'Kevin Magnussen', team: 'Haas', color: '#b6babd', initials: 'KM', number: 20 },
-  { code: 'HUL', name: 'Nico Hulkenberg', team: 'Haas', color: '#b6babd', initials: 'NH', number: 27 },
-  { code: 'ZHO', name: 'Guanyu Zhou', team: 'Sauber', color: '#c92d4b', initials: 'GZ', number: 24 },
-  { code: 'BOT', name: 'Valtteri Bottas', team: 'Sauber', color: '#c92d4b', initials: 'VB', number: 77 },
-]
+const DRIVER_COLORS_BY_YEAR = {
+  '2026': {
+    VER: '#3671c6', HAD: '#3671c6',
+    LEC: '#e8002d', HAM: '#e8002d', BEA: '#e8002d',
+    NOR: '#ff8000', PIA: '#ff8000', DOO: '#ff8000',
+    RUS: '#00d2be', ANT: '#00d2be',
+    ALO: '#52e252', STR: '#52e252',
+    GAS: '#0093cc', COL: '#0093cc',
+    TSU: '#6692ff', LAW: '#6692ff',
+    ALB: '#005aff', SAI: '#005aff',
+    OCO: '#b6babd', MAG: '#b6babd',
+    HUL: '#c92d4b', BOR: '#c92d4b',
+    PER: '#ffffff', BOT: '#ffffff',
+  },
+  '2025': {
+    VER: '#3671c6', LAW: '#3671c6',
+    LEC: '#e8002d', HAM: '#e8002d',
+    NOR: '#ff8000', PIA: '#ff8000',
+    RUS: '#00d2be', ANT: '#00d2be',
+    ALO: '#52e252', STR: '#52e252',
+    GAS: '#0093cc', DOO: '#0093cc',
+    TSU: '#6692ff', HAD: '#6692ff',
+    ALB: '#005aff', SAI: '#005aff',
+    MAG: '#b6babd', OCO: '#b6babd',
+    HUL: '#c92d4b', BOR: '#c92d4b',
+    BEA: '#b6babd',
+  },
+  '2024': {
+    VER: '#3671c6', PER: '#3671c6',
+    LEC: '#e8002d', SAI: '#e8002d',
+    NOR: '#ff8000', PIA: '#ff8000',
+    HAM: '#00d2be', RUS: '#00d2be',
+    ALO: '#52e252', STR: '#52e252',
+    GAS: '#0093cc', OCO: '#0093cc',
+    TSU: '#6692ff', RIC: '#6692ff',
+    ALB: '#005aff', SAR: '#005aff',
+    MAG: '#b6babd', HUL: '#b6babd',
+    ZHO: '#c92d4b', BOT: '#c92d4b',
+  },
+  '2023': {
+    VER: '#3671c6', PER: '#3671c6',
+    LEC: '#e8002d', SAI: '#e8002d',
+    NOR: '#ff8000', PIA: '#ff8000',
+    HAM: '#00d2be', RUS: '#00d2be',
+    ALO: '#52e252', STR: '#52e252',
+    GAS: '#0093cc', OCO: '#0093cc',
+    TSU: '#6692ff', DEV: '#6692ff',
+    ALB: '#005aff', SAR: '#005aff',
+    MAG: '#b6babd', HUL: '#b6babd',
+    ZHO: '#c92d4b', BOT: '#c92d4b',
+  },
+  '2022': {
+    VER: '#3671c6', PER: '#3671c6',
+    LEC: '#e8002d', SAI: '#e8002d',
+    NOR: '#ff8000', RIC: '#ff8000',
+    HAM: '#00d2be', RUS: '#00d2be',
+    ALO: '#0093cc', OCO: '#0093cc',
+    VET: '#52e252', STR: '#52e252',
+    GAS: '#6692ff', TSU: '#6692ff',
+    ALB: '#005aff', LAT: '#005aff',
+    MAG: '#b6babd', MSC: '#b6babd',
+    ZHO: '#c92d4b', BOT: '#c92d4b',
+  },
+  '2021': {
+    VER: '#3671c6', PER: '#3671c6',
+    HAM: '#00d2be', BOT: '#00d2be',
+    LEC: '#e8002d', SAI: '#e8002d',
+    NOR: '#ff8000', RIC: '#ff8000',
+    VET: '#52e252', STR: '#52e252',
+    GAS: '#0093cc', ALO: '#0093cc',
+    TSU: '#6692ff', HAR: '#6692ff',
+    RAI: '#c92d4b', GIO: '#c92d4b',
+    RUS: '#005aff', LAT: '#005aff',
+    MAZ: '#b6babd', SCH: '#b6babd',
+  },
+  '2020': {
+    HAM: '#00d2be', BOT: '#00d2be',
+    VER: '#3671c6', ALB: '#3671c6',
+    LEC: '#e8002d', VET: '#e8002d',
+    NOR: '#ff8000', SAI: '#ff8000',
+    PER: '#c92d4b', STR: '#52e252',
+    OCO: '#0093cc', RIC: '#0093cc',
+    GAS: '#6692ff', KVY: '#6692ff',
+    GRO: '#b6babd', MAG: '#b6babd',
+    RAI: '#c92d4b', GIO: '#c92d4b',
+    RUS: '#005aff', LAT: '#005aff',
+  },
+}
+
+const DRIVER_TEAMS_BY_YEAR = {
+  '2026': {
+    VER: 'Red Bull', HAD: 'Red Bull',
+    LEC: 'Ferrari', HAM: 'Ferrari', BEA: 'Ferrari',
+    NOR: 'McLaren', PIA: 'McLaren', DOO: 'McLaren',
+    RUS: 'Mercedes', ANT: 'Mercedes',
+    ALO: 'Aston Martin', STR: 'Aston Martin',
+    GAS: 'Alpine', COL: 'Alpine',
+    TSU: 'RB', LAW: 'RB',
+    ALB: 'Williams', SAI: 'Williams',
+    OCO: 'Haas', MAG: 'Haas',
+    HUL: 'Sauber', BOR: 'Sauber',
+    PER: 'Cadillac', BOT: 'Cadillac',
+  },
+  '2025': {
+    VER: 'Red Bull', LAW: 'Red Bull',
+    LEC: 'Ferrari', HAM: 'Ferrari',
+    NOR: 'McLaren', PIA: 'McLaren',
+    RUS: 'Mercedes', ANT: 'Mercedes',
+    ALO: 'Aston Martin', STR: 'Aston Martin',
+    GAS: 'Alpine', DOO: 'Alpine',
+    TSU: 'RB', HAD: 'RB',
+    ALB: 'Williams', SAI: 'Williams',
+    MAG: 'Haas', BEA: 'Haas', OCO: 'Haas',
+    HUL: 'Sauber', BOR: 'Sauber',
+  },
+  '2024': {
+    VER: 'Red Bull', PER: 'Red Bull',
+    LEC: 'Ferrari', SAI: 'Ferrari',
+    NOR: 'McLaren', PIA: 'McLaren',
+    HAM: 'Mercedes', RUS: 'Mercedes',
+    ALO: 'Aston Martin', STR: 'Aston Martin',
+    GAS: 'Alpine', OCO: 'Alpine',
+    TSU: 'RB', RIC: 'RB',
+    ALB: 'Williams', SAR: 'Williams',
+    MAG: 'Haas', HUL: 'Haas',
+    ZHO: 'Sauber', BOT: 'Sauber',
+  },
+  '2023': {
+    VER: 'Red Bull', PER: 'Red Bull',
+    LEC: 'Ferrari', SAI: 'Ferrari',
+    NOR: 'McLaren', PIA: 'McLaren',
+    HAM: 'Mercedes', RUS: 'Mercedes',
+    ALO: 'Aston Martin', STR: 'Aston Martin',
+    GAS: 'Alpine', OCO: 'Alpine',
+    TSU: 'AlphaTauri', DEV: 'AlphaTauri',
+    ALB: 'Williams', SAR: 'Williams',
+    MAG: 'Haas', HUL: 'Haas',
+    ZHO: 'Alfa Romeo', BOT: 'Alfa Romeo',
+  },
+  '2022': {
+    VER: 'Red Bull', PER: 'Red Bull',
+    LEC: 'Ferrari', SAI: 'Ferrari',
+    NOR: 'McLaren', RIC: 'McLaren',
+    HAM: 'Mercedes', RUS: 'Mercedes',
+    ALO: 'Alpine', OCO: 'Alpine',
+    VET: 'Aston Martin', STR: 'Aston Martin',
+    GAS: 'AlphaTauri', TSU: 'AlphaTauri',
+    ALB: 'Williams', LAT: 'Williams',
+    MAG: 'Haas', MSC: 'Haas',
+    ZHO: 'Alfa Romeo', BOT: 'Alfa Romeo',
+  },
+}
+
+const ALL_DRIVERS_BY_YEAR = {
+  '2026': [
+    { code: 'VER', name: 'Max Verstappen', number: 1, initials: 'MV' },
+    { code: 'HAM', name: 'Lewis Hamilton', number: 44, initials: 'LH' },
+    { code: 'LEC', name: 'Charles Leclerc', number: 16, initials: 'CL' },
+    { code: 'NOR', name: 'Lando Norris', number: 4, initials: 'LN' },
+    { code: 'PIA', name: 'Oscar Piastri', number: 81, initials: 'OP' },
+    { code: 'RUS', name: 'George Russell', number: 63, initials: 'GR' },
+    { code: 'ANT', name: 'Kimi Antonelli', number: 12, initials: 'KA' },
+    { code: 'SAI', name: 'Carlos Sainz', number: 55, initials: 'CS' },
+    { code: 'ALO', name: 'Fernando Alonso', number: 14, initials: 'FA' },
+    { code: 'STR', name: 'Lance Stroll', number: 18, initials: 'LS' },
+    { code: 'HAD', name: 'Isack Hadjar', number: 6, initials: 'IH' },
+    { code: 'LAW', name: 'Liam Lawson', number: 30, initials: 'LL' },
+    { code: 'TSU', name: 'Yuki Tsunoda', number: 22, initials: 'YT' },
+    { code: 'ALB', name: 'Alexander Albon', number: 23, initials: 'AA' },
+    { code: 'COL', name: 'Franco Colapinto', number: 43, initials: 'FC' },
+    { code: 'GAS', name: 'Pierre Gasly', number: 10, initials: 'PG' },
+    { code: 'OCO', name: 'Esteban Ocon', number: 31, initials: 'EO' },
+    { code: 'MAG', name: 'Kevin Magnussen', number: 20, initials: 'KM' },
+    { code: 'HUL', name: 'Nico Hulkenberg', number: 27, initials: 'NH' },
+    { code: 'BOR', name: 'Gabriel Bortoleto', number: 5, initials: 'GB' },
+    { code: 'BEA', name: 'Oliver Bearman', number: 87, initials: 'OB' },
+    { code: 'DOO', name: 'Jack Doohan', number: 7, initials: 'JD' },
+    { code: 'PER', name: 'Sergio Perez', number: 11, initials: 'SP' },
+    { code: 'BOT', name: 'Valtteri Bottas', number: 77, initials: 'VB' },
+  ],
+  '2025': [
+    { code: 'VER', name: 'Max Verstappen', number: 1, initials: 'MV' },
+    { code: 'HAM', name: 'Lewis Hamilton', number: 44, initials: 'LH' },
+    { code: 'LEC', name: 'Charles Leclerc', number: 16, initials: 'CL' },
+    { code: 'NOR', name: 'Lando Norris', number: 4, initials: 'LN' },
+    { code: 'PIA', name: 'Oscar Piastri', number: 81, initials: 'OP' },
+    { code: 'RUS', name: 'George Russell', number: 63, initials: 'GR' },
+    { code: 'ANT', name: 'Kimi Antonelli', number: 12, initials: 'KA' },
+    { code: 'SAI', name: 'Carlos Sainz', number: 55, initials: 'CS' },
+    { code: 'ALO', name: 'Fernando Alonso', number: 14, initials: 'FA' },
+    { code: 'STR', name: 'Lance Stroll', number: 18, initials: 'LS' },
+    { code: 'LAW', name: 'Liam Lawson', number: 30, initials: 'LL' },
+    { code: 'HAD', name: 'Isack Hadjar', number: 6, initials: 'IH' },
+    { code: 'TSU', name: 'Yuki Tsunoda', number: 22, initials: 'YT' },
+    { code: 'ALB', name: 'Alexander Albon', number: 23, initials: 'AA' },
+    { code: 'GAS', name: 'Pierre Gasly', number: 10, initials: 'PG' },
+    { code: 'DOO', name: 'Jack Doohan', number: 7, initials: 'JD' },
+    { code: 'MAG', name: 'Kevin Magnussen', number: 20, initials: 'KM' },
+    { code: 'BEA', name: 'Oliver Bearman', number: 87, initials: 'OB' },
+    { code: 'HUL', name: 'Nico Hulkenberg', number: 27, initials: 'NH' },
+    { code: 'BOR', name: 'Gabriel Bortoleto', number: 5, initials: 'GB' },
+  ],
+  '2024': [
+    { code: 'VER', name: 'Max Verstappen', number: 1, initials: 'MV' },
+    { code: 'PER', name: 'Sergio Perez', number: 11, initials: 'SP' },
+    { code: 'LEC', name: 'Charles Leclerc', number: 16, initials: 'CL' },
+    { code: 'SAI', name: 'Carlos Sainz', number: 55, initials: 'CS' },
+    { code: 'NOR', name: 'Lando Norris', number: 4, initials: 'LN' },
+    { code: 'PIA', name: 'Oscar Piastri', number: 81, initials: 'OP' },
+    { code: 'HAM', name: 'Lewis Hamilton', number: 44, initials: 'LH' },
+    { code: 'RUS', name: 'George Russell', number: 63, initials: 'GR' },
+    { code: 'ALO', name: 'Fernando Alonso', number: 14, initials: 'FA' },
+    { code: 'STR', name: 'Lance Stroll', number: 18, initials: 'LS' },
+    { code: 'GAS', name: 'Pierre Gasly', number: 10, initials: 'PG' },
+    { code: 'OCO', name: 'Esteban Ocon', number: 31, initials: 'EO' },
+    { code: 'TSU', name: 'Yuki Tsunoda', number: 22, initials: 'YT' },
+    { code: 'RIC', name: 'Daniel Ricciardo', number: 3, initials: 'DR' },
+    { code: 'ALB', name: 'Alexander Albon', number: 23, initials: 'AA' },
+    { code: 'SAR', name: 'Logan Sargeant', number: 2, initials: 'LS' },
+    { code: 'MAG', name: 'Kevin Magnussen', number: 20, initials: 'KM' },
+    { code: 'HUL', name: 'Nico Hulkenberg', number: 27, initials: 'NH' },
+    { code: 'ZHO', name: 'Guanyu Zhou', number: 24, initials: 'GZ' },
+    { code: 'BOT', name: 'Valtteri Bottas', number: 77, initials: 'VB' },
+  ],
+  '2023': [
+    { code: 'VER', name: 'Max Verstappen', number: 1, initials: 'MV' },
+    { code: 'PER', name: 'Sergio Perez', number: 11, initials: 'SP' },
+    { code: 'LEC', name: 'Charles Leclerc', number: 16, initials: 'CL' },
+    { code: 'SAI', name: 'Carlos Sainz', number: 55, initials: 'CS' },
+    { code: 'NOR', name: 'Lando Norris', number: 4, initials: 'LN' },
+    { code: 'PIA', name: 'Oscar Piastri', number: 81, initials: 'OP' },
+    { code: 'HAM', name: 'Lewis Hamilton', number: 44, initials: 'LH' },
+    { code: 'RUS', name: 'George Russell', number: 63, initials: 'GR' },
+    { code: 'ALO', name: 'Fernando Alonso', number: 14, initials: 'FA' },
+    { code: 'STR', name: 'Lance Stroll', number: 18, initials: 'LS' },
+    { code: 'GAS', name: 'Pierre Gasly', number: 10, initials: 'PG' },
+    { code: 'OCO', name: 'Esteban Ocon', number: 31, initials: 'EO' },
+    { code: 'TSU', name: 'Yuki Tsunoda', number: 22, initials: 'YT' },
+    { code: 'DEV', name: 'Nyck de Vries', number: 21, initials: 'NV' },
+    { code: 'ALB', name: 'Alexander Albon', number: 23, initials: 'AA' },
+    { code: 'SAR', name: 'Logan Sargeant', number: 2, initials: 'LS' },
+    { code: 'MAG', name: 'Kevin Magnussen', number: 20, initials: 'KM' },
+    { code: 'HUL', name: 'Nico Hulkenberg', number: 27, initials: 'NH' },
+    { code: 'ZHO', name: 'Guanyu Zhou', number: 24, initials: 'GZ' },
+    { code: 'BOT', name: 'Valtteri Bottas', number: 77, initials: 'VB' },
+  ],
+  '2022': [
+    { code: 'VER', name: 'Max Verstappen', number: 1, initials: 'MV' },
+    { code: 'PER', name: 'Sergio Perez', number: 11, initials: 'SP' },
+    { code: 'LEC', name: 'Charles Leclerc', number: 16, initials: 'CL' },
+    { code: 'SAI', name: 'Carlos Sainz', number: 55, initials: 'CS' },
+    { code: 'NOR', name: 'Lando Norris', number: 4, initials: 'LN' },
+    { code: 'RIC', name: 'Daniel Ricciardo', number: 3, initials: 'DR' },
+    { code: 'HAM', name: 'Lewis Hamilton', number: 44, initials: 'LH' },
+    { code: 'RUS', name: 'George Russell', number: 63, initials: 'GR' },
+    { code: 'ALO', name: 'Fernando Alonso', number: 14, initials: 'FA' },
+    { code: 'OCO', name: 'Esteban Ocon', number: 31, initials: 'EO' },
+    { code: 'VET', name: 'Sebastian Vettel', number: 5, initials: 'SV' },
+    { code: 'STR', name: 'Lance Stroll', number: 18, initials: 'LS' },
+    { code: 'GAS', name: 'Pierre Gasly', number: 10, initials: 'PG' },
+    { code: 'TSU', name: 'Yuki Tsunoda', number: 22, initials: 'YT' },
+    { code: 'ALB', name: 'Alexander Albon', number: 23, initials: 'AA' },
+    { code: 'LAT', name: 'Nicholas Latifi', number: 6, initials: 'NL' },
+    { code: 'MAG', name: 'Kevin Magnussen', number: 20, initials: 'KM' },
+    { code: 'MSC', name: 'Mick Schumacher', number: 47, initials: 'MS' },
+    { code: 'ZHO', name: 'Guanyu Zhou', number: 24, initials: 'GZ' },
+    { code: 'BOT', name: 'Valtteri Bottas', number: 77, initials: 'VB' },
+  ],
+}
+
+function getDriverColor(code, year) {
+  const colors = DRIVER_COLORS_BY_YEAR[String(year)] || DRIVER_COLORS_BY_YEAR['2024']
+  return colors[code] || '#888'
+}
+
+function getDriverTeam(code, year) {
+  const teams = DRIVER_TEAMS_BY_YEAR[String(year)] || DRIVER_TEAMS_BY_YEAR['2024']
+  return teams[code] || 'Unknown'
+}
+
+function getDriversForYear(year) {
+  return ALL_DRIVERS_BY_YEAR[String(year)] || ALL_DRIVERS_BY_YEAR['2024']
+}
 
 export default function HeadToHead() {
-  const [year, setYear] = useState('2026')
+  const [year, setYear] = useState('2024')
   const [d1Code, setD1Code] = useState('VER')
   const [d2Code, setD2Code] = useState('LEC')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  const d1 = ALL_DRIVERS.find(d => d.code === d1Code)
-  const d2 = ALL_DRIVERS.find(d => d.code === d2Code)
+  const drivers = getDriversForYear(year)
+  const d1 = drivers.find(d => d.code === d1Code) || drivers[0]
+  const d2 = drivers.find(d => d.code === d2Code) || drivers[1]
+  const d1Color = getDriverColor(d1Code, year)
+  const d2Color = getDriverColor(d2Code, year)
+  const d1Team = getDriverTeam(d1Code, year)
+  const d2Team = getDriverTeam(d2Code, year)
 
   async function compare() {
     if (d1Code === d2Code) { alert('Pick two different drivers'); return }
@@ -46,177 +313,182 @@ export default function HeadToHead() {
     setLoading(false)
   }
 
-  const cardStyle = { background: '#111', border: '0.5px solid #222', borderRadius: '12px', padding: '20px', marginBottom: '14px' }
+  function handleYearChange(newYear) {
+    setYear(newYear)
+    setData(null)
+    const newDrivers = getDriversForYear(newYear)
+    if (!newDrivers.find(d => d.code === d1Code)) setD1Code(newDrivers[0].code)
+    if (!newDrivers.find(d => d.code === d2Code)) setD2Code(newDrivers[1].code)
+  }
+
+  const cardStyle = { background: '#111', border: '0.5px solid #1e1e1e', borderRadius: '12px', padding: '18px', marginBottom: '12px' }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ padding: '20px 16px', maxWidth: '900px', margin: '0 auto', minHeight: 'calc(100vh - 52px)', background: '#0a0a0a' }}>
       <style>{`
         @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .matchup-row:hover { background: rgba(255,255,255,0.04) !important; border-color: rgba(225,6,0,0.2) !important; }
       `}</style>
-      <div style={{ fontSize: '20px', fontWeight: '700', marginBottom: '4px' }}>Head to Head</div>
-      <div style={{ fontSize: '13px', color: '#666', marginBottom: '24px' }}>Real F1 data — compare any two drivers across a full season</div>
 
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'center' }}>
-        <select value={year} onChange={e => { setYear(e.target.value); setData(null) }}
-          style={{ background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '7px', color: '#fff', padding: '8px 12px', fontSize: '13px' }}>
-          {['2026','2025','2024','2023','2022','2021','2020','2019','2018'].map(y => <option key={y}>{y}</option>)}
+      <div style={{ fontSize: '20px', fontWeight: '800', marginBottom: '4px', letterSpacing: '-0.5px' }}>Head to Head</div>
+      <div style={{ fontSize: '13px', color: '#555', marginBottom: '20px' }}>Real F1 data — compare any two drivers across a full season</div>
+
+      {/* Year selector */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <select value={year} onChange={e => handleYearChange(e.target.value)} style={{
+          background: '#1a1a1a', border: '0.5px solid #333',
+          borderRadius: '7px', color: '#fff', padding: '8px 12px', fontSize: '13px'
+        }}>
+          {['2026','2025','2024','2023','2022','2021','2020'].map(y => <option key={y}>{y}</option>)}
         </select>
         <div style={{ fontSize: '12px', color: '#555' }}>season</div>
       </div>
 
-      <div className="h2h-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '16px', alignItems: 'center', marginBottom: '24px' }}>
+      {/* Driver selector */}
+      <div className="h2h-selector" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '14px', alignItems: 'stretch', marginBottom: '20px' }}>
+        {/* Driver 1 */}
         <div style={cardStyle}>
           <div style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '10px' }}>Driver 1</div>
-          <select value={d1Code} onChange={e => { setD1Code(e.target.value); setData(null) }}
-            style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '7px', color: '#fff', padding: '8px', fontSize: '13px', marginBottom: '14px' }}>
-            {ALL_DRIVERS.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
+          <select value={d1Code} onChange={e => { setD1Code(e.target.value); setData(null) }} style={{
+            width: '100%', background: '#1a1a1a', border: '0.5px solid #333',
+            borderRadius: '7px', color: '#fff', padding: '8px', fontSize: '13px', marginBottom: '14px'
+          }}>
+            {drivers.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
           </select>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: d1.color + '22', border: `2px solid ${d1.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '800', color: d1.color }}>
-              {d1.initials}
-            </div>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '50%',
+              background: d1Color + '22', border: `2px solid ${d1Color}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '14px', fontWeight: '800', color: d1Color, flexShrink: 0
+            }}>{d1.initials}</div>
             <div>
               <div style={{ fontSize: '14px', fontWeight: '700' }}>{d1.name}</div>
-              <div style={{ fontSize: '12px', color: '#666' }}>{d1.team}</div>
-              <div style={{ fontSize: '11px', color: d1.color, marginTop: '2px' }}>#{d1.number}</div>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>{d1Team}</div>
+              <div style={{ fontSize: '11px', color: d1Color, marginTop: '2px' }}>#{d1.number}</div>
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#e10600', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: '800' }}>VS</div>
+        {/* VS */}
+        <div className="h2h-vs-center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+          <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: '#e10600', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', boxShadow: '0 0 16px rgba(225,6,0,0.3)' }}>VS</div>
           <button onClick={compare} disabled={loading} style={{
             background: '#e10600', color: '#fff', border: 'none',
             padding: '8px 16px', borderRadius: '8px', fontSize: '12px',
             fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap',
-            opacity: loading ? .6 : 1
+            opacity: loading ? .6 : 1, boxShadow: '0 0 12px rgba(225,6,0,0.2)'
           }}>{loading ? 'Loading...' : 'Compare'}</button>
         </div>
 
+        {/* Driver 2 */}
         <div style={cardStyle}>
           <div style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '10px' }}>Driver 2</div>
-          <select value={d2Code} onChange={e => { setD2Code(e.target.value); setData(null) }}
-            style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '7px', color: '#fff', padding: '8px', fontSize: '13px', marginBottom: '14px' }}>
-            {ALL_DRIVERS.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
+          <select value={d2Code} onChange={e => { setD2Code(e.target.value); setData(null) }} style={{
+            width: '100%', background: '#1a1a1a', border: '0.5px solid #333',
+            borderRadius: '7px', color: '#fff', padding: '8px', fontSize: '13px', marginBottom: '14px'
+          }}>
+            {drivers.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
           </select>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: d2.color + '22', border: `2px solid ${d2.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '800', color: d2.color }}>
-              {d2.initials}
-            </div>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '50%',
+              background: d2Color + '22', border: `2px solid ${d2Color}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '14px', fontWeight: '800', color: d2Color, flexShrink: 0
+            }}>{d2.initials}</div>
             <div>
               <div style={{ fontSize: '14px', fontWeight: '700' }}>{d2.name}</div>
-              <div style={{ fontSize: '12px', color: '#666' }}>{d2.team}</div>
-              <div style={{ fontSize: '11px', color: d2.color, marginTop: '2px' }}>#{d2.number}</div>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>{d2Team}</div>
+              <div style={{ fontSize: '11px', color: d2Color, marginTop: '2px' }}>#{d2.number}</div>
             </div>
           </div>
         </div>
       </div>
-      {!loading && !data && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-          <div style={{ background: '#111', border: '0.5px solid #1e1e1e', borderRadius: '12px', padding: '24px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '300px', height: '200px', background: 'radial-gradient(ellipse, rgba(225,6,0,0.05), transparent 70%)', pointerEvents: 'none' }}/>
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚔️</div>
-            <div style={{ fontSize: '15px', fontWeight: '700', marginBottom: '8px' }}>Pick your drivers</div>
-            <div style={{ fontSize: '13px', color: '#555', lineHeight: '1.7', maxWidth: '340px', margin: '0 auto' }}>
-              Select any two drivers from the dropdowns above and hit <span style={{ color: '#e10600', fontWeight: '600' }}>Compare</span> to see the full season battle
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            {[
-              { title: 'Championship points', desc: 'Who scored more across the season', icon: '🏆' },
-              { title: 'Race wins', desc: 'Head to head win count', icon: '🥇' },
-              { title: 'Qualifying battle', desc: 'Who out-qualified who', icon: '⚡' },
-              { title: 'Race by race', desc: 'Visual breakdown every GP', icon: '📊' },
-              { title: 'Podiums & poles', desc: 'Full season stats', icon: '🏅' },
-              { title: 'DNF comparison', desc: 'Reliability battle', icon: '🔧' },
-            ].map((f, i) => (
-              <div key={i} style={{
-                background: '#0f0f0f', border: '0.5px solid #1a1a1a',
-                borderRadius: '10px', padding: '14px',
-                animation: `fadeUp .3s ease ${i * 0.05}s both`
-              }}>
-                <div style={{ fontSize: '18px', marginBottom: '6px' }}>{f.icon}</div>
-                <div style={{ fontSize: '12px', fontWeight: '600', color: '#aaa', marginBottom: '3px' }}>{f.title}</div>
-                <div style={{ fontSize: '11px', color: '#444', lineHeight: '1.5' }}>{f.desc}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ background: '#0f0f0f', border: '0.5px solid #1a1a1a', borderRadius: '12px', padding: '16px' }}>
-            <div style={{ fontSize: '11px', color: '#333', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: '12px' }}>Classic matchups to try</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {[
-                { d1: 'VER', d2: 'NOR', year: '2024', label: 'Verstappen vs Norris — 2024' },
-                { d1: 'LEC', d2: 'SAI', year: '2024', label: 'Leclerc vs Sainz — Teammates 2024' },
-                { d1: 'HAM', d2: 'RUS', year: '2023', label: 'Hamilton vs Russell — Mercedes 2023' },
-                { d1: 'VER', d2: 'LEC', year: '2022', label: 'Verstappen vs Leclerc — 2022' },
-              ].map((m, i) => (
-                <div key={i} onClick={() => {
-                  setD1Code(m.d1)
-                  setD2Code(m.d2)
-                  setYear(m.year)
-                }} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '9px 12px', background: '#111', border: '0.5px solid #1e1e1e',
-                  borderRadius: '8px', cursor: 'pointer', transition: 'all .2s'
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(225,6,0,0.3)'; e.currentTarget.style.background = 'rgba(225,6,0,0.04)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#1e1e1e'; e.currentTarget.style.background = '#111' }}
-                >
-                  <div style={{ fontSize: '12px', color: '#aaa', fontWeight: '500' }}>{m.label}</div>
-                  <div style={{ fontSize: '11px', color: '#e10600', background: 'rgba(225,6,0,0.08)', padding: '3px 8px', borderRadius: '6px' }}>Try this →</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Loading */}
       {loading && (
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
           <div style={{ width: '32px', height: '32px', border: '2.5px solid #333', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite', margin: '0 auto 12px' }}></div>
           <div style={{ fontSize: '13px' }}>Loading F1 data...</div>
-          <div style={{ fontSize: '11px', color: '#555', marginTop: '6px' }}>Usually takes 10-30 seconds</div>
-          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+          <div style={{ fontSize: '11px', color: '#444', marginTop: '6px' }}>Usually takes 5-10 seconds</div>
         </div>
       )}
 
+      {/* Empty state */}
+      {!loading && !data && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ ...cardStyle, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '300px', height: '200px', background: 'radial-gradient(ellipse, rgba(225,6,0,0.05), transparent 70%)', pointerEvents: 'none' }}/>
+            <div style={{ fontSize: '28px', marginBottom: '10px' }}>⚔️</div>
+            <div style={{ fontSize: '15px', fontWeight: '700', marginBottom: '8px' }}>Pick your drivers</div>
+            <div style={{ fontSize: '13px', color: '#555', lineHeight: '1.7', maxWidth: '340px', margin: '0 auto' }}>
+              Select any two drivers and hit <span style={{ color: '#e10600', fontWeight: '600' }}>Compare</span> to see the full season battle with real data
+            </div>
+          </div>
+
+          <div style={{ fontSize: '11px', color: '#333', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: '4px' }}>Classic matchups to try</div>
+          {[
+            { d1: 'VER', d2: 'NOR', year: '2024', label: 'Verstappen vs Norris — 2024 Title Fight' },
+            { d1: 'LEC', d2: 'SAI', year: '2024', label: 'Leclerc vs Sainz — Ferrari Teammates 2024' },
+            { d1: 'HAM', d2: 'RUS', year: '2023', label: 'Hamilton vs Russell — Mercedes 2023' },
+            { d1: 'VER', d2: 'LEC', year: '2022', label: 'Verstappen vs Leclerc — Epic 2022 Battle' },
+            { d1: 'HAM', d2: 'LEC', year: '2025', label: 'Hamilton vs Leclerc — Ferrari Teammates 2025' },
+          ].map((m, i) => (
+            <div key={i} className="matchup-row" onClick={() => { handleYearChange(m.year); setD1Code(m.d1); setD2Code(m.d2); setData(null) }} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '11px 14px', background: '#111', border: '0.5px solid #1e1e1e',
+              borderRadius: '9px', cursor: 'pointer', transition: 'all .2s',
+              animation: `fadeUp .3s ease ${i * 0.05}s both`
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: getDriverColor(m.d1, m.year) }}></div>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: getDriverColor(m.d2, m.year) }}></div>
+                </div>
+                <div style={{ fontSize: '13px', color: '#aaa', fontWeight: '500' }}>{m.label}</div>
+              </div>
+              <div style={{ fontSize: '11px', color: '#e10600', background: 'rgba(225,6,0,0.08)', padding: '3px 8px', borderRadius: '6px' }}>Try →</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Results */}
       {data && !data.error && (
         <>
+          {/* Stats battle */}
           <div style={cardStyle}>
             <div style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '16px' }}>Season battle — {year}</div>
             {[
-              { label: 'Championship points', v1: data.stats[d1Code].points, v2: data.stats[d2Code].points, higher: true, fmt: v => Math.round(v) },
-              { label: 'Race wins', v1: data.stats[d1Code].wins, v2: data.stats[d2Code].wins, higher: true },
-              { label: 'Podiums', v1: data.stats[d1Code].podiums, v2: data.stats[d2Code].podiums, higher: true },
-              { label: 'Pole positions', v1: data.stats[d1Code].poles, v2: data.stats[d2Code].poles, higher: true },
-              { label: 'Avg finish position', v1: data.stats[d1Code].avgFinish, v2: data.stats[d2Code].avgFinish, higher: false, fmt: v => `P${v}` },
-              { label: 'DNFs', v1: data.stats[d1Code].dnfs, v2: data.stats[d2Code].dnfs, higher: false },
-              { label: 'Head to head wins', v1: data.h2h_wins[d1Code], v2: data.h2h_wins[d2Code], higher: true },
+              { label: 'Championship points', v1: data.stats[d1Code]?.points || 0, v2: data.stats[d2Code]?.points || 0, higher: true, fmt: v => Math.round(v) },
+              { label: 'Race wins', v1: data.stats[d1Code]?.wins || 0, v2: data.stats[d2Code]?.wins || 0, higher: true },
+              { label: 'Podiums', v1: data.stats[d1Code]?.podiums || 0, v2: data.stats[d2Code]?.podiums || 0, higher: true },
+              { label: 'Pole positions', v1: data.stats[d1Code]?.poles || 0, v2: data.stats[d2Code]?.poles || 0, higher: true },
+              { label: 'Avg finish', v1: data.stats[d1Code]?.avgFinish || 0, v2: data.stats[d2Code]?.avgFinish || 0, higher: false, fmt: v => `P${v}` },
+              { label: 'DNFs', v1: data.stats[d1Code]?.dnfs || 0, v2: data.stats[d2Code]?.dnfs || 0, higher: false },
+              { label: 'Head to head wins', v1: data.h2h_wins?.[d1Code] || 0, v2: data.h2h_wins?.[d2Code] || 0, higher: true },
             ].map((stat, i) => {
               const w = stat.higher
                 ? (stat.v1 > stat.v2 ? 'left' : stat.v1 < stat.v2 ? 'right' : 'tie')
                 : (stat.v1 < stat.v2 ? 'left' : stat.v1 > stat.v2 ? 'right' : 'tie')
               const total = stat.v1 + stat.v2 || 1
-              const pct1 = stat.higher
-                ? (stat.v1 / total * 100).toFixed(0)
-                : ((1 - stat.v1 / total) * 100).toFixed(0)
+              const pct1 = stat.higher ? (stat.v1 / total * 100).toFixed(0) : ((1 - stat.v1 / total) * 100).toFixed(0)
               const fmt = stat.fmt || (v => v)
               return (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '12px', alignItems: 'center', marginBottom: '14px' }}>
+                <div key={i} className="h2h-stat-row" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '10px', alignItems: 'center', marginBottom: '14px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '700', color: w === 'left' ? d1.color : '#555' }}>{fmt(stat.v1)}</div>
-                    <div style={{ width: '100%', height: '5px', background: '#1a1a1a', borderRadius: '3px', overflow: 'hidden', direction: 'rtl' }}>
-                      <div style={{ width: `${pct1}%`, height: '100%', background: d1.color, borderRadius: '3px', transition: 'width .6s ease' }}></div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: w === 'left' ? d1Color : '#555' }}>{fmt(stat.v1)}</div>
+                    <div style={{ width: '100%', height: '4px', background: '#1a1a1a', borderRadius: '2px', overflow: 'hidden', direction: 'rtl' }}>
+                      <div style={{ width: `${pct1}%`, height: '100%', background: d1Color, borderRadius: '2px', transition: 'width .6s ease' }}></div>
                     </div>
                   </div>
-                  <div style={{ fontSize: '11px', color: '#555', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '140px' }}>{stat.label}</div>
+                  <div className="h2h-stat-label" style={{ fontSize: '10px', color: '#444', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '100px' }}>{stat.label}</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '700', color: w === 'right' ? d2.color : '#555' }}>{fmt(stat.v2)}</div>
-                    <div style={{ width: '100%', height: '5px', background: '#1a1a1a', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: `${100 - pct1}%`, height: '100%', background: d2.color, borderRadius: '3px', transition: 'width .6s ease' }}></div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: w === 'right' ? d2Color : '#555' }}>{fmt(stat.v2)}</div>
+                    <div style={{ width: '100%', height: '4px', background: '#1a1a1a', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ width: `${100 - pct1}%`, height: '100%', background: d2Color, borderRadius: '2px', transition: 'width .6s ease' }}></div>
                     </div>
                   </div>
                 </div>
@@ -224,84 +496,74 @@ export default function HeadToHead() {
             })}
           </div>
 
-          <div style={cardStyle}>
-            <div style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '14px' }}>Race by race — {year}</div>
-            <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', height: '80px' }}>
-              {data.race_names.map((race, i) => {
-                const r1 = data.results[d1Code][i] || 20
-                const r2 = data.results[d2Code][i] || 20
-                const d1won = r1 < r2
-                return (
-                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1px', position: 'relative', cursor: 'pointer' }}
-                    onMouseEnter={e => {
-                      const tip = e.currentTarget.querySelector('.tip')
-                      if (tip) tip.style.display = 'block'
-                    }}
-                    onMouseLeave={e => {
-                      const tip = e.currentTarget.querySelector('.tip')
-                      if (tip) tip.style.display = 'none'
-                    }}>
-                    <div className="tip" style={{
-                      display: 'none', position: 'absolute', bottom: '100%',
-                      left: '50%', transform: 'translateX(-50%)',
-                      background: '#1a1a1a', border: '0.5px solid #333',
-                      borderRadius: '6px', padding: '6px 10px',
-                      fontSize: '10px', whiteSpace: 'nowrap', zIndex: 10,
-                      marginBottom: '4px', pointerEvents: 'none'
-                    }}>
-                      <div style={{ color: '#888', marginBottom: '3px' }}>{race}</div>
-                      <div style={{ color: d1.color }}>{d1Code}: P{r1}</div>
-                      <div style={{ color: d2.color }}>{d2Code}: P{r2}</div>
+          {/* Race by race */}
+          {data.race_names && (
+            <div style={cardStyle}>
+              <div style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '14px' }}>Race by race — {year}</div>
+              <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', height: '80px', overflowX: 'auto' }}>
+                {data.race_names.map((race, i) => {
+                  const r1 = data.results?.[d1Code]?.[i] || 20
+                  const r2 = data.results?.[d2Code]?.[i] || 20
+                  const d1won = r1 < r2
+                  return (
+                    <div key={i} style={{ flex: '0 0 auto', width: '28px', display: 'flex', flexDirection: 'column', gap: '1px', position: 'relative', cursor: 'default' }}
+                      title={`${race}: ${d1Code} P${r1} vs ${d2Code} P${r2}`}>
+                      <div style={{ width: '100%', height: `${(1 - r1/20) * 34 + 4}px`, background: d1Color, borderRadius: '2px 2px 0 0', opacity: d1won ? 1 : 0.3 }}></div>
+                      <div style={{ width: '100%', height: `${(1 - r2/20) * 34 + 4}px`, background: d2Color, borderRadius: '0 0 2px 2px', opacity: !d1won ? 1 : 0.3 }}></div>
                     </div>
-                    <div style={{ width: '100%', height: `${(1 - r1/20) * 34 + 4}px`, background: d1.color, borderRadius: '1px', opacity: d1won ? 1 : 0.3 }}></div>
-                    <div style={{ width: '100%', height: `${(1 - r2/20) * 34 + 4}px`, background: d2.color, borderRadius: '1px', opacity: !d1won ? 1 : 0.3 }}></div>
-                  </div>
-                )
-              })}
-            </div>
-            <div style={{ display: 'flex', gap: '14px', marginTop: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#666' }}>
-                <div style={{ width: '12px', height: '4px', borderRadius: '2px', background: d1.color }}></div>
-                {d1.name.split(' ')[1]} ({data.h2h_wins[d1Code]} wins)
+                  )
+                })}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#666' }}>
-                <div style={{ width: '12px', height: '4px', borderRadius: '2px', background: d2.color }}></div>
-                {d2.name.split(' ')[1]} ({data.h2h_wins[d2Code]} wins)
+              <div style={{ display: 'flex', gap: '14px', marginTop: '10px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#666' }}>
+                  <div style={{ width: '12px', height: '4px', borderRadius: '2px', background: d1Color }}></div>
+                  {d1.name.split(' ')[1]} ({data.h2h_wins?.[d1Code] || 0} wins)
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#666' }}>
+                  <div style={{ width: '12px', height: '4px', borderRadius: '2px', background: d2Color }}></div>
+                  {d2.name.split(' ')[1]} ({data.h2h_wins?.[d2Code] || 0} wins)
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          <div style={{
-            background: '#0a0a0a',
-            border: `0.5px solid ${data.h2h_wins[d1Code] >= data.h2h_wins[d2Code] ? d1.color : d2.color}`,
-            borderRadius: '12px', padding: '24px', textAlign: 'center'
-          }}>
-            {(() => {
-              const winnerCode = data.h2h_wins[d1Code] >= data.h2h_wins[d2Code] ? d1Code : d2Code
-              const winner = ALL_DRIVERS.find(d => d.code === winnerCode)
-              const loserCode = winnerCode === d1Code ? d2Code : d1Code
-              const loser = ALL_DRIVERS.find(d => d.code === loserCode)
-              return (
-                <>
-                  <div style={{ fontSize: '10px', color: winner.color, textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: '8px' }}>{year} head to head winner</div>
-                  <div style={{ fontSize: '26px', fontWeight: '800', color: winner.color, marginBottom: '4px' }}>{winner.name}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', margin: '14px 0' }}>
-                    <div style={{ fontSize: '36px', fontWeight: '800', color: d1.color }}>{data.h2h_wins[d1Code]}</div>
-                    <div style={{ fontSize: '20px', color: '#333' }}>—</div>
-                    <div style={{ fontSize: '36px', fontWeight: '800', color: d2.color }}>{data.h2h_wins[d2Code]}</div>
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.6' }}>
-                    {winner.name} won <strong style={{ color: winner.color }}>{Math.max(data.h2h_wins[d1Code], data.h2h_wins[d2Code])} of {data.race_names.length} head to head battles</strong> and outscored {loser.name} by <strong style={{ color: winner.color }}>{Math.abs(data.stats[d1Code].points - data.stats[d2Code].points).toFixed(0)} championship points</strong> in {year}
-                  </div>
-                </>
-              )
-            })()}
-          </div>
+          {/* Verdict */}
+          {data.h2h_wins && (
+            <div style={{
+              background: '#0a0a0a',
+              border: `0.5px solid ${(data.h2h_wins[d1Code] || 0) >= (data.h2h_wins[d2Code] || 0) ? d1Color : d2Color}`,
+              borderRadius: '12px', padding: '24px', textAlign: 'center'
+            }}>
+              {(() => {
+                const w1 = data.h2h_wins[d1Code] || 0
+                const w2 = data.h2h_wins[d2Code] || 0
+                const winnerCode = w1 >= w2 ? d1Code : d2Code
+                const winner = winnerCode === d1Code ? d1 : d2
+                const winnerColor = winnerCode === d1Code ? d1Color : d2Color
+                const loser = winnerCode === d1Code ? d2 : d1
+                const ptsDiff = Math.abs((data.stats[d1Code]?.points || 0) - (data.stats[d2Code]?.points || 0))
+                return (
+                  <>
+                    <div style={{ fontSize: '10px', color: winnerColor, textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: '8px' }}>{year} head to head winner</div>
+                    <div style={{ fontSize: '24px', fontWeight: '800', color: winnerColor, marginBottom: '4px' }}>{winner.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', margin: '14px 0' }}>
+                      <div style={{ fontSize: '34px', fontWeight: '800', color: d1Color }}>{w1}</div>
+                      <div style={{ fontSize: '20px', color: '#333' }}>—</div>
+                      <div style={{ fontSize: '34px', fontWeight: '800', color: d2Color }}>{w2}</div>
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#555', lineHeight: '1.6' }}>
+                      {winner.name} won <strong style={{ color: winnerColor }}>{Math.max(w1, w2)} of {data.race_names?.length || 0} head to head battles</strong> and outscored {loser.name} by <strong style={{ color: winnerColor }}>{ptsDiff.toFixed(0)} championship points</strong> in {year}
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+          )}
         </>
       )}
 
       {data && data.error && (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#666', fontSize: '13px' }}>
+        <div style={{ textAlign: 'center', padding: '40px', color: '#555', fontSize: '13px' }}>
           Failed to load data — try again
         </div>
       )}

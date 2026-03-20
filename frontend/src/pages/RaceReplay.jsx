@@ -501,7 +501,7 @@ export default function RaceReplay() {
                   const driverIndex = raceData.drivers.indexOf(d)
                   return (
                     <div key={d} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                      <div style={{ width: '32px', fontSize: '11px', fontWeight: '600', color: getDriverColor(d, driverIndex) }}>{d}</div>
+                      <div style={{ width: '32px', fontSize: '11px', fontWeight: '600', color: getDriverColor(d, driverIndex, year) }}>{d}</div>
                       <div style={{ display: 'flex', gap: '2px', flex: 1, height: '24px' }}>
                         {stints.map((s, i) => {
                           const pct = ((s.end - s.start + 1) / raceData.total_laps * 100).toFixed(0)
