@@ -97,6 +97,34 @@ RACES_BY_YEAR['2020'] = RACES_BY_YEAR['2023']
 RACES_BY_YEAR['2019'] = RACES_BY_YEAR['2023']
 RACES_BY_YEAR['2018'] = RACES_BY_YEAR['2023']
 
+function LoadingTimer() {
+  const [seconds, setSeconds] = useState(0)
+  const msgs = [
+    'Connecting to F1 data servers...',
+    'Downloading lap telemetry...',
+    'Processing position data...',
+    'Building lap time charts...',
+    'Almost there...',
+    'This is a cached race — should be fast...',
+    'Still loading — first load takes up to 30 seconds...',
+    'Worth the wait — real F1 data incoming...',
+  ]
+  useEffect(() => {
+    const t = setInterval(() => setSeconds(s => s + 1), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const msgIndex = Math.min(Math.floor(seconds / 4), msgs.length - 1)
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: '11px', color: '#444', marginBottom: '8px', transition: 'all .3s' }}>{msgs[msgIndex]}</div>
+      <div style={{ fontSize: '11px', color: '#333' }}>{seconds}s</div>
+      <div style={{ width: '200px', height: '2px', background: '#1a1a1a', borderRadius: '1px', margin: '8px auto 0', overflow: 'hidden' }}>
+        <div style={{ height: '100%', background: '#e10600', borderRadius: '1px', width: `${Math.min(seconds / 30 * 100, 95)}%`, transition: 'width 1s linear' }}></div>
+      </div>
+    </div>
+  )
+}
+
 export default function RaceReplay() {
   const [year, setYear] = useState('2026')
   const [gp, setGp] = useState('Australian Grand Prix')
@@ -420,13 +448,9 @@ export default function RaceReplay() {
             </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '14px', color: '#fff', fontWeight: '600', marginBottom: '6px' }}>Loading race data</div>
-              <div style={{ fontSize: '12px', color: '#444' }}>First load ~30 seconds · subsequent loads are instant</div>
+              <div style={{ fontSize: '12px', color: '#444' }}>Hang tight — fetching real F1 telemetry</div>
             </div>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              {['Fetching telemetry', 'Processing laps', 'Building charts'].map((step, i) => (
-                <div key={i} style={{ fontSize: '10px', color: '#333', background: '#111', border: '0.5px solid #1e1e1e', padding: '4px 10px', borderRadius: '10px', animation: `pulse 1.5s infinite ${i * 0.3}s` }}>{step}</div>
-              ))}
-            </div>
+            <LoadingTimer />
           </div>
         )}
 
