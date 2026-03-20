@@ -41,6 +41,23 @@ select, input, button { font-family: inherit; }
   from { opacity: 0; transform: translateX(-10px); }
   to { opacity: 1; transform: translateX(0); }
 }
+@media (max-width: 768px) {
+  .race-layout { flex-direction: column !important; }
+  .race-sidebar { width: 100% !important; border-right: none !important; border-bottom: 0.5px solid #1a1a1a !important; }
+}
+
+@media (max-width: 768px) {
+  .h2h-grid { grid-template-columns: 1fr !important; }
+  .h2h-grid > div:nth-child(2) { order: 3; }
+}
+@media (max-width: 768px) {
+  .standing-row-grid { grid-template-columns: 28px 36px 1fr auto !important; }
+}
+@media (max-width: 768px) {
+  .features-grid { grid-template-columns: 1fr !important; }
+  .stats-row { grid-template-columns: repeat(2, 1fr) !important; }
+  .nav-desktop { display: none !important; }
+}
 
 /* Button base */
 button {

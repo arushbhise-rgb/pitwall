@@ -9,7 +9,7 @@ export default function Support() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCount(prev => {
-        if (prev < 47) return prev + 1
+        if (prev < 3) return prev + 1
         clearInterval(timer)
         return prev
       })

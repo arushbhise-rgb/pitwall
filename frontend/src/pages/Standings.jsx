@@ -137,7 +137,7 @@ export default function Standings() {
               const color = getDriverColor(d.code)
               const pct = (d.points / maxPoints * 100).toFixed(1)
               return (
-                <div key={i} className="standing-row" style={{
+                <div key={i} className="standing-row standing-row-grid" style={{
                   background: i === 0 ? 'rgba(225,6,0,0.05)' : '#111',
                   border: `0.5px solid ${i === 0 ? 'rgba(225,6,0,0.2)' : '#1e1e1e'}`,
                   borderRadius: '10px', padding: '14px 16px',

@@ -163,7 +163,7 @@ export default function RaceReplay() {
   const cardStyle = { background: '#111', border: '0.5px solid #1e1e1e', borderRadius: '12px', padding: '16px' }
 
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 52px)', background: '#0a0a0a' }}>
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - 52px)', background: '#0a0a0a', flexDirection: 'column' }} className="race-layout">
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
@@ -177,7 +177,7 @@ export default function RaceReplay() {
       `}</style>
 
       {/* SIDEBAR */}
-      <div style={{
+      <div className="race-sidebar" style={{
         width: '230px', background: '#0f0f0f',
         borderRight: '0.5px solid #1a1a1a',
         padding: '16px', display: 'flex',

@@ -64,7 +64,7 @@ export default function HeadToHead() {
         <div style={{ fontSize: '12px', color: '#555' }}>season</div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '16px', alignItems: 'center', marginBottom: '24px' }}>
+      <div className="h2h-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '16px', alignItems: 'center', marginBottom: '24px' }}>
         <div style={cardStyle}>
           <div style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '10px' }}>Driver 1</div>
           <select value={d1Code} onChange={e => { setD1Code(e.target.value); setData(null) }}

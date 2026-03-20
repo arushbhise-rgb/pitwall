@@ -618,7 +618,7 @@ export default function Landing() {
           }}>Every tool you need</div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
+        <div className="features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
           {features.map((f, i) => (
             <FeatureCard key={i} {...f} delay={i * 80} visible={featVisible} />
           ))}
