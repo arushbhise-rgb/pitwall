@@ -58,6 +58,20 @@ select, input, button { font-family: inherit; }
   .stats-row { grid-template-columns: repeat(2, 1fr) !important; }
   .nav-desktop { display: none !important; }
 }
+@media (max-width: 768px) {
+  .race-layout { flex-direction: column !important; }
+  .race-sidebar { 
+    width: 100% !important; 
+    border-right: none !important; 
+    border-bottom: 0.5px solid #1a1a1a !important;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .tab-btn { 
+    padding: 8px 12px !important; 
+    font-size: '11px' !important;
+  }
+}
 
 /* Button base */
 button {

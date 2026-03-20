@@ -9,26 +9,75 @@ Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, L
 
 const API = 'https://pitwall-production-c292.up.railway.app'
 
-const DRIVER_COLORS = {
-  VER: '#3671c6', PER: '#3671c6',
-  LEC: '#e8002d', SAI: '#e8002d', BEA: '#e8002d',
-  NOR: '#ff8000', PIA: '#ff8000',
-  HAM: '#00d2be', RUS: '#00d2be',
-  ALO: '#52e252', STR: '#52e252',
-  GAS: '#0093cc', OCO: '#0093cc',
-  TSU: '#6692ff', RIC: '#6692ff',
-  ALB: '#005aff', SAR: '#005aff',
-  MAG: '#b6babd', HUL: '#b6babd',
-  ZHO: '#c92d4b', BOT: '#c92d4b',
-  ANT: '#00d2be', HAD: '#6692ff',
-  LAW: '#6692ff', COL: '#005aff',
-  BOR: '#0093cc', LIN: '#0093cc',
+const DRIVER_COLORS_BY_SEASON = {
+  '2026': {
+    NOR: '#ff8000', PIA: '#ff8000',
+    LEC: '#e8002d', HAM: '#e8002d',
+    RUS: '#00d2be', ANT: '#00d2be',
+    VER: '#3671c6', HAD: '#3671c6',
+    ALO: '#52e252', STR: '#52e252',
+    GAS: '#0093cc', COL: '#0093cc',
+    TSU: '#6692ff', LAW: '#6692ff',
+    ALB: '#005aff', SAI: '#005aff',
+    MAG: '#b6babd', OCO: '#b6babd',
+    HUL: '#c92d4b', BOR: '#c92d4b',
+    DOO: '#ff8000', BEA: '#e8002d',
+  },
+  '2025': {
+    NOR: '#ff8000', PIA: '#ff8000',
+    LEC: '#e8002d', HAM: '#e8002d',
+    RUS: '#00d2be', ANT: '#00d2be',
+    VER: '#3671c6', LAW: '#3671c6',
+    ALO: '#52e252', STR: '#52e252',
+    GAS: '#0093cc', DOO: '#0093cc',
+    TSU: '#6692ff', HAD: '#6692ff',
+    ALB: '#005aff', SAI: '#005aff',
+    MAG: '#b6babd', OCO: '#b6babd',
+    HUL: '#c92d4b', BOR: '#c92d4b',
+  },
+  '2024': {
+    VER: '#3671c6', PER: '#3671c6',
+    LEC: '#e8002d', SAI: '#e8002d',
+    NOR: '#ff8000', PIA: '#ff8000',
+    HAM: '#00d2be', RUS: '#00d2be',
+    ALO: '#52e252', STR: '#52e252',
+    GAS: '#0093cc', OCO: '#0093cc',
+    TSU: '#6692ff', RIC: '#6692ff',
+    ALB: '#005aff', SAR: '#005aff',
+    MAG: '#b6babd', HUL: '#b6babd',
+    ZHO: '#c92d4b', BOT: '#c92d4b',
+  },
+  '2023': {
+    VER: '#3671c6', PER: '#3671c6',
+    LEC: '#e8002d', SAI: '#e8002d',
+    NOR: '#ff8000', PIA: '#ff8000',
+    HAM: '#00d2be', RUS: '#00d2be',
+    ALO: '#52e252', STR: '#52e252',
+    GAS: '#0093cc', OCO: '#0093cc',
+    TSU: '#6692ff', DEV: '#6692ff',
+    ALB: '#005aff', SAR: '#005aff',
+    MAG: '#b6babd', HUL: '#b6babd',
+    ZHO: '#c92d4b', BOT: '#c92d4b',
+  },
+  '2022': {
+    VER: '#3671c6', PER: '#3671c6',
+    LEC: '#e8002d', SAI: '#e8002d',
+    NOR: '#ff8000', RIC: '#ff8000',
+    HAM: '#00d2be', RUS: '#00d2be',
+    ALO: '#0093cc', OCO: '#0093cc',
+    VET: '#52e252', STR: '#52e252',
+    GAS: '#6692ff', TSU: '#6692ff',
+    ALB: '#005aff', LAT: '#005aff',
+    MAG: '#b6babd', MSC: '#b6babd',
+    ZHO: '#c92d4b', BOT: '#c92d4b',
+  },
 }
 
-const FALLBACK = ['#3671c6','#e8002d','#ff8000','#00d2be','#52e252','#c92d4b','#9b59b6','#f39c12']
+const FALLBACK_COLORS = ['#3671c6','#e8002d','#ff8000','#00d2be','#52e252','#c92d4b','#9b59b6','#f39c12']
 
-function getDriverColor(code, index) {
-  return DRIVER_COLORS[code] || FALLBACK[index % FALLBACK.length]
+function getDriverColor(code, index, seasonYear) {
+  const seasonColors = DRIVER_COLORS_BY_SEASON[String(seasonYear)] || DRIVER_COLORS_BY_SEASON['2024']
+  return seasonColors[code] || FALLBACK_COLORS[index % FALLBACK_COLORS.length]
 }
 
 const TIRE_COLORS = {
@@ -268,7 +317,7 @@ export default function RaceReplay() {
                   opacity: selectedDrivers.includes(d) ? 1 : 0.35,
                   transition: 'all .12s'
                 }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: getDriverColor(d, i), flexShrink: 0, boxShadow: selectedDrivers.includes(d) ? `0 0 6px ${getDriverColor(d, i)}66` : 'none' }}></div>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: getDriverColor(d, i, year), flexShrink: 0, boxShadow: selectedDrivers.includes(d) ? `0 0 6px ${getDriverColor(d, i, year)}66` : 'none' }}></div>
                   <div style={{ fontSize: '12px', fontWeight: '500', color: '#fff', flex: 1 }}>{d}</div>
                 </div>
               ))}
@@ -385,15 +434,15 @@ export default function RaceReplay() {
                 </div>
                 <div style={{ fontSize: '12px', color: '#555', marginTop: '3px' }}>{raceData.total_laps} laps · {raceData.drivers.length} drivers</div>
               </div>
-              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '8px' }}>
                 {['positions','laptimes','tires','gap','sectors'].map(tab => (
                   <button key={tab} className="tab-btn" onClick={() => setActiveTab(tab)} style={{
                     background: activeTab === tab ? '#e10600' : '#1a1a1a',
                     color: activeTab === tab ? '#fff' : '#666',
                     border: `0.5px solid ${activeTab === tab ? '#e10600' : '#2a2a2a'}`,
-                    padding: '5px 12px', borderRadius: '6px',
-                    fontSize: '11px', cursor: 'pointer', textTransform: 'capitalize',
-                    transition: 'all .15s'
+                    padding: '7px 14px', borderRadius: '6px',
+                    fontSize: '12px', cursor: 'pointer', textTransform: 'capitalize',
+                    transition: 'all .15s', minHeight: '36px'
                   }}>{tab}</button>
                 ))}
               </div>
@@ -429,7 +478,7 @@ export default function RaceReplay() {
             {activeTab === 'positions' && (
               <div style={cardStyle}>
                 <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px', color: '#aaa' }}>Position changes — every lap</div>
-                <Line data={{ labels: laps, datasets: raceData.drivers.map((d, i) => ({ label: d, data: raceData.position_data[d], borderColor: getDriverColor(d, i), backgroundColor: 'transparent', borderWidth: selectedDrivers.includes(d) ? 2.5 : 0.5, pointRadius: 0, pointHoverRadius: 4, tension: .3, hidden: !selectedDrivers.includes(d) })) }}
+                <Line data={{ labels: laps, datasets: raceData.drivers.map((d, i) => ({ label: d, data: raceData.position_data[d], borderColor: getDriverColor(d, i, year), backgroundColor: 'transparent', borderWidth: selectedDrivers.includes(d) ? 2.5 : 0.5, pointRadius: 0, pointHoverRadius: 4, tension: .3, hidden: !selectedDrivers.includes(d) })) }}
                   options={{ responsive: true, plugins: { legend: { labels: { color: '#666', font: { size: 11 }, boxWidth: 12, filter: item => selectedDrivers.includes(item.text) } }, tooltip: { mode: 'index', intersect: false, callbacks: { title: items => `Lap ${items[0].label}`, label: c => `${c.dataset.label}: P${c.raw}` }, itemSort: (a, b) => a.raw - b.raw } }, scales: { x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', maxTicksLimit: 12, font: { size: 10 } }, title: { display: true, text: 'Lap', color: '#444', font: { size: 10 } } }, y: { reverse: true, min: 1, max: 20, grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', stepSize: 2, font: { size: 10 } }, title: { display: true, text: 'Position', color: '#444', font: { size: 10 } } } } }}
                 />
               </div>
@@ -438,7 +487,7 @@ export default function RaceReplay() {
             {activeTab === 'laptimes' && (
               <div style={cardStyle}>
                 <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px', color: '#aaa' }}>Lap times comparison</div>
-                <Line data={{ labels: laps, datasets: raceData.drivers.map((d, i) => ({ label: d, data: raceData.lap_time_data[d], borderColor: getDriverColor(d, i), backgroundColor: 'transparent', borderWidth: selectedDrivers.includes(d) ? 1.8 : 0.5, pointRadius: 0, pointHoverRadius: 4, tension: .25, spanGaps: false, hidden: !selectedDrivers.includes(d) })) }}
+                <Line data={{ labels: laps, datasets: raceData.drivers.map((d, i) => ({ label: d, data: raceData.lap_time_data[d], borderColor: getDriverColor(d, i, year), backgroundColor: 'transparent', borderWidth: selectedDrivers.includes(d) ? 1.8 : 0.5, pointRadius: 0, pointHoverRadius: 4, tension: .25, spanGaps: false, hidden: !selectedDrivers.includes(d) })) }}
                   options={{ responsive: true, plugins: { legend: { labels: { color: '#666', font: { size: 11 }, boxWidth: 12, filter: item => selectedDrivers.includes(item.text) } }, tooltip: { mode: 'index', intersect: false, callbacks: { label: c => c.raw ? `${c.dataset.label}: ${c.raw.toFixed(3)}s` : null, filter: i => i.raw !== null } } }, scales: { x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', maxTicksLimit: 12, font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', font: { size: 10 }, callback: v => `${v.toFixed(1)}s` }, title: { display: true, text: 'Lap time (s)', color: '#444', font: { size: 10 } } } } }}
                 />
               </div>
@@ -538,7 +587,7 @@ function GapChart({ raceData, selectedDrivers, getDriverColor, API }) {
   if (!gapData) return <div style={{ color: '#444', fontSize: '13px', padding: '20px 0' }}>Loading gap data...</div>
   const laps = Array.from({length: gapData.total_laps}, (_, i) => i + 1)
   return (
-    <Line data={{ labels: laps, datasets: gapData.drivers.map((d, i) => ({ label: d, data: gapData.gap_data[d], borderColor: getDriverColor(d, i), backgroundColor: 'transparent', borderWidth: selectedDrivers.includes(d) ? 2 : 0.5, pointRadius: 0, pointHoverRadius: 4, tension: .3, spanGaps: false, hidden: !selectedDrivers.includes(d) })) }}
+    <Line data={{ labels: laps, datasets: gapData.drivers.map((d, i) => ({ label: d, data: gapData.gap_data[d], borderColor: getDriverColor(d, i, year), backgroundColor: 'transparent', borderWidth: selectedDrivers.includes(d) ? 2 : 0.5, pointRadius: 0, pointHoverRadius: 4, tension: .3, spanGaps: false, hidden: !selectedDrivers.includes(d) })) }}
       options={{ responsive: true, plugins: { legend: { labels: { color: '#666', font: { size: 11 }, boxWidth: 12, filter: item => selectedDrivers.includes(item.text) } }, tooltip: { mode: 'index', intersect: false, itemSort: (a, b) => a.raw - b.raw, callbacks: { title: items => `Lap ${items[0].label}`, label: c => c.raw !== null ? `${c.dataset.label}: +${c.raw.toFixed(3)}s` : null, filter: i => i.raw !== null } } }, scales: { x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', maxTicksLimit: 12, font: { size: 10 } }, title: { display: true, text: 'Lap', color: '#444', font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', font: { size: 10 }, callback: v => `+${v.toFixed(1)}s` }, title: { display: true, text: 'Gap to leader', color: '#444', font: { size: 10 } } } } }}
     />
   )
@@ -561,7 +610,7 @@ function SectorChart({ raceData, selectedDrivers, getDriverColor, API }) {
           <button key={s} onClick={() => setActiveSector(s)} style={{ background: activeSector === s ? '#e10600' : '#1a1a1a', color: activeSector === s ? '#fff' : '#555', border: `0.5px solid ${activeSector === s ? '#e10600' : '#2a2a2a'}`, padding: '4px 12px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', transition: 'all .15s' }}>{sectorLabels[s]}</button>
         ))}
       </div>
-      <Line data={{ labels: laps, datasets: sectorData.drivers.map((d, i) => ({ label: d, data: sectorData.sector_data[d]?.[activeSector], borderColor: getDriverColor(d, i), backgroundColor: 'transparent', borderWidth: selectedDrivers.includes(d) ? 2 : 0.5, pointRadius: 0, pointHoverRadius: 4, tension: .25, spanGaps: false, hidden: !selectedDrivers.includes(d) })) }}
+      <Line data={{ labels: laps, datasets: sectorData.drivers.map((d, i) => ({ label: d, data: sectorData.sector_data[d]?.[activeSector], borderColor: getDriverColor(d, i, year), backgroundColor: 'transparent', borderWidth: selectedDrivers.includes(d) ? 2 : 0.5, pointRadius: 0, pointHoverRadius: 4, tension: .25, spanGaps: false, hidden: !selectedDrivers.includes(d) })) }}
         options={{ responsive: true, plugins: { legend: { labels: { color: '#666', font: { size: 11 }, boxWidth: 12, filter: item => selectedDrivers.includes(item.text) } }, tooltip: { mode: 'index', intersect: false, callbacks: { title: items => `Lap ${items[0].label}`, label: c => c.raw ? `${c.dataset.label}: ${c.raw.toFixed(3)}s` : null, filter: i => i.raw !== null } } }, scales: { x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', maxTicksLimit: 12, font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', font: { size: 10 }, callback: v => `${v.toFixed(2)}s` }, title: { display: true, text: 'Sector time (s)', color: '#444', font: { size: 10 } } } } }}
       />
     </>
