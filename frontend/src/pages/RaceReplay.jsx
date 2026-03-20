@@ -449,7 +449,15 @@ export default function RaceReplay() {
             {activeTab === 'positions' && (
               <div style={cardStyle}>
                 <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px', color: '#aaa' }}>Position changes — every lap</div>
-                <Line data={{ labels: laps, datasets: raceData.drivers.map((d, i) => ({ label: d, data: raceData.position_data[d], borderColor: getDriverColor(d, i, year), backgroundColor: 'transparent', borderWidth: selectedDrivers.includes(d) ? 2.5 : 0.5, pointRadius: 0, pointHoverRadius: 4, tension: .3, hidden: !selectedDrivers.includes(d) })) }}
+                <Line data={{ labels: laps, datasets: raceData.drivers.map((d, i) => ({ label: d, data: (() => {
+                      const positions = raceData.position_data[d]
+                      if (!positions) return []
+                      let lastValid = null
+                      return positions.map(p => {
+                        if (p && p > 0) { lastValid = p; return p }
+                        return lastValid
+                      })
+                    })(), borderColor: getDriverColor(d, i, year), backgroundColor: 'transparent', borderWidth: selectedDrivers.includes(d) ? 2.5 : 0.5, pointRadius: 0, pointHoverRadius: 4, tension: .3, hidden: !selectedDrivers.includes(d) })) }}
                   options={{ responsive: true, plugins: { legend: { labels: { color: '#666', font: { size: 11 }, boxWidth: 12, filter: item => selectedDrivers.includes(item.text) } }, tooltip: { mode: 'index', intersect: false, callbacks: { title: items => `Lap ${items[0].label}`, label: c => `${c.dataset.label}: P${c.raw}` }, itemSort: (a, b) => a.raw - b.raw } }, scales: { x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', maxTicksLimit: 12, font: { size: 10 } }, title: { display: true, text: 'Lap', color: '#444', font: { size: 10 } } }, y: { reverse: true, min: 1, max: 20, grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', stepSize: 2, font: { size: 10 } }, title: { display: true, text: 'Position', color: '#444', font: { size: 10 } } } } }}
                 />
               </div>

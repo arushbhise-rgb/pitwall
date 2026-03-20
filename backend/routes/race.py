@@ -58,7 +58,8 @@ def get_race(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_
         tire_data = {}
         for driver in drivers:
             dl = laps.pick_drivers(driver)
-            position_data[driver] = dl['Position'].fillna(0).astype(int).tolist()
+            positions = dl['Position'].ffill().fillna(0).astype(int).tolist()
+            position_data[driver] = positions
             lap_time_data[driver] = [x if pd.notna(x) else None for x in dl['LapTime'].dt.total_seconds().round(3).tolist()]
             tire_data[driver] = dl['Compound'].tolist()
         results = session.results
