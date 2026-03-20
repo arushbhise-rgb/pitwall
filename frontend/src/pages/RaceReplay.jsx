@@ -82,7 +82,7 @@ function getDriverColor(code, index, seasonYear) {
 
 const TIRE_COLORS = {
   SOFT: '#e8002d', MEDIUM: '#f5c842',
-  HARD: '#ccc', INTERMEDIATE: '#52e252', WET: '#3671c6'
+  HARD: '#ffffff', INTERMEDIATE: '#52e252', WET: '#3671c6'
 }
 
 const RACES_BY_YEAR = {
@@ -520,7 +520,7 @@ export default function RaceReplay() {
                           const pct = ((s.end - s.start + 1) / raceData.total_laps * 100).toFixed(0)
                           const color = TIRE_COLORS[s.compound] || '#888'
                           return (
-                            <div key={i} style={{ flex: pct, background: color + '22', border: `1px solid ${color}55`, borderRadius: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: color, fontWeight: '600' }}>
+                            <div key={i} style={{ flex: pct, background: color === '#ffffff' ? '#333' : color + '22', border: `1px solid ${color === '#ffffff' ? '#888' : color + '55'}`, borderRadius: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: color === '#ffffff' ? '#fff' : color, fontWeight: '600' }}>
                               {s.compound?.[0]} {s.start}-{s.end}
                             </div>
                           )
@@ -543,14 +543,14 @@ export default function RaceReplay() {
             {activeTab === 'gap' && (
               <div style={cardStyle}>
                 <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px', color: '#aaa' }}>Gap to race leader — seconds</div>
-                <GapChart raceData={raceData} selectedDrivers={selectedDrivers} getDriverColor={getDriverColor} API={API} />
+                <GapChart raceData={raceData} selectedDrivers={selectedDrivers} getDriverColor={getDriverColor} API={API} year={year} />
               </div>
             )}
 
             {activeTab === 'sectors' && (
               <div style={cardStyle}>
                 <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px', color: '#aaa' }}>Sector times</div>
-                <SectorChart raceData={raceData} selectedDrivers={selectedDrivers} getDriverColor={getDriverColor} API={API} />
+                <SectorChart raceData={raceData} selectedDrivers={selectedDrivers} getDriverColor={getDriverColor} API={API} year={year} />
               </div>
             )}
 
@@ -591,7 +591,7 @@ export default function RaceReplay() {
   )
 }
 
-function GapChart({ raceData, selectedDrivers, getDriverColor, API }) {
+function GapChart({ raceData, selectedDrivers, getDriverColor, API, year }) {
   const [gapData, setGapData] = useState(null)
   useEffect(() => {
     if (!raceData) return
@@ -606,7 +606,7 @@ function GapChart({ raceData, selectedDrivers, getDriverColor, API }) {
   )
 }
 
-function SectorChart({ raceData, selectedDrivers, getDriverColor, API }) {
+function SectorChart({ raceData, selectedDrivers, getDriverColor, API, year }) {
   const [sectorData, setSectorData] = useState(null)
   const [activeSector, setActiveSector] = useState('s1')
   useEffect(() => {
