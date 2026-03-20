@@ -34,7 +34,7 @@ def get_race(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_
         lap_time_data = {}
         tire_data = {}
         for driver in drivers:
-            dl = laps.pick_driver(driver)
+            dl = laps.pick_drivers(driver)
             position_data[driver] = dl['Position'].fillna(0).astype(int).tolist()
             lap_time_data[driver] = [x if pd.notna(x) else None for x in dl['LapTime'].dt.total_seconds().round(3).tolist()]
             tire_data[driver] = dl['Compound'].tolist()
@@ -62,15 +62,16 @@ def get_race(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_
 
 @router.get("/races")
 def get_races(year: int = Query(..., ge=2018, le=2030)):
-
-    # Don't cache this one — we want it to update as new races happen
     from datetime import datetime, timezone
+    import pandas as pd
     schedule = fastf1.get_event_schedule(year)
-    now = datetime.now(timezone.utc)
-    # Only return races that have already happened
-    past_races = schedule[
-        (schedule['EventFormat'] != 'testing') &
-        (schedule['EventDate'] < now)
+    now = pd.Timestamp.now(tz='UTC')
+    filtered = schedule[schedule['EventFormat'] != 'testing'].copy()
+    # Make EventDate timezone aware if it isn't
+    if filtered['EventDate'].dt.tz is None:
+        filtered['EventDate'] = filtered['EventDate'].dt.tz_localize('UTC')
+    past_races = filtered[
+        filtered['EventDate'] < now
     ]['EventName'].tolist()
     return {"races": past_races}
 
@@ -99,7 +100,7 @@ def get_gap_to_leader(year: int = Query(..., ge=2018, le=2030), gp: str = Query(
 
         gap_data = {}
         for driver in drivers:
-            dl = laps.pick_driver(driver)
+            dl = laps.pick_drivers(driver)
             gaps = []
             for lap_num in range(1, total_laps + 1):
                 driver_lap = dl[dl['LapNumber'] == lap_num]
@@ -134,7 +135,7 @@ def get_sectors(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., m
         sector_data = {}
 
         for driver in drivers:
-            dl = laps.pick_driver(driver)
+            dl = laps.pick_drivers(driver)
             sector_data[driver] = {
                 "s1": [round(x, 3) if pd.notna(x) else None for x in dl['Sector1Time'].dt.total_seconds()],
                 "s2": [round(x, 3) if pd.notna(x) else None for x in dl['Sector2Time'].dt.total_seconds()],
