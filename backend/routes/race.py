@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 import fastf1
 import pandas as pd
 import threading
@@ -22,7 +22,7 @@ fastf1.Cache.enable_cache('cache')
 router = APIRouter()
 
 @router.get("/race")
-def get_race(year: int, gp: str):
+def get_race(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_length=3)):
     cache_key = f"race_{year}_{gp}"
 
     def fetch():
@@ -61,7 +61,8 @@ def get_race(year: int, gp: str):
     return get_cached(cache_key, fetch)
 
 @router.get("/races")
-def get_races(year: int):
+def get_races(year: int = Query(..., ge=2018, le=2030)):
+
     # Don't cache this one — we want it to update as new races happen
     from datetime import datetime, timezone
     schedule = fastf1.get_event_schedule(year)
@@ -74,7 +75,8 @@ def get_races(year: int):
     return {"races": past_races}
 
 @router.get("/gap-to-leader")
-def get_gap_to_leader(year: int, gp: str):
+def get_gap_to_leader(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_length=3)):
+
     cache_key = f"gap_{year}_{gp}"
 
     def fetch():
@@ -121,7 +123,7 @@ def get_gap_to_leader(year: int, gp: str):
     return get_cached(cache_key, fetch)
 
 @router.get("/sectors")
-def get_sectors(year: int, gp: str):
+def get_sectors(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_length=3)):
     cache_key = f"sectors_{year}_{gp}"
 
     def fetch():
