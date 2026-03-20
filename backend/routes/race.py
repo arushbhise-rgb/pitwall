@@ -45,7 +45,12 @@ def get_race(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_
 
     def fetch():
         session = fastf1.get_session(year, gp, 'R')
-        session.load()
+        session.load(
+            telemetry=False,
+            weather=False,
+            messages=False,
+            livedata=None
+        )
         laps = session.laps
         drivers = laps['Driver'].unique().tolist()
         position_data = {}
@@ -95,16 +100,14 @@ def get_races(year: int = Query(..., ge=2018, le=2030)):
 
 @router.get("/gap-to-leader")
 def get_gap_to_leader(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_length=3)):
-
     cache_key = f"gap_{year}_{gp}"
 
     def fetch():
         session = fastf1.get_session(year, gp, 'R')
-        session.load()
+        session.load(telemetry=False, weather=False, messages=False)
         laps = session.laps
         drivers = laps['Driver'].unique().tolist()
         total_laps = int(laps['LapNumber'].max())
-
         leader_times = {}
         for lap_num in range(1, total_laps + 1):
             lap_data = laps[laps['LapNumber'] == lap_num]
@@ -115,7 +118,6 @@ def get_gap_to_leader(year: int = Query(..., ge=2018, le=2030), gp: str = Query(
                 continue
             fastest = valid.loc[valid['LapTime'].idxmin()]
             leader_times[lap_num] = fastest['LapTime'].total_seconds()
-
         gap_data = {}
         for driver in drivers:
             dl = laps.pick_drivers(driver)
@@ -132,14 +134,10 @@ def get_gap_to_leader(year: int = Query(..., ge=2018, le=2030), gp: str = Query(
                 diff = pd.Timedelta(lap_time).total_seconds() - leader_times[lap_num]
                 gaps.append(round(diff, 3))
             gap_data[driver] = gaps
-
-        return {
-            "drivers": drivers,
-            "gap_data": gap_data,
-            "total_laps": total_laps
-        }
+        return {"drivers": drivers, "gap_data": gap_data, "total_laps": total_laps}
 
     return get_cached(cache_key, fetch)
+
 
 @router.get("/sectors")
 def get_sectors(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_length=3)):
@@ -147,11 +145,10 @@ def get_sectors(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., m
 
     def fetch():
         session = fastf1.get_session(year, gp, 'R')
-        session.load()
+        session.load(telemetry=False, weather=False, messages=False)
         laps = session.laps
         drivers = laps['Driver'].unique().tolist()
         sector_data = {}
-
         for driver in drivers:
             dl = laps.pick_drivers(driver)
             sector_data[driver] = {
@@ -159,12 +156,7 @@ def get_sectors(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., m
                 "s2": [round(x, 3) if pd.notna(x) else None for x in dl['Sector2Time'].dt.total_seconds()],
                 "s3": [round(x, 3) if pd.notna(x) else None for x in dl['Sector3Time'].dt.total_seconds()],
             }
-
-        return {
-            "drivers": drivers,
-            "sector_data": sector_data,
-            "total_laps": int(laps['LapNumber'].max())
-        }
+        return {"drivers": drivers, "sector_data": sector_data, "total_laps": int(laps['LapNumber'].max())}
 
     return get_cached(cache_key, fetch)
 
