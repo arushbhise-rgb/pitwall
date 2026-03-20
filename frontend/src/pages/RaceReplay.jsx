@@ -105,28 +105,17 @@ function LoadingTimer() {
     'Processing position data...',
     'Building lap time charts...',
     'Almost there...',
-    'This is a cached race — should be fast...',
     'Still loading — first load takes up to 30 seconds...',
     'Worth the wait — real F1 data incoming...',
   ]
   useEffect(() => {
-    const fallback = RACES_BY_YEAR[year] || RACES_BY_YEAR['2024']
-    setRaces(fallback)
-    if (fallback.length > 0) setGp(fallback[0])
-    
-    axios.get(`${API}/races?year=${year}`)
-      .then(r => {
-        if (r.data.races && r.data.races.length > 0) {
-          setRaces(r.data.races)
-          setGp(r.data.races[0])
-        }
-      })
-      .catch(() => {})
-  }, [year])
+    const t = setInterval(() => setSeconds(s => s + 1), 1000)
+    return () => clearInterval(t)
+  }, [])
   const msgIndex = Math.min(Math.floor(seconds / 4), msgs.length - 1)
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '11px', color: '#444', marginBottom: '8px', transition: 'all .3s' }}>{msgs[msgIndex]}</div>
+      <div style={{ fontSize: '11px', color: '#444', marginBottom: '8px' }}>{msgs[msgIndex]}</div>
       <div style={{ fontSize: '11px', color: '#333' }}>{seconds}s</div>
       <div style={{ width: '200px', height: '2px', background: '#1a1a1a', borderRadius: '1px', margin: '8px auto 0', overflow: 'hidden' }}>
         <div style={{ height: '100%', background: '#e10600', borderRadius: '1px', width: `${Math.min(seconds / 30 * 100, 95)}%`, transition: 'width 1s linear' }}></div>
