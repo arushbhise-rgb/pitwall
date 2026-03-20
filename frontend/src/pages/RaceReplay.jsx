@@ -110,9 +110,19 @@ function LoadingTimer() {
     'Worth the wait — real F1 data incoming...',
   ]
   useEffect(() => {
-    const t = setInterval(() => setSeconds(s => s + 1), 1000)
-    return () => clearInterval(t)
-  }, [])
+    const fallback = RACES_BY_YEAR[year] || RACES_BY_YEAR['2024']
+    setRaces(fallback)
+    if (fallback.length > 0) setGp(fallback[0])
+    
+    axios.get(`${API}/races?year=${year}`)
+      .then(r => {
+        if (r.data.races && r.data.races.length > 0) {
+          setRaces(r.data.races)
+          setGp(r.data.races[0])
+        }
+      })
+      .catch(() => {})
+  }, [year])
   const msgIndex = Math.min(Math.floor(seconds / 4), msgs.length - 1)
   return (
     <div style={{ textAlign: 'center' }}>
@@ -159,7 +169,9 @@ export default function RaceReplay() {
       const r = await axios.get(`${API}/race?year=${year}&gp=${encodeURIComponent(gp)}`)
       setRaceData(r.data)
       setSelectedDrivers(r.data.drivers.slice(0, 6))
-    } catch(e) { alert('Error loading race') }
+    } catch(e) {
+      alert(`No data available for ${gp} ${year} yet — this race may not have happened yet or data is still processing.`)
+    }
     setLoading(false)
   }
 

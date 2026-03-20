@@ -62,14 +62,16 @@ def get_race(year: int, gp: str):
 
 @router.get("/races")
 def get_races(year: int):
-    cache_key = f"races_{year}"
-
-    def fetch():
-        schedule = fastf1.get_event_schedule(year)
-        races = schedule[schedule['EventFormat'] != 'testing']['EventName'].tolist()
-        return {"races": races}
-
-    return get_cached(cache_key, fetch)
+    # Don't cache this one — we want it to update as new races happen
+    from datetime import datetime, timezone
+    schedule = fastf1.get_event_schedule(year)
+    now = datetime.now(timezone.utc)
+    # Only return races that have already happened
+    past_races = schedule[
+        (schedule['EventFormat'] != 'testing') &
+        (schedule['EventDate'] < now)
+    ]['EventName'].tolist()
+    return {"races": past_races}
 
 @router.get("/gap-to-leader")
 def get_gap_to_leader(year: int, gp: str):
