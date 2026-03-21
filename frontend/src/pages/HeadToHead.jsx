@@ -1,21 +1,8 @@
 import { useState } from 'react'
 import axios from 'axios'
-import { getDriverColor } from '../constants/driverData'
 import { API } from '../config'
-
 import { getDriverColor, DRIVER_TEAMS_BY_YEAR, ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
 
-
-
-
-function getDriverTeam(code, year) {
-  const teams = DRIVER_TEAMS_BY_YEAR[String(year)] || DRIVER_TEAMS_BY_YEAR['2024']
-  return teams[code] || 'Unknown'
-}
-
-function getDriversForYear(year) {
-  return ALL_DRIVERS_BY_YEAR[String(year)] || ALL_DRIVERS_BY_YEAR['2024']
-}
 
 export default function HeadToHead() {
   const [year, setYear] = useState('2024')
