@@ -10,6 +10,7 @@ Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, L
 import { API } from '../config'
 
 import { getDriverColor } from '../constants/driverData'
+import { DRIVER_TEAMS_BY_YEAR } from '../constants/driverData'
 
 const TIRE_COLORS = {
   SOFT: '#e8002d', MEDIUM: '#f5c842',
@@ -96,83 +97,90 @@ export default function RaceReplay() {
   }
 
   async function askAI() {
-    if (!question || !raceData) return
-    setAiLoading(true)
-    const q = question.toLowerCase()
-    const lapMatch = q.match(/lap\s*(\d+)/)
-    const posMatch = q.match(/p(\d+)|(\d+)(st|nd|rd|th)?\s*place|position\s*(\d+)/)
+  if (!question || !raceData) return
+  setAiLoading(true)
 
-    if (lapMatch && posMatch) {
-      const lapNum = parseInt(lapMatch[1])
-      const posNum = parseInt(posMatch[1] || posMatch[2] || posMatch[4])
-      if (lapNum >= 1 && lapNum <= raceData.total_laps) {
-        const lapPositions = raceData.drivers.map(d => {
-          const pos = raceData.position_data[d]?.[lapNum - 1]
-          return pos && pos > 0 ? { driver: d, pos } : null
-        }).filter(Boolean).sort((a, b) => a.pos - b.pos)
-        const driverAtPos = lapPositions.find(x => x.pos === posNum)
-        if (driverAtPos) {
-          const fullOrder = lapPositions.map(x => `P${x.pos}: ${x.driver}`).join('\n')
-          setAiReply(`On lap ${lapNum} of the ${raceData.gp} Grand Prix, ${driverAtPos.driver} held P${posNum}.\n\nFull order at lap ${lapNum}:\n${fullOrder}`)
-          setAiLoading(false)
-          return
-        }
-      }
-    }
-
-    if (q.includes('who won') || q.includes('race winner') || q.includes('finish first')) {
-      const finalPositions = raceData.drivers.map(d => {
-        const positions = raceData.position_data[d]
-        const lastPos = positions ? [...positions].reverse().find(p => p > 0) : null
-        return lastPos ? { driver: d, pos: lastPos } : null
-      }).filter(Boolean).sort((a, b) => a.pos - b.pos)
-      setAiReply(`Race result — ${raceData.gp} ${raceData.year}:\n\n${finalPositions.slice(0,5).map(x => `P${x.pos}: ${x.driver}`).join('\n')}`)
-      setAiLoading(false)
-      return
-    }
-
-    const allLapPositions = []
-    for (let lap = 1; lap <= raceData.total_laps; lap++) {
-      const lapData = raceData.drivers.map(d => {
-        const pos = raceData.position_data[d]?.[lap - 1]
-        return pos && pos > 0 ? `${d}:P${pos}` : null
-      }).filter(Boolean).sort((a, b) => parseInt(a.split(':P')[1]) - parseInt(b.split(':P')[1]))
-      allLapPositions.push(`Lap ${lap}: ${lapData.join(' ')}`)
-    }
-
-    // Build tire stint summary for each driver
-    const tireStintSummary = raceData.drivers.map(d => {
-      const tires = raceData.tire_data[d]
-      if (!tires || tires.length === 0) return `${d}: no tire data`
-      const stints = []
-      let current = tires[0], start = 1
-      for (let i = 1; i < tires.length; i++) {
-        if (tires[i] !== current) {
-          stints.push(`${current} laps ${start}-${i}`)
-          current = tires[i]
-          start = i + 1
-        }
-      }
-      stints.push(`${current} laps ${start}-${tires.length}`)
-      return `${d}: ${stints.join(' → ')}`
-    }).join('\n')
-
-    const summary = `Race: ${raceData.gp} Grand Prix ${raceData.year}
-    Total laps: ${raceData.total_laps}
-    Drivers: ${raceData.drivers.join(', ')}
-
-    TIRE STRATEGY (compound and laps):
-    ${tireStintSummary}
-
-    COMPLETE LAP BY LAP POSITIONS:
-    ${allLapPositions.join('\n')}`
-
-    try {
-      const r = await axios.post(`${API}/analyze`, { race_summary: summary, question })
-      setAiReply(r.data.response)
-    } catch(e) { setAiReply('AI unavailable right now.') }
-    setAiLoading(false)
+  // Build lap by lap positions
+  const allLapPositions = []
+  for (let lap = 1; lap <= raceData.total_laps; lap++) {
+    const lapData = raceData.drivers.map(d => {
+      const pos = raceData.position_data[d]?.[lap - 1]
+      return pos && pos > 0 ? `${d}:P${pos}` : null
+    }).filter(Boolean).sort((a, b) => parseInt(a.split(':P')[1]) - parseInt(b.split(':P')[1]))
+    allLapPositions.push(`Lap ${lap}: ${lapData.join(' ')}`)
   }
+
+  // Build tire stint summary
+  const tireStintSummary = raceData.drivers.map(d => {
+    const tires = raceData.tire_data[d]
+    if (!tires || tires.length === 0) return `${d}: no tire data`
+    const stints = []
+    let current = tires[0], start = 1
+    for (let i = 1; i < tires.length; i++) {
+      if (tires[i] !== current) {
+        stints.push(`${current} laps ${start}-${i}`)
+        current = tires[i]
+        start = i + 1
+      }
+    }
+    stints.push(`${current} laps ${start}-${tires.length}`)
+    return `${d}: ${stints.join(' → ')}`
+  }).join('\n')
+
+  // Build lap time summary (fastest laps per driver)
+  const lapTimeSummary = raceData.drivers.map(d => {
+    const times = raceData.lap_time_data[d]
+    if (!times) return `${d}: no lap time data`
+    const valid = times.filter(t => t && t > 0)
+    if (valid.length === 0) return `${d}: no valid lap times`
+    const fastest = Math.min(...valid)
+    const avg = valid.reduce((a, b) => a + b, 0) / valid.length
+    return `${d}: fastest ${fastest.toFixed(3)}s avg ${avg.toFixed(3)}s`
+  }).join('\n')
+
+  // Final race order
+  const finalOrder = raceData.drivers.map(d => {
+    const positions = raceData.position_data[d]
+    const lastPos = positions ? [...positions].reverse().find(p => p > 0) : null
+    return lastPos ? { driver: d, pos: lastPos } : null
+  }).filter(Boolean).sort((a, b) => a.pos - b.pos)
+  const finalOrderStr = finalOrder.map(x => `P${x.pos}: ${x.driver}`).join(' | ')
+
+  // Build team summary from actual season data
+const teamSummary = raceData.drivers.map(d => {
+  const teams = DRIVER_TEAMS_BY_YEAR[String(raceData.year)] || DRIVER_TEAMS_BY_YEAR['2024']
+  const team = teams[d] || 'Unknown'
+  return `${d}: ${team}`
+}).join(', ')
+
+const summary = `RACE: ${raceData.gp} Grand Prix ${raceData.year}
+TOTAL LAPS: ${raceData.total_laps}
+DRIVER TEAMS (${raceData.year} season):
+${teamSummary}
+
+FINAL RACE RESULT:
+${finalOrderStr} Driver team affiliations may differ from previous seasons. Do not assume any driver's team — only reference what the data shows.
+
+FINAL RACE RESULT:
+${finalOrderStr}
+
+TIRE STRATEGY (compound → laps):
+${tireStintSummary}
+
+LAP TIME SUMMARY (fastest and average per driver):
+${lapTimeSummary}
+
+LAP BY LAP POSITIONS:
+${allLapPositions.join('\n')}`
+
+  try {
+    const r = await axios.post(`${API}/analyze`, { race_summary: summary, question })
+    setAiReply(r.data.response)
+  } catch(e) {
+    setAiReply('AI unavailable right now — try again in a moment.')
+  }
+  setAiLoading(false)
+}
 
   function toggleDriver(d) {
     setSelectedDrivers(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])
