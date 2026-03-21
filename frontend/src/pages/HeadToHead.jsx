@@ -29,6 +29,7 @@ export default function HeadToHead() {
     try {
       const r = await axios.get(`${API}/h2h?year=${finalYear}&driver1=${finalD1}&driver2=${finalD2}`)
       setData(r.data)
+      document.title = `${finalD1} vs ${finalD2} ${finalYear} — PitWall Head to Head`
     } catch(e) { alert('Error loading H2H data') }
     setLoading(false)
   }

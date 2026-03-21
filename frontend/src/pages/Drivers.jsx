@@ -57,6 +57,7 @@ export default function Drivers() {
     if (!selectedCode) return
     setStatsLoading(true)
     setStats(null)
+    document.title = `${selectedDriver?.name} ${year} Season Stats — PitWall`
     const driverId = CODE_TO_ID[selectedCode] || selectedCode.toLowerCase()
     axios.get(`${API}/driver/stats?year=${year}&driver=${driverId}`)
       .then(r => { setStats(r.data); setStatsLoading(false) })

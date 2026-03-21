@@ -56,6 +56,12 @@ function LoadingTimer() {
   )
 }
 
+function setMetaDescription(desc) {
+  let meta = document.querySelector('meta[name="description"]')
+  if (!meta) { meta = document.createElement('meta'); meta.name = 'description'; document.head.appendChild(meta) }
+  meta.content = desc
+}
+
 export default function RaceReplay() {
   const [year, setYear] = useState('2026')
   const [gp, setGp] = useState('Australian Grand Prix')
@@ -110,9 +116,11 @@ export default function RaceReplay() {
     setLoading(true)
     setRaceData(null)
     setAiReply('')
+    setMetaDescription(`Lap by lap analysis of the ${r.data.year} ${r.data.gp} Grand Prix. Position changes, tire strategy, gap to leader, sector times and AI race analysis. Free on PitWall.`)
     try {
       const r = await axios.get(`${API}/race?year=${year}&gp=${encodeURIComponent(gp)}`)
       setRaceData(r.data)
+      document.title = `${r.data.gp} Grand Prix ${r.data.year} Analysis — PitWall`
       setSelectedDrivers(r.data.drivers.slice(0, 6))
     } catch(e) {
       alert(`No data available for ${gp} ${year} yet — this race may not have happened yet or data is still processing.`)
@@ -460,13 +468,12 @@ ${allLapPositions.join('\n')}`
                     </div>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '3px' }}>
-                  <div style={{ fontSize: '12px', color: '#555' }}>{raceData.total_laps} laps · {raceData.drivers.length} drivers</div>
+                <div style={{ display: 'flex', gap: '6px' }}>
                   <button onClick={() => {
                     const url = `${window.location.origin}/replay?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`
                     navigator.clipboard.writeText(url).then(() => {
                       const btn = document.getElementById('share-btn')
-                      if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = '🔗 Share' }, 2000) }
+                      if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = '🔗 Share' }, 2000) }
                     })
                   }} id="share-btn" style={{
                     background: 'rgba(255,255,255,0.05)', border: '0.5px solid #2a2a2a',
@@ -476,6 +483,19 @@ ${allLapPositions.join('\n')}`
                     onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#444' }}
                     onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = '#2a2a2a' }}
                   >🔗 Share</button>
+
+                  <button onClick={() => {
+                    const url = `${window.location.origin}/replay?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`
+                    const text = `Just analyzed the ${raceData.year} ${raceData.gp} Grand Prix on PitWall 🏎️\n\nReal F1 telemetry — lap times, tire strategy, AI race analyst. Free forever.\n\n${url}`
+                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank')
+                  }} style={{
+                    background: 'rgba(29,155,240,0.1)', border: '0.5px solid rgba(29,155,240,0.3)',
+                    color: '#1d9bf0', padding: '3px 10px', borderRadius: '6px',
+                    fontSize: '11px', cursor: 'pointer', transition: 'all .2s', fontWeight: '600'
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(29,155,240,0.2)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(29,155,240,0.1)'}
+                  >Post on X</button>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '8px' }}>

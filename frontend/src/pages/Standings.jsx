@@ -10,6 +10,7 @@ export default function Standings() {
   const [drivers, setDrivers] = useState(null)
   const [teams, setTeams] = useState(null)
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => { loadStandings() }, [year])
 
@@ -23,6 +24,7 @@ export default function Standings() {
         axios.get(`${API}/standings/constructors?year=${year}`)
       ])
       setDrivers(dr.data)
+      document.title = `${year} F1 Championship Standings — PitWall`
       setTeams(tr.data)
     } catch(e) { console.error(e) }
     setLoading(false)

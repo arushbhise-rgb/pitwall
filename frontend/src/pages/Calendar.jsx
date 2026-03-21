@@ -52,6 +52,7 @@ export default function Calendar() {
     axios.get(`${API}/calendar?year=${year}`)
       .then(r => { setRaces(r.data.races || []); setLoading(false) })
       .catch(() => setLoading(false))
+      document.title = `${year} F1 Race Calendar — PitWall`
   }, [year])
 
   const now = new Date()
