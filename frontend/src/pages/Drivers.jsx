@@ -16,6 +16,18 @@ const DRIVER_NATIONALITIES = {
   GIO: 'Italy', KVY: 'Russia', GRO: 'France', DOO: 'Australia',
 }
 
+const DRIVER_NATIONALITY_CODES = {
+  VER: 'nl', HAD: 'fr', LEC: 'mc', HAM: 'gb',
+  NOR: 'gb', PIA: 'au', RUS: 'gb', ANT: 'it',
+  ALO: 'es', STR: 'ca', GAS: 'fr', COL: 'ar',
+  LAW: 'nz', LIN: 'gb', ALB: 'th', SAI: 'es',
+  OCO: 'fr', BEA: 'gb', HUL: 'de', BOR: 'br',
+  PER: 'mx', BOT: 'fi', TSU: 'jp', RIC: 'au',
+  SAR: 'us', MAG: 'dk', ZHO: 'cn', DEV: 'nl',
+  MSC: 'de', LAT: 'ca', VET: 'de', RAI: 'fi',
+  GIO: 'it', KVY: 'ru', GRO: 'fr', DOO: 'au',
+}
+
 const CODE_TO_ID = {
   VER: 'max_verstappen', HAM: 'hamilton', LEC: 'leclerc',
   NOR: 'norris', PIA: 'piastri', RUS: 'russell',
@@ -160,9 +172,12 @@ export default function Drivers() {
                               transition: 'border-color .3s',
                               boxShadow: isSelected ? `0 0 16px ${color}44` : 'none',
                             }}>{d.initials}</div>
-                            <div style={{ fontSize: '10px', color: '#555', background: '#1a1a1a', padding: '3px 8px', borderRadius: '6px', fontWeight: '500' }}>
-                              {DRIVER_NATIONALITIES[d.code]?.country || '—'}
-                            </div>
+                            <img
+                              src={`https://flagcdn.com/24x18/${DRIVER_NATIONALITY_CODES[d.code] || 'un'}.png`}
+                              alt={DRIVER_NATIONALITIES[d.code] || ''}
+                              style={{ width: '24px', height: '18px', borderRadius: '3px', objectFit: 'cover' }}
+                              onError={e => e.target.style.display = 'none'}
+                            />
                           </div>
 
                           {/* Name */}
@@ -220,9 +235,12 @@ export default function Drivers() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                         <div style={{ fontSize: '22px', fontWeight: '900', letterSpacing: '-0.5px' }}>{selectedDriver.name}</div>
-                        <div style={{ fontSize: '11px', color: '#555', background: '#1a1a1a', padding: '3px 10px', borderRadius: '6px' }}>
-                          {DRIVER_NATIONALITIES[selectedCode]?.country || '—'}
-                        </div>
+                        <img
+                          src={`https://flagcdn.com/24x18/${DRIVER_NATIONALITY_CODES[selectedCode] || 'un'}.png`}
+                          alt={DRIVER_NATIONALITIES[selectedCode] || ''}
+                          style={{ width: '24px', height: '18px', borderRadius: '3px', objectFit: 'cover' }}
+                          onError={e => e.target.style.display = 'none'}
+                        />
                       </div>
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         <div style={{ fontSize: '11px', color: selectedColor, background: selectedColor + '18', border: `0.5px solid ${selectedColor}44`, padding: '3px 10px', borderRadius: '20px', fontWeight: '700' }}>{selectedTeam}</div>
