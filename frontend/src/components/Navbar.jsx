@@ -9,6 +9,8 @@ export default function Navbar() {
     { label: 'Race replay', path: '/replay' },
     { label: 'Head to head', path: '/h2h' },
     { label: 'Standings', path: '/standings' },
+    { label: 'Drivers', path: '/drivers' },
+    { label: 'Calendar', path: '/calendar' },
     { label: 'Support', path: '/support' },
     { label: 'Contact', path: '/contact' },
   ]

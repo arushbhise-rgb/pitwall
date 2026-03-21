@@ -352,3 +352,86 @@ def get_constructor_standings(year: int):
         return get_cached(cache_key, fetch)
     except Exception as e:
         return {"error": str(e)}
+
+@router.get("/calendar")
+def get_calendar(year: int = Query(..., ge=2018, le=2030)):
+    cache_key = f"calendar_{year}"
+
+    def fetch():
+        schedule = fastf1.get_event_schedule(year)
+        filtered = schedule[schedule['EventFormat'] != 'testing'].copy()
+        if filtered['EventDate'].dt.tz is None:
+            filtered['EventDate'] = filtered['EventDate'].dt.tz_localize('UTC')
+        races = []
+        for _, row in filtered.iterrows():
+            races.append({
+                'round': int(row['RoundNumber']),
+                'name': str(row['EventName']),
+                'location': str(row['Location']),
+                'country': str(row['Country']),
+                'date': row['EventDate'].isoformat(),
+            })
+        return {"races": races, "year": year}
+
+    try:
+        return get_cached(cache_key, fetch)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.get("/driver/stats")
+def get_driver_stats(year: int = Query(..., ge=2018, le=2030), driver: str = Query(..., min_length=2)):
+    cache_key = f"driver_stats_{year}_{driver}"
+
+    def fetch():
+        r = req.get(
+            f'https://api.jolpi.ca/ergast/f1/{year}/drivers/{driver}/results/?limit=30',
+            timeout=15
+        )
+        data = r.json()
+        races = data['MRData']['RaceTable']['Races']
+        stats = {
+            'points': 0, 'wins': 0, 'podiums': 0,
+            'dnfs': 0, 'positions': [], 'race_results': []
+        }
+        for race in races:
+            if not race['Results']:
+                continue
+            res = race['Results'][0]
+            pos = int(res['position'])
+            pts = float(res['points'])
+            status = res['status']
+            stats['points'] += pts
+            stats['positions'].append(pos)
+            if pos == 1: stats['wins'] += 1
+            if pos <= 3: stats['podiums'] += 1
+            if status not in ['Finished'] and '+' not in status:
+                stats['dnfs'] += 1
+            stats['race_results'].append({
+                'race': race['raceName'].replace(' Grand Prix', ''),
+                'position': pos,
+                'points': pts,
+                'status': status,
+            })
+
+        # get qualifying for poles
+        r2 = req.get(
+            f'https://api.jolpi.ca/ergast/f1/{year}/drivers/{driver}/qualifying/?limit=30',
+            timeout=15
+        )
+        qdata = r2.json()
+        poles = sum(
+            1 for race in qdata['MRData']['RaceTable']['Races']
+            if race['QualifyingResults'] and race['QualifyingResults'][0]['position'] == '1'
+        )
+        stats['poles'] = poles
+        valid = [p for p in stats['positions'] if p < 20]
+        stats['avgFinish'] = round(sum(valid) / len(valid), 1) if valid else 0
+        stats['races'] = len(races)
+        stats['bestFinish'] = min(stats['positions']) if stats['positions'] else 0
+        return stats
+
+    try:
+        return get_cached(cache_key, fetch)
+    except Exception as e:
+        return {"error": str(e)}

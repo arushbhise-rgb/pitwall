@@ -6,6 +6,9 @@ import Landing from './pages/Landing'
 const RaceReplay = lazy(() => import('./pages/RaceReplay'))
 const HeadToHead = lazy(() => import('./pages/HeadToHead'))
 const Standings = lazy(() => import('./pages/Standings'))
+const Calendar = lazy(() => import('./pages/Calendar'))
+const Drivers = lazy(() => import('./pages/Drivers'))
+const DriverProfile = lazy(() => import('./pages/DriverProfile'))
 const Contact = lazy(() => import('./pages/Contact'))
 const Support = lazy(() => import('./pages/Support'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -23,36 +26,15 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route path="/replay" element={
-        <Suspense fallback={<PageLoader />}>
-          <Navbar /><RaceReplay />
-        </Suspense>
-      } />
-      <Route path="/h2h" element={
-        <Suspense fallback={<PageLoader />}>
-          <Navbar /><HeadToHead />
-        </Suspense>
-      } />
-      <Route path="/standings" element={
-        <Suspense fallback={<PageLoader />}>
-          <Navbar /><Standings />
-        </Suspense>
-      } />
-      <Route path="/contact" element={
-        <Suspense fallback={<PageLoader />}>
-          <Navbar /><Contact />
-        </Suspense>
-      } />
-      <Route path="/support" element={
-        <Suspense fallback={<PageLoader />}>
-          <Navbar /><Support />
-        </Suspense>
-      } />
-      <Route path="*" element={
-        <Suspense fallback={<PageLoader />}>
-          <NotFound />
-        </Suspense>
-      } />
+      <Route path="/replay" element={<Suspense fallback={<PageLoader />}><Navbar /><RaceReplay /></Suspense>} />
+      <Route path="/h2h" element={<Suspense fallback={<PageLoader />}><Navbar /><HeadToHead /></Suspense>} />
+      <Route path="/standings" element={<Suspense fallback={<PageLoader />}><Navbar /><Standings /></Suspense>} />
+      <Route path="/calendar" element={<Suspense fallback={<PageLoader />}><Navbar /><Calendar /></Suspense>} />
+      <Route path="/drivers" element={<Suspense fallback={<PageLoader />}><Navbar /><Drivers /></Suspense>} />
+      <Route path="/drivers/:code" element={<Suspense fallback={<PageLoader />}><Navbar /><DriverProfile /></Suspense>} />
+      <Route path="/contact" element={<Suspense fallback={<PageLoader />}><Navbar /><Contact /></Suspense>} />
+      <Route path="/support" element={<Suspense fallback={<PageLoader />}><Navbar /><Support /></Suspense>} />
+      <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
     </Routes>
   )
 }

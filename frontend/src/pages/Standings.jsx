@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 import { getDriverColor, getConstructorColor } from '../constants/driverData'
 import { API } from '../config'
 
@@ -90,7 +91,7 @@ export default function Standings() {
               const color = getDriverColor(d.code, 0, year)
               const pct = (d.points / maxDriverPoints * 100).toFixed(1)
               return (
-                <div key={i} className="s-row standings-row-driver" style={{
+                <div key={i} className="s-row standings-row-driver" onClick={() => navigate(`/drivers?driver=${d.code}&year=${year}`)} style={{
                   background: i === 0 ? 'rgba(225,6,0,0.05)' : '#111',
                   border: `0.5px solid ${i === 0 ? 'rgba(225,6,0,0.2)' : '#1e1e1e'}`,
                   borderRadius: '10px', padding: '12px 14px',
@@ -98,7 +99,7 @@ export default function Standings() {
                   gridTemplateColumns: '36px 44px 1fr auto auto',
                   alignItems: 'center', gap: '12px',
                   animation: `fadeUp .3s ease ${i * 0.03}s both`,
-                  cursor: 'default'
+                  cursor: 'pointer'
                 }}>
                   <div style={{
                     fontSize: i === 0 ? '16px' : '13px',
