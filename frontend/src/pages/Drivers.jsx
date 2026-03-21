@@ -5,42 +5,15 @@ import { API } from '../config'
 import { DRIVER_COLORS_BY_YEAR, DRIVER_TEAMS_BY_YEAR, ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
 
 const DRIVER_NATIONALITIES = {
-  VER: { flag: '🇳🇱', country: 'Netherlands' },
-  HAD: { flag: '🇫🇷', country: 'France' },
-  LEC: { flag: '🇲🇨', country: 'Monaco' },
-  HAM: { flag: '🇬🇧', country: 'Britain' },
-  NOR: { flag: '🇬🇧', country: 'Britain' },
-  PIA: { flag: '🇦🇺', country: 'Australia' },
-  RUS: { flag: '🇬🇧', country: 'Britain' },
-  ANT: { flag: '🇮🇹', country: 'Italy' },
-  ALO: { flag: '🇪🇸', country: 'Spain' },
-  STR: { flag: '🇨🇦', country: 'Canada' },
-  GAS: { flag: '🇫🇷', country: 'France' },
-  COL: { flag: '🇦🇷', country: 'Argentina' },
-  LAW: { flag: '🇳🇿', country: 'New Zealand' },
-  LIN: { flag: '🇬🇧', country: 'Britain' },
-  ALB: { flag: '🇹🇭', country: 'Thailand' },
-  SAI: { flag: '🇪🇸', country: 'Spain' },
-  OCO: { flag: '🇫🇷', country: 'France' },
-  BEA: { flag: '🇬🇧', country: 'Britain' },
-  HUL: { flag: '🇩🇪', country: 'Germany' },
-  BOR: { flag: '🇧🇷', country: 'Brazil' },
-  PER: { flag: '🇲🇽', country: 'Mexico' },
-  BOT: { flag: '🇫🇮', country: 'Finland' },
-  TSU: { flag: '🇯🇵', country: 'Japan' },
-  RIC: { flag: '🇦🇺', country: 'Australia' },
-  SAR: { flag: '🇺🇸', country: 'USA' },
-  MAG: { flag: '🇩🇰', country: 'Denmark' },
-  ZHO: { flag: '🇨🇳', country: 'China' },
-  DEV: { flag: '🇳🇱', country: 'Netherlands' },
-  MSC: { flag: '🇩🇪', country: 'Germany' },
-  LAT: { flag: '🇨🇦', country: 'Canada' },
-  VET: { flag: '🇩🇪', country: 'Germany' },
-  RAI: { flag: '🇫🇮', country: 'Finland' },
-  GIO: { flag: '🇮🇹', country: 'Italy' },
-  KVY: { flag: '🇷🇺', country: 'Russia' },
-  GRO: { flag: '🇫🇷', country: 'France' },
-  DOO: { flag: '🇦🇺', country: 'Australia' },
+  VER: 'Netherlands', HAD: 'France', LEC: 'Monaco', HAM: 'Britain',
+  NOR: 'Britain', PIA: 'Australia', RUS: 'Britain', ANT: 'Italy',
+  ALO: 'Spain', STR: 'Canada', GAS: 'France', COL: 'Argentina',
+  LAW: 'New Zealand', LIN: 'Britain', ALB: 'Thailand', SAI: 'Spain',
+  OCO: 'France', BEA: 'Britain', HUL: 'Germany', BOR: 'Brazil',
+  PER: 'Mexico', BOT: 'Finland', TSU: 'Japan', RIC: 'Australia',
+  SAR: 'USA', MAG: 'Denmark', ZHO: 'China', DEV: 'Netherlands',
+  MSC: 'Germany', LAT: 'Canada', VET: 'Germany', RAI: 'Finland',
+  GIO: 'Italy', KVY: 'Russia', GRO: 'France', DOO: 'Australia',
 }
 
 const CODE_TO_ID = {
@@ -187,8 +160,8 @@ export default function Drivers() {
                               transition: 'border-color .3s',
                               boxShadow: isSelected ? `0 0 16px ${color}44` : 'none',
                             }}>{d.initials}</div>
-                            <div style={{ fontSize: '24px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>
-                              {DRIVER_NATIONALITIES[d.code] || '🏁'}
+                            <div style={{ fontSize: '10px', color: '#555', background: '#1a1a1a', padding: '3px 8px', borderRadius: '6px', fontWeight: '500' }}>
+                              {DRIVER_NATIONALITIES[d.code]?.country || '—'}
                             </div>
                           </div>
 
@@ -247,7 +220,9 @@ export default function Drivers() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                         <div style={{ fontSize: '22px', fontWeight: '900', letterSpacing: '-0.5px' }}>{selectedDriver.name}</div>
-                        <div style={{ fontSize: '24px' }}>{DRIVER_NATIONALITIES[selectedCode] || '🏁'}</div>
+                        <div style={{ fontSize: '11px', color: '#555', background: '#1a1a1a', padding: '3px 10px', borderRadius: '6px' }}>
+                          {DRIVER_NATIONALITIES[selectedCode]?.country || '—'}
+                        </div>
                       </div>
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         <div style={{ fontSize: '11px', color: selectedColor, background: selectedColor + '18', border: `0.5px solid ${selectedColor}44`, padding: '3px 10px', borderRadius: '20px', fontWeight: '700' }}>{selectedTeam}</div>
