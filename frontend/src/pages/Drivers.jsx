@@ -12,7 +12,7 @@ const DRIVER_NATIONALITIES = {
   PER: '🇲🇽', BOT: '🇫🇮', TSU: '🇯🇵', RIC: '🇦🇺', SAR: '🇺🇸',
   MAG: '🇩🇰', ZHO: '🇨🇳', DEV: '🇳🇱', MSC: '🇩🇪', LAT: '🇨🇦',
   VET: '🇩🇪', RAI: '🇫🇮', GIO: '🇮🇹', KVY: '🇷🇺', GRO: '🇫🇷',
-  DOO: '🇦🇺', HAR: '🇳🇿', MAZ: '🇷🇺', SCH: '🇩🇪',
+  DOO: '🇦🇺',
 }
 
 const CODE_TO_ID = {
@@ -30,229 +30,13 @@ const CODE_TO_ID = {
   KVY: 'kvyat', GRO: 'grosjean', DOO: 'doohan',
 }
 
-function StatPill({ label, value, color }) {
-  return (
-    <div style={{ textAlign: 'center', flex: 1 }}>
-      <div style={{ fontSize: '18px', fontWeight: '800', color: color || '#fff' }}>{value}</div>
-      <div style={{ fontSize: '10px', color: '#444', marginTop: '2px' }}>{label}</div>
-    </div>
-  )
-}
-
-function DriverCard({ driver, year, color, team, isSelected, onSelect }) {
-  const [hovered, setHovered] = useState(false)
-  const active = isSelected || hovered
-
-  return (
-    <div
-      onClick={() => onSelect(driver.code)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: isSelected ? `${color}10` : '#111',
-        border: `0.5px solid ${active ? color + '66' : '#1e1e1e'}`,
-        borderRadius: '14px', padding: '20px',
-        cursor: 'pointer', transition: 'all .25s',
-        transform: isSelected ? 'scale(1.02)' : 'scale(1)',
-        position: 'relative', overflow: 'hidden',
-      }}
-    >
-      {/* Top color bar */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: color, opacity: active ? 1 : 0.4, transition: 'opacity .25s' }}></div>
-
-      {/* Big number watermark */}
-      <div style={{ position: 'absolute', bottom: '-10px', right: '10px', fontSize: '72px', fontWeight: '900', color: color, opacity: 0.05, userSelect: 'none', lineHeight: 1 }}>
-        {driver.number}
-      </div>
-
-      {/* Flag + initials */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-        <div style={{
-          width: '52px', height: '52px', borderRadius: '50%',
-          background: color + '20', border: `2px solid ${color}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '14px', fontWeight: '900', color: color,
-        }}>{driver.initials}</div>
-        <div style={{ fontSize: '22px' }}>{DRIVER_NATIONALITIES[driver.code] || '🏁'}</div>
-      </div>
-
-      {/* Name */}
-      <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '3px', lineHeight: 1.2 }}>
-        {driver.name}
-      </div>
-
-      {/* Team */}
-      <div style={{ fontSize: '11px', color: color, marginBottom: '12px' }}>{team}</div>
-
-      {/* Number tag */}
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: color + '15', border: `0.5px solid ${color}33`, padding: '3px 8px', borderRadius: '6px' }}>
-        <span style={{ fontSize: '10px', color: color, fontWeight: '700' }}>#{driver.number}</span>
-      </div>
-
-      {/* Selected indicator */}
-      {isSelected && (
-        <div style={{ position: 'absolute', top: '10px', right: '10px', width: '8px', height: '8px', borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}` }}></div>
-      )}
-    </div>
-  )
-}
-
-function DriverProfile({ driverCode, year, color, team, driverInfo }) {
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (!driverCode) return
-    setLoading(true)
-    setStats(null)
-    const driverId = CODE_TO_ID[driverCode] || driverCode.toLowerCase()
-    axios.get(`${API}/driver/stats?year=${year}&driver=${driverId}`)
-      .then(r => { setStats(r.data); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [driverCode, year])
-
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px', background: '#111', borderRadius: '16px', border: '0.5px solid #1e1e1e' }}>
-      <div style={{ width: '28px', height: '28px', border: '2.5px solid #1e1e1e', borderTopColor: color, borderRadius: '50%', animation: 'spin .7s linear infinite' }}></div>
-    </div>
-  )
-
-  if (!stats || stats.error) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px', background: '#111', borderRadius: '16px', border: '0.5px solid #1e1e1e' }}>
-      <div style={{ fontSize: '13px', color: '#444' }}>No data available for {driverCode} in {year}</div>
-    </div>
-  )
-
-  return (
-    <div style={{ background: '#111', border: `0.5px solid ${color}33`, borderRadius: '16px', overflow: 'hidden', animation: 'fadeUp .3s ease both' }}>
-      {/* Header */}
-      <div style={{ position: 'relative', padding: '28px', background: `linear-gradient(135deg, ${color}12, transparent)`, borderBottom: '0.5px solid #1a1a1a', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, ${color}, ${color}44)` }}></div>
-        <div style={{ position: 'absolute', right: '-10px', top: '50%', transform: 'translateY(-50%)', fontSize: '140px', fontWeight: '900', color: color, opacity: 0.05, userSelect: 'none', lineHeight: 1 }}>
-          {driverInfo?.number}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', position: 'relative' }}>
-          <div style={{
-            width: '80px', height: '80px', borderRadius: '50%',
-            background: color + '20', border: `2.5px solid ${color}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '22px', fontWeight: '900', color: color, flexShrink: 0,
-            boxShadow: `0 0 24px ${color}33`
-          }}>{driverInfo?.initials}</div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-              <div style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '-1px' }}>{driverInfo?.name}</div>
-              <div style={{ fontSize: '28px' }}>{DRIVER_NATIONALITIES[driverCode] || '🏁'}</div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <div style={{ fontSize: '12px', color: color, background: color + '15', border: `0.5px solid ${color}33`, padding: '4px 12px', borderRadius: '8px', fontWeight: '600' }}>{team}</div>
-              <div style={{ fontSize: '12px', color: '#555', background: '#1a1a1a', padding: '4px 12px', borderRadius: '8px' }}>#{driverInfo?.number}</div>
-              <div style={{ fontSize: '12px', color: '#555', background: '#1a1a1a', padding: '4px 12px', borderRadius: '8px' }}>{year} season</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: '#1a1a1a', borderBottom: '0.5px solid #1a1a1a' }}>
-        {[
-          { label: 'Points', value: Math.round(stats.points), highlight: true },
-          { label: 'Wins', value: stats.wins },
-          { label: 'Podiums', value: stats.podiums },
-          { label: 'Poles', value: stats.poles },
-          { label: 'Races', value: stats.races },
-          { label: 'Best finish', value: stats.bestFinish ? `P${stats.bestFinish}` : '—' },
-          { label: 'DNFs', value: stats.dnfs },
-          { label: 'Avg finish', value: stats.avgFinish ? `P${stats.avgFinish}` : '—' },
-        ].map((s, i) => (
-          <div key={i} style={{ background: '#111', padding: '16px', textAlign: 'center' }}>
-            <div style={{ fontSize: '22px', fontWeight: '800', color: s.highlight ? color : '#fff' }}>{s.value}</div>
-            <div style={{ fontSize: '10px', color: '#444', marginTop: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Race results */}
-      {stats.race_results && stats.race_results.length > 0 && (
-        <div style={{ padding: '20px' }}>
-          <div style={{ fontSize: '11px', color: '#444', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '14px' }}>
-            Race by race — {year}
-          </div>
-
-          {/* Visual bar chart */}
-          <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', height: '60px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
-            {stats.race_results.map((r, i) => {
-              const height = Math.max(((21 - r.position) / 20) * 60, 4)
-              const isWin = r.position === 1
-              return (
-                <div key={i} title={`${r.race}: P${r.position}`} style={{ flex: '0 0 auto', width: '20px', height: `${height}px`, background: isWin ? '#f5c842' : color, borderRadius: '3px 3px 0 0', opacity: r.position <= 10 ? 1 : 0.35, transition: 'opacity .2s', cursor: 'default' }}></div>
-              )
-            })}
-          </div>
-
-          {/* Results list */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '280px', overflowY: 'auto' }}>
-            {stats.race_results.map((r, i) => {
-              const isWin = r.position === 1
-              const isPodium = r.position <= 3
-              return (
-                <div key={i}
-                  onClick={() => navigate(`/replay?year=${year}&gp=${encodeURIComponent(r.race + ' Grand Prix')}`)}
-                  style={{
-                    display: 'grid', gridTemplateColumns: '36px 1fr auto auto',
-                    alignItems: 'center', gap: '10px',
-                    padding: '8px 10px', borderRadius: '8px',
-                    background: isWin ? 'rgba(245,200,66,0.06)' : 'transparent',
-                    cursor: 'pointer', transition: 'background .15s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-                  onMouseLeave={e => e.currentTarget.style.background = isWin ? 'rgba(245,200,66,0.06)' : 'transparent'}
-                >
-                  <div style={{ fontSize: '13px', fontWeight: '800', color: isWin ? '#f5c842' : isPodium ? color : '#555', textAlign: 'center' }}>
-                    P{r.position}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#aaa' }}>{r.race}</div>
-                  <div style={{ fontSize: '11px', color: r.points > 0 ? color : '#333' }}>
-                    {r.points > 0 ? `+${r.points}pts` : '—'}
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#333' }}>→</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Action buttons */}
-      <div style={{ padding: '0 20px 20px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        <button onClick={() => navigate(`/h2h`)} style={{
-          flex: 1, background: color + '15', border: `0.5px solid ${color}33`,
-          color: color, padding: '10px', borderRadius: '8px',
-          fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'all .2s'
-        }}
-          onMouseEnter={e => e.currentTarget.style.background = color + '25'}
-          onMouseLeave={e => e.currentTarget.style.background = color + '15'}
-        >⚔️ Compare in H2H</button>
-        <button onClick={() => navigate(`/standings?year=${year}`)} style={{
-          flex: 1, background: '#1a1a1a', border: '0.5px solid #2a2a2a',
-          color: '#aaa', padding: '10px', borderRadius: '8px',
-          fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'all .2s'
-        }}
-          onMouseEnter={e => e.currentTarget.style.background = '#222'}
-          onMouseLeave={e => e.currentTarget.style.background = '#1a1a1a'}
-        >📊 Championship</button>
-      </div>
-    </div>
-  )
-}
-
 export default function Drivers() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [year, setYear] = useState('2026')
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const [year, setYear] = useState(searchParams.get('year') || '2026')
   const [selectedCode, setSelectedCode] = useState(searchParams.get('driver')?.toUpperCase() || null)
+  const [stats, setStats] = useState(null)
+  const [statsLoading, setStatsLoading] = useState(false)
 
   const drivers = ALL_DRIVERS_BY_YEAR[year] || ALL_DRIVERS_BY_YEAR['2024']
   const colors = DRIVER_COLORS_BY_YEAR[year] || DRIVER_COLORS_BY_YEAR['2024']
@@ -266,87 +50,299 @@ export default function Drivers() {
   })
 
   const selectedDriver = drivers.find(d => d.code === selectedCode)
-  const selectedColor = selectedCode ? (colors[selectedCode] || '#888') : '#888'
+  const selectedColor = selectedCode ? (colors[selectedCode] || '#888') : '#e10600'
   const selectedTeam = selectedCode ? (teams[selectedCode] || 'Unknown') : ''
 
+  useEffect(() => {
+    if (!selectedCode) return
+    setStatsLoading(true)
+    setStats(null)
+    const driverId = CODE_TO_ID[selectedCode] || selectedCode.toLowerCase()
+    axios.get(`${API}/driver/stats?year=${year}&driver=${driverId}`)
+      .then(r => { setStats(r.data); setStatsLoading(false) })
+      .catch(() => setStatsLoading(false))
+  }, [selectedCode, year])
+
   function handleSelect(code) {
-    if (selectedCode === code) {
-      setSelectedCode(null)
-    } else {
-      setSelectedCode(code)
-      setTimeout(() => {
-        document.getElementById('driver-profile-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
-    }
+    setSelectedCode(prev => prev === code ? null : code)
+    setStats(null)
   }
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 52px)', background: '#0a0a0a', padding: '20px 16px' }}>
+    <div style={{ minHeight: 'calc(100vh - 52px)', background: '#0a0a0a' }}>
       <style>{`
         @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg) } }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .driver-card { transition: all .25s cubic-bezier(0.16,1,0.3,1); }
+        .driver-card:hover { transform: translateY(-4px) !important; }
       `}</style>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <div style={{ fontSize: '22px', fontWeight: '800', letterSpacing: '-0.5px' }}>Drivers</div>
-            <div style={{ fontSize: '12px', color: '#555', marginTop: '3px' }}>Click any driver to see their full season profile</div>
+      {/* Hero header */}
+      <div style={{
+        background: 'linear-gradient(180deg, #111 0%, #0a0a0a 100%)',
+        borderBottom: '0.5px solid #1a1a1a',
+        padding: '32px 24px 28px',
+        position: 'relative', overflow: 'hidden'
+      }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 20% 50%, rgba(225,6,0,0.06), transparent 60%)', pointerEvents: 'none' }}></div>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <div style={{ fontSize: '11px', color: '#e10600', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px', fontWeight: '600' }}>PitWall</div>
+              <div style={{ fontSize: '32px', fontWeight: '900', letterSpacing: '-1px', lineHeight: 1 }}>Driver Profiles</div>
+              <div style={{ fontSize: '13px', color: '#555', marginTop: '8px' }}>
+                {Object.keys(teamGroups).length} teams · {drivers.length} drivers · {year} season
+              </div>
+            </div>
+            <select value={year} onChange={e => { setYear(e.target.value); setSelectedCode(null); setStats(null) }} style={{
+              background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '10px',
+              color: '#fff', padding: '10px 16px', fontSize: '14px', cursor: 'pointer',
+              fontWeight: '600'
+            }}>
+              {['2026','2025','2024','2023','2022','2021','2020'].map(y => <option key={y}>{y}</option>)}
+            </select>
           </div>
-          <select value={year} onChange={e => { setYear(e.target.value); setSelectedCode(null) }} style={{
-            background: '#111', border: '0.5px solid #333', borderRadius: '8px',
-            color: '#fff', padding: '8px 14px', fontSize: '13px', cursor: 'pointer'
-          }}>
-            {['2026','2025','2024','2023','2022','2021','2020'].map(y => <option key={y}>{y}</option>)}
-          </select>
         </div>
+      </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: selectedCode ? '1fr 400px' : '1fr', gap: '20px', alignItems: 'start' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: selectedCode ? '1fr 420px' : '1fr', gap: '24px', alignItems: 'start' }}>
 
           {/* Driver grid */}
           <div>
-            {Object.entries(teamGroups).map(([team, teamDrivers], ti) => (
-              <div key={team} style={{ marginBottom: '28px' }}>
-                <div style={{ fontSize: '11px', color: '#333', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px', fontWeight: '600' }}>
-                  {team}
+            {Object.entries(teamGroups).map(([team, teamDrivers], ti) => {
+              const teamColor = colors[teamDrivers[0]?.code] || '#888'
+              return (
+                <div key={team} style={{ marginBottom: '32px', animation: `fadeUp .4s ease ${ti * 0.06}s both` }}>
+                  {/* Team header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                    <div style={{ width: '4px', height: '20px', background: teamColor, borderRadius: '2px' }}></div>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#aaa', textTransform: 'uppercase', letterSpacing: '1.5px' }}>{team}</div>
+                    <div style={{ flex: 1, height: '0.5px', background: '#1a1a1a' }}></div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '12px' }}>
+                    {teamDrivers.map(d => {
+                      const color = colors[d.code] || '#888'
+                      const isSelected = selectedCode === d.code
+                      return (
+                        <div key={d.code} className="driver-card" onClick={() => handleSelect(d.code)} style={{
+                          background: isSelected
+                            ? `linear-gradient(145deg, ${color}18, ${color}08)`
+                            : 'linear-gradient(145deg, #161616, #111)',
+                          border: `1px solid ${isSelected ? color + '66' : '#222'}`,
+                          borderRadius: '16px', padding: '20px 18px',
+                          cursor: 'pointer',
+                          transform: isSelected ? 'translateY(-4px)' : 'translateY(0)',
+                          boxShadow: isSelected ? `0 8px 32px ${color}22` : '0 2px 8px rgba(0,0,0,0.4)',
+                          position: 'relative', overflow: 'hidden',
+                        }}>
+                          {/* Shimmer top bar */}
+                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${color}, transparent)`, opacity: isSelected ? 1 : 0.3, transition: 'opacity .3s' }}></div>
+
+                          {/* Big number */}
+                          <div style={{ position: 'absolute', bottom: '-8px', right: '8px', fontSize: '64px', fontWeight: '900', color: color, opacity: 0.06, userSelect: 'none', lineHeight: 1, transition: 'opacity .3s' }}>
+                            {d.number}
+                          </div>
+
+                          {/* Top row — initials + flag */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                            <div style={{
+                              width: '48px', height: '48px', borderRadius: '50%',
+                              background: `radial-gradient(circle, ${color}30, ${color}10)`,
+                              border: `2px solid ${color}${isSelected ? 'cc' : '55'}`,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: '13px', fontWeight: '900', color: color,
+                              transition: 'border-color .3s',
+                              boxShadow: isSelected ? `0 0 16px ${color}44` : 'none',
+                            }}>{d.initials}</div>
+                            <div style={{ fontSize: '24px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>
+                              {DRIVER_NATIONALITIES[d.code] || '🏁'}
+                            </div>
+                          </div>
+
+                          {/* Name */}
+                          <div style={{ fontSize: '14px', fontWeight: '700', color: isSelected ? '#fff' : '#ccc', marginBottom: '4px', lineHeight: 1.2, transition: 'color .3s' }}>
+                            {d.name.split(' ')[0]}
+                          </div>
+                          <div style={{ fontSize: '16px', fontWeight: '900', color: isSelected ? '#fff' : '#aaa', marginBottom: '12px', lineHeight: 1, transition: 'color .3s' }}>
+                            {d.name.split(' ').slice(1).join(' ')}
+                          </div>
+
+                          {/* Number tag */}
+                          <div style={{ display: 'inline-flex', alignItems: 'center', background: color + '18', border: `0.5px solid ${color}44`, padding: '3px 10px', borderRadius: '20px' }}>
+                            <span style={{ fontSize: '11px', color: color, fontWeight: '800' }}>#{d.number}</span>
+                          </div>
+
+                          {/* Selected dot */}
+                          {isSelected && (
+                            <div style={{ position: 'absolute', top: '12px', right: '12px', width: '8px', height: '8px', borderRadius: '50%', background: color, boxShadow: `0 0 10px ${color}`, animation: 'pulse 2s infinite' }}></div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
-                  {teamDrivers.map(d => (
-                    <DriverCard
-                      key={d.code}
-                      driver={d}
-                      year={year}
-                      color={colors[d.code] || '#888'}
-                      team={team}
-                      isSelected={selectedCode === d.code}
-                      onSelect={handleSelect}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* Profile panel */}
           {selectedCode && selectedDriver && (
-            <div id="driver-profile-panel" style={{ position: 'sticky', top: '72px', animation: 'fadeUp .3s ease both' }}>
-              <DriverProfile
-                driverCode={selectedCode}
-                year={year}
-                color={selectedColor}
-                team={selectedTeam}
-                driverInfo={selectedDriver}
-              />
+            <div style={{ position: 'sticky', top: '72px', animation: 'fadeUp .3s ease both' }}>
+              <div style={{
+                background: 'linear-gradient(145deg, #161616, #111)',
+                border: `1px solid ${selectedColor}33`,
+                borderRadius: '20px', overflow: 'hidden',
+                boxShadow: `0 16px 48px ${selectedColor}15`
+              }}>
+                {/* Profile header */}
+                <div style={{ position: 'relative', padding: '28px', background: `linear-gradient(135deg, ${selectedColor}15, transparent)`, borderBottom: '0.5px solid #1a1a1a', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg, ${selectedColor}, ${selectedColor}44, transparent)` }}></div>
+                  <div style={{ position: 'absolute', right: '-20px', bottom: '-20px', fontSize: '160px', fontWeight: '900', color: selectedColor, opacity: 0.04, userSelect: 'none', lineHeight: 1 }}>
+                    {selectedDriver.number}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '18px', position: 'relative' }}>
+                    <div style={{
+                      width: '72px', height: '72px', borderRadius: '50%',
+                      background: `radial-gradient(circle, ${selectedColor}30, ${selectedColor}10)`,
+                      border: `2.5px solid ${selectedColor}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '20px', fontWeight: '900', color: selectedColor,
+                      boxShadow: `0 0 32px ${selectedColor}44`, flexShrink: 0
+                    }}>{selectedDriver.initials}</div>
+
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                        <div style={{ fontSize: '22px', fontWeight: '900', letterSpacing: '-0.5px' }}>{selectedDriver.name}</div>
+                        <div style={{ fontSize: '24px' }}>{DRIVER_NATIONALITIES[selectedCode] || '🏁'}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <div style={{ fontSize: '11px', color: selectedColor, background: selectedColor + '18', border: `0.5px solid ${selectedColor}44`, padding: '3px 10px', borderRadius: '20px', fontWeight: '700' }}>{selectedTeam}</div>
+                        <div style={{ fontSize: '11px', color: '#555', background: '#1a1a1a', padding: '3px 10px', borderRadius: '20px' }}>#{selectedDriver.number}</div>
+                      </div>
+                    </div>
+
+                    <button onClick={() => setSelectedCode(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '0.5px solid #2a2a2a', color: '#555', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                {statsLoading && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px', gap: '12px' }}>
+                    <div style={{ width: '24px', height: '24px', border: `2.5px solid ${selectedColor}33`, borderTopColor: selectedColor, borderRadius: '50%', animation: 'spin .7s linear infinite' }}></div>
+                    <div style={{ fontSize: '13px', color: '#444' }}>Loading {year} season data...</div>
+                  </div>
+                )}
+
+                {stats && !statsLoading && !stats.error && (
+                  <>
+                    {/* Stats grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: '#1a1a1a' }}>
+                      {[
+                        { label: 'Pts', value: Math.round(stats.points), highlight: true },
+                        { label: 'Wins', value: stats.wins },
+                        { label: 'Pods', value: stats.podiums },
+                        { label: 'Poles', value: stats.poles },
+                        { label: 'Races', value: stats.races },
+                        { label: 'Best', value: stats.bestFinish ? `P${stats.bestFinish}` : '—' },
+                        { label: 'DNFs', value: stats.dnfs },
+                        { label: 'Avg', value: stats.avgFinish ? `P${stats.avgFinish}` : '—' },
+                      ].map((s, i) => (
+                        <div key={i} style={{ background: '#111', padding: '14px 10px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '20px', fontWeight: '900', color: s.highlight ? selectedColor : '#fff', letterSpacing: '-0.5px' }}>{s.value}</div>
+                          <div style={{ fontSize: '9px', color: '#444', marginTop: '3px', textTransform: 'uppercase', letterSpacing: '1px' }}>{s.label}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Bar chart of results */}
+                    {stats.race_results?.length > 0 && (
+                      <div style={{ padding: '20px' }}>
+                        <div style={{ fontSize: '10px', color: '#444', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>
+                          Race results — {year}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', height: '56px', marginBottom: '16px' }}>
+                          {stats.race_results.map((r, i) => {
+                            const h = Math.max(((21 - r.position) / 20) * 56, 3)
+                            return (
+                              <div key={i} title={`${r.race}: P${r.position}`} style={{
+                                flex: 1, height: `${h}px`,
+                                background: r.position === 1 ? '#f5c842' : r.position <= 3 ? selectedColor : selectedColor + '55',
+                                borderRadius: '2px 2px 0 0',
+                                minWidth: '6px', cursor: 'default',
+                                transition: 'opacity .2s'
+                              }}></div>
+                            )
+                          })}
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxHeight: '240px', overflowY: 'auto' }}>
+                          {stats.race_results.map((r, i) => (
+                            <div key={i}
+                              onClick={() => navigate(`/replay?year=${year}&gp=${encodeURIComponent(r.race + ' Grand Prix')}`)}
+                              style={{
+                                display: 'grid', gridTemplateColumns: '32px 1fr auto',
+                                alignItems: 'center', gap: '10px',
+                                padding: '7px 10px', borderRadius: '8px',
+                                cursor: 'pointer', transition: 'background .15s',
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <div style={{ fontSize: '12px', fontWeight: '800', color: r.position === 1 ? '#f5c842' : r.position <= 3 ? selectedColor : '#555', textAlign: 'center' }}>
+                                P{r.position}
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#777' }}>{r.race}</div>
+                              <div style={{ fontSize: '11px', color: r.points > 0 ? selectedColor : '#333' }}>
+                                {r.points > 0 ? `+${r.points}` : '—'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div style={{ padding: '0 20px 20px', display: 'flex', gap: '8px' }}>
+                      <button onClick={() => navigate(`/h2h`)} style={{
+                        flex: 1, background: selectedColor + '18', border: `0.5px solid ${selectedColor}33`,
+                        color: selectedColor, padding: '10px', borderRadius: '10px',
+                        fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'all .2s'
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.background = selectedColor + '30'}
+                        onMouseLeave={e => e.currentTarget.style.background = selectedColor + '18'}
+                      >⚔️ H2H Compare</button>
+                      <button onClick={() => navigate(`/standings?year=${year}`)} style={{
+                        flex: 1, background: '#1a1a1a', border: '0.5px solid #2a2a2a',
+                        color: '#666', padding: '10px', borderRadius: '10px',
+                        fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'all .2s'
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#222'; e.currentTarget.style.color = '#aaa' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#1a1a1a'; e.currentTarget.style.color = '#666' }}
+                      >📊 Standings</button>
+                    </div>
+                  </>
+                )}
+
+                {stats?.error && !statsLoading && (
+                  <div style={{ padding: '40px', textAlign: 'center', color: '#444', fontSize: '13px' }}>
+                    No data for {selectedCode} in {year}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Empty state */}
+        {/* Empty state hint */}
         {!selectedCode && (
-          <div style={{ textAlign: 'center', padding: '20px', color: '#333', fontSize: '13px', marginTop: '8px' }}>
-            ↑ Select a driver to view their full {year} season profile
+          <div style={{ textAlign: 'center', padding: '12px', color: '#2a2a2a', fontSize: '12px' }}>
+            Click any driver card to view their full {year} season profile
           </div>
         )}
       </div>

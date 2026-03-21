@@ -11,13 +11,13 @@ export default function HeadToHead() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  const drivers = getDriversForYear(year)
+  const drivers = ALL_DRIVERS_BY_YEAR[String(year)] || ALL_DRIVERS_BY_YEAR['2024']
   const d1 = drivers.find(d => d.code === d1Code) || drivers[0]
   const d2 = drivers.find(d => d.code === d2Code) || drivers[1]
   const d1Color = getDriverColor(d1Code, 0, year)
   const d2Color = getDriverColor(d2Code, 0, year)
-  const d1Team = getDriverTeam(d1Code, year)
-  const d2Team = getDriverTeam(d2Code, year)
+  const d1Team = DRIVER_TEAMS_BY_YEAR[String(year)]?.[d1Code] || 'Unknown'
+  const d2Team = DRIVER_TEAMS_BY_YEAR[String(year)]?.[d2Code] || 'Unknown'
 
   async function compare(overrideD1, overrideD2, overrideYear) {
     const finalD1 = overrideD1 || d1Code
@@ -36,7 +36,7 @@ export default function HeadToHead() {
   function handleYearChange(newYear) {
     setYear(newYear)
     setData(null)
-    const newDrivers = getDriversForYear(newYear)
+    const newDrivers = ALL_DRIVERS_BY_YEAR[String(newYear)] || ALL_DRIVERS_BY_YEAR['2024']
     if (!newDrivers.find(d => d.code === d1Code)) setD1Code(newDrivers[0].code)
     if (!newDrivers.find(d => d.code === d2Code)) setD2Code(newDrivers[1].code)
   }

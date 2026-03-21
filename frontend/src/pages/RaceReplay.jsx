@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { Line } from 'react-chartjs-2'
 import {
@@ -8,7 +9,6 @@ import {
 Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend)
 
 import { API } from '../config'
-
 import { getDriverColor } from '../constants/driverData'
 import { DRIVER_TEAMS_BY_YEAR } from '../constants/driverData'
 
@@ -67,6 +67,29 @@ export default function RaceReplay() {
   const [aiLoading, setAiLoading] = useState(false)
   const [selectedDrivers, setSelectedDrivers] = useState([])
   const [activeTab, setActiveTab] = useState('positions')
+  const [searchParams] = useSearchParams()
+
+  useEffect(() => {
+    const urlYear = searchParams.get('year')
+    const urlGp = searchParams.get('gp')
+    if (!urlYear || !urlGp) return
+    setYear(urlYear)
+    setGp(urlGp)
+    setRaces(RACES_BY_YEAR[urlYear] || RACES_BY_YEAR['2024'])
+    setLoading(true)
+    setRaceData(null)
+    setAiReply('')
+    axios.get(`${API}/race?year=${urlYear}&gp=${encodeURIComponent(urlGp)}`)
+      .then(r => {
+        setRaceData(r.data)
+        setSelectedDrivers(r.data.drivers.slice(0, 6))
+        setLoading(false)
+      })
+      .catch(() => {
+        alert(`No data available for ${urlGp} ${urlYear} yet.`)
+        setLoading(false)
+      })
+  }, [])
 
   useEffect(() => {
     const fallback = RACES_BY_YEAR[year] || RACES_BY_YEAR['2024']
