@@ -140,7 +140,32 @@ export default function RaceReplay() {
       allLapPositions.push(`Lap ${lap}: ${lapData.join(' ')}`)
     }
 
-    const summary = `Race: ${raceData.gp} Grand Prix ${raceData.year}\nTotal laps: ${raceData.total_laps}\nDrivers: ${raceData.drivers.join(', ')}\n\nCOMPLETE LAP BY LAP POSITIONS:\n${allLapPositions.join('\n')}`
+    // Build tire stint summary for each driver
+    const tireStintSummary = raceData.drivers.map(d => {
+      const tires = raceData.tire_data[d]
+      if (!tires || tires.length === 0) return `${d}: no tire data`
+      const stints = []
+      let current = tires[0], start = 1
+      for (let i = 1; i < tires.length; i++) {
+        if (tires[i] !== current) {
+          stints.push(`${current} laps ${start}-${i}`)
+          current = tires[i]
+          start = i + 1
+        }
+      }
+      stints.push(`${current} laps ${start}-${tires.length}`)
+      return `${d}: ${stints.join(' → ')}`
+    }).join('\n')
+
+    const summary = `Race: ${raceData.gp} Grand Prix ${raceData.year}
+    Total laps: ${raceData.total_laps}
+    Drivers: ${raceData.drivers.join(', ')}
+
+    TIRE STRATEGY (compound and laps):
+    ${tireStintSummary}
+
+    COMPLETE LAP BY LAP POSITIONS:
+    ${allLapPositions.join('\n')}`
 
     try {
       const r = await axios.post(`${API}/analyze`, { race_summary: summary, question })
