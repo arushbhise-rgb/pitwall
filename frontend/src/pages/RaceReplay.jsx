@@ -83,6 +83,7 @@ export default function RaceReplay() {
       .then(r => {
         setRaceData(r.data)
         setSelectedDrivers(r.data.drivers.slice(0, 6))
+        window.history.replaceState(null, '', `/replay?year=${year}&gp=${encodeURIComponent(gp)}`)
         setLoading(false)
       })
       .catch(() => {
@@ -459,10 +460,26 @@ ${allLapPositions.join('\n')}`
                     </div>
                   )}
                 </div>
-                <div style={{ fontSize: '12px', color: '#555', marginTop: '3px' }}>{raceData.total_laps} laps · {raceData.drivers.length} drivers</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '3px' }}>
+                  <div style={{ fontSize: '12px', color: '#555' }}>{raceData.total_laps} laps · {raceData.drivers.length} drivers</div>
+                  <button onClick={() => {
+                    const url = `${window.location.origin}/replay?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`
+                    navigator.clipboard.writeText(url).then(() => {
+                      const btn = document.getElementById('share-btn')
+                      if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = '🔗 Share' }, 2000) }
+                    })
+                  }} id="share-btn" style={{
+                    background: 'rgba(255,255,255,0.05)', border: '0.5px solid #2a2a2a',
+                    color: '#555', padding: '3px 10px', borderRadius: '6px',
+                    fontSize: '11px', cursor: 'pointer', transition: 'all .2s'
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#444' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = '#2a2a2a' }}
+                  >🔗 Share</button>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '8px' }}>
-                {['positions','laptimes','tires','gap','sectors'].map(tab => (
+                {['positions','laptimes','tires','gap','sectors','fastest'].map(tab => (
                   <button key={tab} className="tab-btn" onClick={() => setActiveTab(tab)} style={{
                     background: activeTab === tab ? '#e10600' : '#1a1a1a',
                     color: activeTab === tab ? '#fff' : '#666',
@@ -573,6 +590,67 @@ ${allLapPositions.join('\n')}`
               <div style={cardStyle}>
                 <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px', color: '#aaa' }}>Sector times</div>
                 <SectorChart raceData={raceData} selectedDrivers={selectedDrivers} getDriverColor={getDriverColor} API={API} year={year} />
+              </div>
+            )}
+
+            {activeTab === 'fastest' && (
+              <div style={cardStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '14px', color: '#aaa' }}>Fastest lap leaderboard</div>
+                {(() => {
+                  const fastestLaps = raceData.drivers.map((d, i) => {
+                    const times = raceData.lap_time_data[d]
+                    if (!times) return null
+                    const valid = times.filter(t => t && t > 0)
+                    if (valid.length === 0) return null
+                    const fastest = Math.min(...valid)
+                    const fastestLapNum = times.indexOf(fastest) + 1
+                    return { driver: d, time: fastest, lap: fastestLapNum, index: i }
+                  }).filter(Boolean).sort((a, b) => a.time - b.time)
+
+                  const pole = fastestLaps[0]?.time || 1
+
+                  return fastestLaps.map((entry, i) => {
+                    const color = getDriverColor(entry.driver, entry.index, year)
+                    const delta = entry.time - pole
+                    const pct = (pole / entry.time) * 100
+
+                    const fmt = s => {
+                      const m = Math.floor(s / 60)
+                      const sec = (s % 60).toFixed(3).padStart(6, '0')
+                      return `${m}:${sec}`
+                    }
+
+                    return (
+                      <div key={entry.driver} style={{
+                        display: 'grid', gridTemplateColumns: '28px 36px 1fr auto auto',
+                        alignItems: 'center', gap: '10px',
+                        padding: '9px 10px', borderRadius: '8px',
+                        background: i === 0 ? 'rgba(245,200,66,0.06)' : 'transparent',
+                        border: `0.5px solid ${i === 0 ? 'rgba(245,200,66,0.2)' : 'transparent'}`,
+                        marginBottom: '4px'
+                      }}>
+                        <div style={{ fontSize: '12px', fontWeight: '800', color: i === 0 ? '#f5c842' : i < 3 ? '#fff' : '#555', textAlign: 'center' }}>
+                          {i + 1}
+                        </div>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: color + '22', border: `1.5px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: '800', color: color }}>
+                          {entry.driver}
+                        </div>
+                        <div>
+                          <div style={{ height: '4px', background: '#1a1a1a', borderRadius: '2px', overflow: 'hidden', marginBottom: '3px' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: i === 0 ? '#f5c842' : color, borderRadius: '2px', transition: 'width .8s ease' }}></div>
+                          </div>
+                          <div style={{ fontSize: '10px', color: '#333' }}>Lap {entry.lap}</div>
+                        </div>
+                        <div style={{ fontSize: '13px', fontWeight: '700', color: i === 0 ? '#f5c842' : '#aaa', fontFamily: 'monospace' }}>
+                          {fmt(entry.time)}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#444', fontFamily: 'monospace', minWidth: '52px', textAlign: 'right' }}>
+                          {i === 0 ? '— pole' : `+${delta.toFixed(3)}s`}
+                        </div>
+                      </div>
+                    )
+                  })
+                })()}
               </div>
             )}
 
