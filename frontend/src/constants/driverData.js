@@ -1,29 +1,49 @@
 export const DRIVER_COLORS_BY_YEAR = {
   '2026': {
+    // Red Bull
     VER: '#3671c6', HAD: '#3671c6',
-    LEC: '#e8002d', HAM: '#e8002d', BEA: '#e8002d',
-    NOR: '#ff8000', PIA: '#ff8000', DOO: '#ff8000',
+    // Ferrari
+    LEC: '#e8002d', HAM: '#e8002d',
+    // McLaren
+    NOR: '#ff8000', PIA: '#ff8000',
+    // Mercedes
     RUS: '#00d2be', ANT: '#00d2be',
+    // Aston Martin
     ALO: '#52e252', STR: '#52e252',
+    // Alpine
     GAS: '#0093cc', COL: '#0093cc',
-    TSU: '#6692ff', LAW: '#6692ff',
+    // Racing Bulls
+    LAW: '#6692ff', LIN: '#6692ff',
+    // Williams
     ALB: '#005aff', SAI: '#005aff',
-    OCO: '#b6babd', MAG: '#b6babd',
+    // Haas
+    OCO: '#b6babd', BEA: '#b6babd',
+    // Audi
     HUL: '#c92d4b', BOR: '#c92d4b',
+    // Cadillac
     PER: '#ffffff', BOT: '#ffffff',
   },
   '2025': {
+    // Red Bull
     VER: '#3671c6', LAW: '#3671c6',
+    // Ferrari
     LEC: '#e8002d', HAM: '#e8002d',
+    // McLaren
     NOR: '#ff8000', PIA: '#ff8000',
+    // Mercedes
     RUS: '#00d2be', ANT: '#00d2be',
+    // Aston Martin
     ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', DOO: '#0093cc',
+    // Alpine (Doohan started, Colapinto replaced mid-season)
+    GAS: '#0093cc', DOO: '#0093cc', COL: '#0093cc',
+    // Racing Bulls
     TSU: '#6692ff', HAD: '#6692ff',
+    // Williams
     ALB: '#005aff', SAI: '#005aff',
-    MAG: '#b6babd', OCO: '#b6babd',
+    // Haas
+    BEA: '#b6babd', OCO: '#b6babd',
+    // Kick Sauber
     HUL: '#c92d4b', BOR: '#c92d4b',
-    BEA: '#b6babd',
   },
   '2024': {
     VER: '#3671c6', PER: '#3671c6',
@@ -96,7 +116,7 @@ export const CONSTRUCTOR_COLORS = {
   'alpine': '#0093cc', 'alpine f1': '#0093cc',
   'williams': '#005aff', 'williams racing': '#005aff',
   'alphatauri': '#6692ff', 'rb': '#6692ff', 'racing bulls': '#6692ff',
-  'alfa romeo': '#c92d4b', 'sauber': '#c92d4b', 'kick sauber': '#c92d4b',
+  'alfa romeo': '#c92d4b', 'sauber': '#c92d4b', 'kick sauber': '#c92d4b', 'audi': '#c92d4b',
   'haas': '#b6babd', 'haas f1 team': '#b6babd',
   'cadillac': '#ffffff', 'andretti': '#ffffff',
 }
@@ -123,15 +143,15 @@ export function getConstructorColor(name) {
 export const DRIVER_TEAMS_BY_YEAR = {
   '2026': {
     VER: 'Red Bull', HAD: 'Red Bull',
-    LEC: 'Ferrari', HAM: 'Ferrari', BEA: 'Ferrari',
-    NOR: 'McLaren', PIA: 'McLaren', DOO: 'McLaren',
+    LEC: 'Ferrari', HAM: 'Ferrari',
+    NOR: 'McLaren', PIA: 'McLaren',
     RUS: 'Mercedes', ANT: 'Mercedes',
     ALO: 'Aston Martin', STR: 'Aston Martin',
     GAS: 'Alpine', COL: 'Alpine',
-    TSU: 'RB', LAW: 'RB',
+    LAW: 'Racing Bulls', LIN: 'Racing Bulls',
     ALB: 'Williams', SAI: 'Williams',
-    OCO: 'Haas', MAG: 'Haas',
-    HUL: 'Sauber', BOR: 'Sauber',
+    OCO: 'Haas', BEA: 'Haas',
+    HUL: 'Audi', BOR: 'Audi',
     PER: 'Cadillac', BOT: 'Cadillac',
   },
   '2025': {
@@ -140,11 +160,11 @@ export const DRIVER_TEAMS_BY_YEAR = {
     NOR: 'McLaren', PIA: 'McLaren',
     RUS: 'Mercedes', ANT: 'Mercedes',
     ALO: 'Aston Martin', STR: 'Aston Martin',
-    GAS: 'Alpine', DOO: 'Alpine',
-    TSU: 'RB', HAD: 'RB',
+    GAS: 'Alpine', DOO: 'Alpine', COL: 'Alpine',
+    TSU: 'Racing Bulls', HAD: 'Racing Bulls',
     ALB: 'Williams', SAI: 'Williams',
-    MAG: 'Haas', BEA: 'Haas', OCO: 'Haas',
-    HUL: 'Sauber', BOR: 'Sauber',
+    BEA: 'Haas', OCO: 'Haas',
+    HUL: 'Kick Sauber', BOR: 'Kick Sauber',
   },
   '2024': {
     VER: 'Red Bull', PER: 'Red Bull',
@@ -156,7 +176,7 @@ export const DRIVER_TEAMS_BY_YEAR = {
     TSU: 'RB', RIC: 'RB',
     ALB: 'Williams', SAR: 'Williams',
     MAG: 'Haas', HUL: 'Haas',
-    ZHO: 'Sauber', BOT: 'Sauber',
+    ZHO: 'Kick Sauber', BOT: 'Kick Sauber',
   },
   '2023': {
     VER: 'Red Bull', PER: 'Red Bull',
