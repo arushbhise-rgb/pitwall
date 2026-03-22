@@ -117,7 +117,6 @@ export default function RaceReplay() {
     setLoading(true)
     setRaceData(null)
     setAiReply('')
-    setMetaDescription(`Lap by lap analysis of the ${r.data.year} ${r.data.gp} Grand Prix. Position changes, tire strategy, gap to leader, sector times and AI race analysis. Free on PitWall.`)
     try {
       const response = await axios.get(`${API}/race?year=${year}&gp=${encodeURIComponent(gp)}`)
       setRaceData(response.data)
@@ -414,9 +413,12 @@ ${allLapPositions.join('\n')}`
                     setRaceData(null)
                     setAiReply('')
                     try {
-                      const r = await axios.get(`${API}/race?year=${item.y}&gp=${encodeURIComponent(item.r)}`)
-                      setRaceData(r.data)
-                      setSelectedDrivers(r.data.drivers.slice(0, 6))
+                      const response = await axios.get(`${API}/race?year=${year}&gp=${encodeURIComponent(gp)}`)
+                      setRaceData(response.data)
+                      setSelectedDrivers(response.data.drivers.slice(0, 6))
+                      window.history.replaceState(null, '', `/replay?year=${year}&gp=${encodeURIComponent(gp)}`)
+                      document.title = `${response.data.gp} Grand Prix ${response.data.year} Analysis — PitWall`
+                      setMetaDescription(`Lap by lap analysis of the ${response.data.year} ${response.data.gp} Grand Prix. Position changes, tire strategy, gap to leader, sector times and AI race analysis. Free on PitWall.`)
                     } catch(e) { alert('Error loading race') }
                     setLoading(false)
                   }} style={{
