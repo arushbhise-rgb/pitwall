@@ -86,10 +86,11 @@ export default function RaceReplay() {
     setRaceData(null)
     setAiReply('')
     axios.get(`${API}/race?year=${urlYear}&gp=${encodeURIComponent(urlGp)}`)
-      .then(r => {
-        setRaceData(r.data)
-        setSelectedDrivers(r.data.drivers.slice(0, 6))
-        window.history.replaceState(null, '', `/replay?year=${year}&gp=${encodeURIComponent(gp)}`)
+      .then(response => {
+        setRaceData(response.data)
+        setSelectedDrivers(response.data.drivers.slice(0, 6))
+        window.history.replaceState(null, '', `/replay?year=${urlYear}&gp=${encodeURIComponent(urlGp)}`)
+        document.title = `${response.data.gp} Grand Prix ${response.data.year} Analysis — PitWall`
         setLoading(false)
       })
       .catch(() => {
@@ -118,10 +119,11 @@ export default function RaceReplay() {
     setAiReply('')
     setMetaDescription(`Lap by lap analysis of the ${r.data.year} ${r.data.gp} Grand Prix. Position changes, tire strategy, gap to leader, sector times and AI race analysis. Free on PitWall.`)
     try {
-      const r = await axios.get(`${API}/race?year=${year}&gp=${encodeURIComponent(gp)}`)
-      setRaceData(r.data)
-      document.title = `${r.data.gp} Grand Prix ${r.data.year} Analysis — PitWall`
-      setSelectedDrivers(r.data.drivers.slice(0, 6))
+      const response = await axios.get(`${API}/race?year=${year}&gp=${encodeURIComponent(gp)}`)
+      setRaceData(response.data)
+      setSelectedDrivers(response.data.drivers.slice(0, 6))
+      window.history.replaceState(null, '', `/replay?year=${year}&gp=${encodeURIComponent(gp)}`)
+      document.title = `${response.data.gp} Grand Prix ${response.data.year} Analysis — PitWall`
     } catch(e) {
       alert(`No data available for ${gp} ${year} yet — this race may not have happened yet or data is still processing.`)
     }
