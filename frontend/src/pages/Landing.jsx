@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { DRIVER_TEAMS_BY_YEAR, DRIVER_COLORS_BY_YEAR } from '../constants/driverData'
+import { API } from '../config'
 import { useNavigate } from "react-router-dom";
 
 function useInView(threshold = 0.15) {
@@ -161,42 +163,52 @@ function Particles() {
 }
 
 // Live ticker showing 2026 standings
-const STANDINGS_2026 = [
-  { pos: 1, code: "RUS", color: "#00d2be", pts: 43 },
-  { pos: 2, code: "ANT", color: "#00d2be", pts: 38 },
-  { pos: 3, code: "NOR", color: "#ff8000", pts: 35 },
-  { pos: 4, code: "LEC", color: "#e8002d", pts: 30 },
-  { pos: 5, code: "HAM", color: "#e8002d", pts: 27 },
-  { pos: 6, code: "PIA", color: "#ff8000", pts: 22 },
-  { pos: 7, code: "VER", color: "#3671c6", pts: 18 },
-  { pos: 8, code: "SAI", color: "#005aff", pts: 15 },
-  { pos: 9, code: "ALB", color: "#005aff", pts: 12 },
-  { pos: 10, code: "ALO", color: "#52e252", pts: 10 },
-];
+function LiveStandingsTicker() {
+  const [standings, setStandings] = useState([])
 
-function LiveTicker() {
-  const tickerRef = useRef(null);
   useEffect(() => {
-    const el = tickerRef.current;
-    if (!el) return;
-    let pos = 0;
-    const speed = 0.5;
-    const totalWidth = el.scrollWidth / 2;
-    function animate() {
-      pos += speed;
-      if (pos >= totalWidth) pos = 0;
-      el.style.transform = `translateX(-${pos}px)`;
-      requestAnimationFrame(animate);
-    }
-    const id = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(id);
-  }, []);
+    fetch(`https://pitwall-production-c292.up.railway.app/standings/drivers?year=2026`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.standings) setStandings(data.standings.slice(0, 10))
+      })
+      .catch(() => {})
+  }, [])
 
-  const items = [...STANDINGS_2026, ...STANDINGS_2026];
+  const tickerRef = useRef(null)
+  useEffect(() => {
+    if (!standings.length) return
+    const el = tickerRef.current
+    if (!el) return
+    let pos = 0
+    const speed = 0.6
+    function animate() {
+      pos += speed
+      const totalWidth = el.scrollWidth / 2
+      if (pos >= totalWidth) pos = 0
+      el.style.transform = `translateX(-${pos}px)`
+      requestAnimationFrame(animate)
+    }
+    const id = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(id)
+  }, [standings])
+
+  if (!standings.length) return null
+
+  const items = [...standings, ...standings]
+
+  const DRIVER_COLORS = {
+    RUS: '#00d2be', ANT: '#00d2be', NOR: '#ff8000', PIA: '#ff8000',
+    LEC: '#e8002d', HAM: '#e8002d', VER: '#3671c6', HAD: '#3671c6',
+    ALB: '#005aff', SAI: '#005aff', ALO: '#52e252', STR: '#52e252',
+    GAS: '#0093cc', COL: '#0093cc', LAW: '#6692ff', LIN: '#6692ff',
+    OCO: '#b6babd', BEA: '#b6babd', HUL: '#c92d4b', BOR: '#c92d4b',
+    PER: '#ffffff', BOT: '#ffffff',
+  }
 
   return (
     <div style={{
-      background: "rgba(0,0,0,0.6)",
+      background: "rgba(0,0,0,0.7)",
       borderTop: "0.5px solid rgba(225,6,0,0.2)",
       borderBottom: "0.5px solid rgba(225,6,0,0.2)",
       padding: "10px 0",
@@ -204,99 +216,75 @@ function LiveTicker() {
       position: "relative",
       zIndex: 2,
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "0", whiteSpace: "nowrap" }}>
-        {/* Label */}
-        <div style={{
-          position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 3,
-          background: "linear-gradient(90deg, #000, transparent)",
-          width: "120px", pointerEvents: "none"
-        }} />
-        <div style={{
-          position: "absolute", right: 0, top: 0, bottom: 0, zIndex: 3,
-          background: "linear-gradient(270deg, #000, transparent)",
-          width: "120px", pointerEvents: "none"
-        }} />
-        <div style={{
-          position: "absolute", left: "20px", zIndex: 4,
-          display: "flex", alignItems: "center", gap: "8px"
-        }}>
-          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#e10600", animation: "pulse 2s infinite" }} />
-          <span style={{ fontSize: "9px", color: "#e10600", fontFamily: "'Space Mono', monospace", letterSpacing: "2px", textTransform: "uppercase" }}>2026 Standings</span>
-        </div>
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 3, background: "linear-gradient(90deg, #000, transparent)", width: "140px", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, zIndex: 3, background: "linear-gradient(270deg, #000, transparent)", width: "140px", pointerEvents: "none" }} />
 
-        <div ref={tickerRef} style={{ display: "flex", alignItems: "center", gap: "0", paddingLeft: "200px" }}>
-          {items.map((d, i) => (
+      <div style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", zIndex: 4, display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#e10600", animation: "pulse 2s infinite" }} />
+        <span style={{ fontSize: "9px", color: "#e10600", fontFamily: "'Space Mono', monospace", letterSpacing: "2px", textTransform: "uppercase", whiteSpace: "nowrap" }}>Live 2026</span>
+      </div>
+
+      <div ref={tickerRef} style={{ display: "flex", alignItems: "center", paddingLeft: "160px", gap: "0" }}>
+        {items.map((d, i) => {
+          const color = DRIVER_COLORS[d.code] || '#888'
+          return (
             <div key={i} style={{
               display: "inline-flex", alignItems: "center", gap: "8px",
-              padding: "0 24px",
+              padding: "0 20px",
               borderRight: "0.5px solid rgba(255,255,255,0.05)",
             }}>
-              <span style={{ fontSize: "10px", color: "#333", fontFamily: "'Space Mono', monospace" }}>P{d.pos}</span>
+              <span style={{ fontSize: "10px", color: "#333", fontFamily: "'Space Mono', monospace" }}>P{d.position}</span>
               <div style={{
-                width: "24px", height: "24px", borderRadius: "50%",
-                background: d.color + "22",
-                border: `1.5px solid ${d.color}`,
+                width: "26px", height: "26px", borderRadius: "50%",
+                background: color + "22",
+                border: `1.5px solid ${color}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "8px", fontWeight: "900", color: d.color
+                fontSize: "8px", fontWeight: "900", color: color,
+                flexShrink: 0
               }}>{d.code}</div>
-              <span style={{ fontSize: "11px", fontWeight: "700", color: "#aaa", fontFamily: "'Space Mono', monospace" }}>{d.pts}</span>
+              <span style={{ fontSize: "12px", fontWeight: "700", color: "#aaa", fontFamily: "'Space Mono', monospace" }}>{Math.round(d.points)}</span>
               <span style={{ fontSize: "9px", color: "#333" }}>PTS</span>
             </div>
-          ))}
-        </div>
+          )
+        })}
       </div>
     </div>
-  );
+  )
 }
 
-// Team colors strip
-const TEAMS_2026 = [
-  { name: "McLaren", color: "#ff8000", drivers: "NOR · PIA" },
-  { name: "Mercedes", color: "#00d2be", drivers: "RUS · ANT" },
-  { name: "Ferrari", color: "#e8002d", drivers: "LEC · HAM" },
-  { name: "Red Bull", color: "#3671c6", drivers: "VER · HAD" },
-  { name: "Williams", color: "#005aff", drivers: "ALB · SAI" },
-  { name: "Aston Martin", color: "#52e252", drivers: "ALO · STR" },
-  { name: "Alpine", color: "#0093cc", drivers: "GAS · COL" },
-  { name: "Racing Bulls", color: "#6692ff", drivers: "LAW · LIN" },
-  { name: "Haas", color: "#b6babd", drivers: "OCO · BEA" },
-  { name: "Audi", color: "#c92d4b", drivers: "HUL · BOR" },
-  { name: "Cadillac", color: "#e8e8e8", drivers: "PER · BOT" },
-];
-
 function TeamsStrip({ visible }) {
+  const teams = DRIVER_TEAMS_BY_YEAR['2026']
+  const colors = DRIVER_COLORS_BY_YEAR['2026']
+
+  const teamGroups = {}
+  Object.entries(teams).forEach(([code, team]) => {
+    if (!teamGroups[team]) teamGroups[team] = { color: colors[code] || '#888', drivers: [] }
+    if (teamGroups[team].drivers.length < 2) teamGroups[team].drivers.push(code)
+  })
+
   return (
-    <div style={{
-      display: "flex", gap: "10px", flexWrap: "wrap",
-      justifyContent: "center",
-      opacity: visible ? 1 : 0,
-      transform: visible ? "translateY(0)" : "translateY(20px)",
-      transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)",
-    }}>
-      {TEAMS_2026.map((t, i) => (
+    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" }}>
+      {Object.entries(teamGroups).map(([team, { color, drivers }], i) => (
         <div key={i} style={{
           display: "flex", alignItems: "center", gap: "8px",
-          background: t.color + "10",
-          border: `0.5px solid ${t.color}33`,
-          borderRadius: "8px",
-          padding: "8px 14px",
-          transition: "all 0.2s",
+          background: color + "10", border: `0.5px solid ${color}33`,
+          borderRadius: "8px", padding: "8px 14px", transition: "all 0.2s",
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(10px)",
           transitionDelay: `${i * 40}ms`,
         }}
-          onMouseEnter={e => { e.currentTarget.style.background = t.color + "25"; e.currentTarget.style.borderColor = t.color + "88"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = t.color + "10"; e.currentTarget.style.borderColor = t.color + "33"; }}
+          onMouseEnter={e => { e.currentTarget.style.background = color + "25"; e.currentTarget.style.borderColor = color + "88" }}
+          onMouseLeave={e => { e.currentTarget.style.background = color + "10"; e.currentTarget.style.borderColor = color + "33" }}
         >
-          <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: t.color, flexShrink: 0 }} />
+          <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: color, flexShrink: 0 }} />
           <div>
-            <div style={{ fontSize: "11px", fontWeight: "700", color: "#fff" }}>{t.name}</div>
-            <div style={{ fontSize: "9px", color: "#444", marginTop: "1px" }}>{t.drivers}</div>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#fff" }}>{team}</div>
+            <div style={{ fontSize: "9px", color: "#444", marginTop: "1px" }}>{drivers.join(' · ')}</div>
           </div>
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 // Next race countdown
@@ -609,7 +597,7 @@ export default function Landing() {
 
       {/* LIVE TICKER */}
       <div style={{ position: "relative", zIndex: 2, paddingTop: "64px" }}>
-        <LiveTicker />
+        <LiveStandingsTicker />
       </div>
 
       {/* HERO */}
