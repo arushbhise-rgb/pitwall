@@ -162,95 +162,7 @@ function Particles() {
   return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
 }
 
-// Live ticker showing 2026 standings
-function LiveStandingsTicker() {
-  const [standings, setStandings] = useState([])
 
-  useEffect(() => {
-    fetch(`https://pitwall-production-c292.up.railway.app/standings/drivers?year=2026`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.standings) setStandings(data.standings.slice(0, 10))
-      })
-      .catch(() => {})
-  }, [])
-
-  const tickerRef = useRef(null)
-  useEffect(() => {
-    if (!standings.length) return
-    const el = tickerRef.current
-    if (!el) return
-    let pos = 0
-    const speed = 0.6
-    function animate() {
-      pos += speed
-      const totalWidth = el.scrollWidth / 2
-      if (pos >= totalWidth) pos = 0
-      el.style.transform = `translateX(-${pos}px)`
-      requestAnimationFrame(animate)
-    }
-    const id = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(id)
-  }, [standings])
-
-  if (!standings.length) return null
-
-  const items = [...standings, ...standings]
-
-  const DRIVER_COLORS = {
-    RUS: '#00d2be', ANT: '#00d2be', NOR: '#ff8000', PIA: '#ff8000',
-    LEC: '#e8002d', HAM: '#e8002d', VER: '#3671c6', HAD: '#3671c6',
-    ALB: '#005aff', SAI: '#005aff', ALO: '#52e252', STR: '#52e252',
-    GAS: '#0093cc', COL: '#0093cc', LAW: '#6692ff', LIN: '#6692ff',
-    OCO: '#b6babd', BEA: '#b6babd', HUL: '#c92d4b', BOR: '#c92d4b',
-    PER: '#ffffff', BOT: '#ffffff',
-  }
-
-  return (
-    <div style={{
-      background: "rgba(0,0,0,0.7)",
-      borderTop: "0.5px solid rgba(225,6,0,0.2)",
-      borderBottom: "0.5px solid rgba(225,6,0,0.2)",
-      padding: "10px 0",
-      overflow: "hidden",
-      position: "relative",
-      zIndex: 2,
-    }}>
-      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 3, background: "linear-gradient(90deg, #000, transparent)", width: "140px", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, zIndex: 3, background: "linear-gradient(270deg, #000, transparent)", width: "140px", pointerEvents: "none" }} />
-
-      <div style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", zIndex: 4, display: "flex", alignItems: "center", gap: "8px" }}>
-        <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#e10600", animation: "pulse 2s infinite" }} />
-        <span style={{ fontSize: "9px", color: "#e10600", fontFamily: "'Space Mono', monospace", letterSpacing: "2px", textTransform: "uppercase", whiteSpace: "nowrap" }}>Live 2026</span>
-      </div>
-
-      <div ref={tickerRef} style={{ display: "flex", alignItems: "center", paddingLeft: "160px", gap: "0" }}>
-        {items.map((d, i) => {
-          const color = DRIVER_COLORS[d.code] || '#888'
-          return (
-            <div key={i} style={{
-              display: "inline-flex", alignItems: "center", gap: "8px",
-              padding: "0 20px",
-              borderRight: "0.5px solid rgba(255,255,255,0.05)",
-            }}>
-              <span style={{ fontSize: "10px", color: "#333", fontFamily: "'Space Mono', monospace" }}>P{d.position}</span>
-              <div style={{
-                width: "26px", height: "26px", borderRadius: "50%",
-                background: color + "22",
-                border: `1.5px solid ${color}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "8px", fontWeight: "900", color: color,
-                flexShrink: 0
-              }}>{d.code}</div>
-              <span style={{ fontSize: "12px", fontWeight: "700", color: "#aaa", fontFamily: "'Space Mono', monospace" }}>{Math.round(d.points)}</span>
-              <span style={{ fontSize: "9px", color: "#333" }}>PTS</span>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
 
 function TeamsStrip({ visible }) {
   const teams = DRIVER_TEAMS_BY_YEAR['2026']
@@ -469,6 +381,124 @@ function Tag({ text }) {
   );
 }
 
+function TeamColorBar() {
+  const teams = [
+    '#ff8000', '#ff8000',
+    '#00d2be', '#00d2be',
+    '#e8002d', '#e8002d',
+    '#3671c6', '#3671c6',
+    '#52e252', '#52e252',
+    '#0093cc', '#0093cc',
+    '#6692ff', '#6692ff',
+    '#005aff', '#005aff',
+    '#b6babd', '#b6babd',
+    '#c92d4b', '#c92d4b',
+    '#dddddd', '#dddddd',
+  ]
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0,
+      height: '3px', zIndex: 200,
+      display: 'flex',
+    }}>
+      {teams.map((color, i) => (
+        <div key={i} style={{
+          flex: 1,
+          background: color,
+          opacity: 0.9,
+        }} />
+      ))}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)',
+        backgroundSize: '200% 100%',
+        animation: 'shimmer 3s linear infinite',
+      }} />
+    </div>
+  )
+}
+
+function LatestResultBanner() {
+  const [result, setResult] = useState(null)
+
+  useEffect(() => {
+    fetch(`${API}/standings/drivers?year=2026`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.standings) setResult(data)
+      })
+      .catch(() => {})
+  }, [])
+
+  const COLORS = {
+    RUS: '#00d2be', ANT: '#00d2be', NOR: '#ff8000', PIA: '#ff8000',
+    LEC: '#e8002d', HAM: '#e8002d', VER: '#3671c6', HAD: '#3671c6',
+    ALB: '#005aff', SAI: '#005aff', ALO: '#52e252', STR: '#52e252',
+  }
+
+  if (!result) return null
+
+  const top3 = result.standings.slice(0, 3)
+
+  return (
+    <div style={{
+      position: 'relative', zIndex: 2,
+      background: 'rgba(0,0,0,0.5)',
+      backdropFilter: 'blur(10px)',
+      borderBottom: '0.5px solid rgba(255,255,255,0.04)',
+      padding: '8px 40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '32px',
+      marginTop: '64px',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '6px',
+      }}>
+        <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#e10600', animation: 'pulse 2s infinite' }} />
+        <span style={{
+          fontSize: '9px', color: '#e10600',
+          fontFamily: "'Space Mono', monospace",
+          letterSpacing: '2px', textTransform: 'uppercase',
+        }}>2026 Championship</span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        {top3.map((d, i) => (
+          <div key={i} style={{
+            display: 'flex', alignItems: 'center', gap: '7px',
+          }}>
+            <span style={{
+              fontSize: '9px', color: '#333',
+              fontFamily: "'Space Mono', monospace",
+            }}>P{d.position}</span>
+            <div style={{
+              width: '22px', height: '22px', borderRadius: '50%',
+              background: (COLORS[d.code] || '#888') + '20',
+              border: `1.5px solid ${COLORS[d.code] || '#888'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '7px', fontWeight: '900',
+              color: COLORS[d.code] || '#888',
+            }}>{d.code}</div>
+            <span style={{
+              fontSize: '11px', fontWeight: '700',
+              color: i === 0 ? '#fff' : '#555',
+              fontFamily: "'Space Mono', monospace",
+            }}>{Math.round(d.points)}<span style={{ fontSize: '8px', color: '#333', marginLeft: '2px' }}>pts</span></span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{
+        fontSize: '9px', color: '#333',
+        fontFamily: "'Space Mono', monospace",
+        letterSpacing: '1px',
+      }}>After Round {result.round}</div>
+    </div>
+  )
+}
+
 export default function Landing() {
   const navigate = useNavigate();
   const [heroRef, heroVisible] = useInView(0.1);
@@ -535,6 +565,7 @@ export default function Landing() {
 
       <GridCanvas />
       <SpeedLines />
+      <TeamColorBar />
 
       {/* NAV */}
       <nav style={{
@@ -595,10 +626,8 @@ export default function Landing() {
         </div>
       </nav>
 
-      {/* LIVE TICKER */}
-      <div style={{ position: "relative", zIndex: 2, paddingTop: "64px" }}>
-        <LiveStandingsTicker />
-      </div>
+      <LatestResultBanner />
+
 
       {/* HERO */}
       <section ref={heroRef} style={{
@@ -606,7 +635,7 @@ export default function Landing() {
         minHeight: "92vh",
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
-        padding: "80px 40px 80px",
+        padding: "40px 40px 80px",
         textAlign: "center",
       }}>
         <Particles />
