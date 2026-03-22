@@ -83,6 +83,45 @@ function GridCanvas() {
   return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
 }
 
+function SpeedLines() {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let frame;
+    const lines = Array.from({ length: 18 }, (_, i) => ({
+      y: (i / 18) * window.innerHeight + Math.random() * 60,
+      speed: Math.random() * 4 + 2,
+      width: Math.random() * 120 + 40,
+      opacity: Math.random() * 0.06 + 0.02,
+      x: Math.random() * window.innerWidth,
+    }));
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener("resize", resize);
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      lines.forEach(l => {
+        l.x += l.speed;
+        if (l.x > canvas.width + l.width) l.x = -l.width;
+        const grad = ctx.createLinearGradient(l.x - l.width, 0, l.x, 0);
+        grad.addColorStop(0, `rgba(225,6,0,0)`);
+        grad.addColorStop(1, `rgba(225,6,0,${l.opacity})`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(l.x - l.width, l.y, l.width, 1);
+      });
+      frame = requestAnimationFrame(draw);
+    }
+    draw();
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); };
+  }, []);
+  return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
+}
+
 function Particles() {
   const canvasRef = useRef(null);
   useEffect(() => {
@@ -119,6 +158,226 @@ function Particles() {
     return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); };
   }, []);
   return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
+}
+
+// Live ticker showing 2026 standings
+const STANDINGS_2026 = [
+  { pos: 1, code: "RUS", color: "#00d2be", pts: 43 },
+  { pos: 2, code: "ANT", color: "#00d2be", pts: 38 },
+  { pos: 3, code: "NOR", color: "#ff8000", pts: 35 },
+  { pos: 4, code: "LEC", color: "#e8002d", pts: 30 },
+  { pos: 5, code: "HAM", color: "#e8002d", pts: 27 },
+  { pos: 6, code: "PIA", color: "#ff8000", pts: 22 },
+  { pos: 7, code: "VER", color: "#3671c6", pts: 18 },
+  { pos: 8, code: "SAI", color: "#005aff", pts: 15 },
+  { pos: 9, code: "ALB", color: "#005aff", pts: 12 },
+  { pos: 10, code: "ALO", color: "#52e252", pts: 10 },
+];
+
+function LiveTicker() {
+  const tickerRef = useRef(null);
+  useEffect(() => {
+    const el = tickerRef.current;
+    if (!el) return;
+    let pos = 0;
+    const speed = 0.5;
+    const totalWidth = el.scrollWidth / 2;
+    function animate() {
+      pos += speed;
+      if (pos >= totalWidth) pos = 0;
+      el.style.transform = `translateX(-${pos}px)`;
+      requestAnimationFrame(animate);
+    }
+    const id = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const items = [...STANDINGS_2026, ...STANDINGS_2026];
+
+  return (
+    <div style={{
+      background: "rgba(0,0,0,0.6)",
+      borderTop: "0.5px solid rgba(225,6,0,0.2)",
+      borderBottom: "0.5px solid rgba(225,6,0,0.2)",
+      padding: "10px 0",
+      overflow: "hidden",
+      position: "relative",
+      zIndex: 2,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0", whiteSpace: "nowrap" }}>
+        {/* Label */}
+        <div style={{
+          position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 3,
+          background: "linear-gradient(90deg, #000, transparent)",
+          width: "120px", pointerEvents: "none"
+        }} />
+        <div style={{
+          position: "absolute", right: 0, top: 0, bottom: 0, zIndex: 3,
+          background: "linear-gradient(270deg, #000, transparent)",
+          width: "120px", pointerEvents: "none"
+        }} />
+        <div style={{
+          position: "absolute", left: "20px", zIndex: 4,
+          display: "flex", alignItems: "center", gap: "8px"
+        }}>
+          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#e10600", animation: "pulse 2s infinite" }} />
+          <span style={{ fontSize: "9px", color: "#e10600", fontFamily: "'Space Mono', monospace", letterSpacing: "2px", textTransform: "uppercase" }}>2026 Standings</span>
+        </div>
+
+        <div ref={tickerRef} style={{ display: "flex", alignItems: "center", gap: "0", paddingLeft: "200px" }}>
+          {items.map((d, i) => (
+            <div key={i} style={{
+              display: "inline-flex", alignItems: "center", gap: "8px",
+              padding: "0 24px",
+              borderRight: "0.5px solid rgba(255,255,255,0.05)",
+            }}>
+              <span style={{ fontSize: "10px", color: "#333", fontFamily: "'Space Mono', monospace" }}>P{d.pos}</span>
+              <div style={{
+                width: "24px", height: "24px", borderRadius: "50%",
+                background: d.color + "22",
+                border: `1.5px solid ${d.color}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "8px", fontWeight: "900", color: d.color
+              }}>{d.code}</div>
+              <span style={{ fontSize: "11px", fontWeight: "700", color: "#aaa", fontFamily: "'Space Mono', monospace" }}>{d.pts}</span>
+              <span style={{ fontSize: "9px", color: "#333" }}>PTS</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Team colors strip
+const TEAMS_2026 = [
+  { name: "McLaren", color: "#ff8000", drivers: "NOR · PIA" },
+  { name: "Mercedes", color: "#00d2be", drivers: "RUS · ANT" },
+  { name: "Ferrari", color: "#e8002d", drivers: "LEC · HAM" },
+  { name: "Red Bull", color: "#3671c6", drivers: "VER · HAD" },
+  { name: "Williams", color: "#005aff", drivers: "ALB · SAI" },
+  { name: "Aston Martin", color: "#52e252", drivers: "ALO · STR" },
+  { name: "Alpine", color: "#0093cc", drivers: "GAS · COL" },
+  { name: "Racing Bulls", color: "#6692ff", drivers: "LAW · LIN" },
+  { name: "Haas", color: "#b6babd", drivers: "OCO · BEA" },
+  { name: "Audi", color: "#c92d4b", drivers: "HUL · BOR" },
+  { name: "Cadillac", color: "#e8e8e8", drivers: "PER · BOT" },
+];
+
+function TeamsStrip({ visible }) {
+  return (
+    <div style={{
+      display: "flex", gap: "10px", flexWrap: "wrap",
+      justifyContent: "center",
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0)" : "translateY(20px)",
+      transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)",
+    }}>
+      {TEAMS_2026.map((t, i) => (
+        <div key={i} style={{
+          display: "flex", alignItems: "center", gap: "8px",
+          background: t.color + "10",
+          border: `0.5px solid ${t.color}33`,
+          borderRadius: "8px",
+          padding: "8px 14px",
+          transition: "all 0.2s",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(10px)",
+          transitionDelay: `${i * 40}ms`,
+        }}
+          onMouseEnter={e => { e.currentTarget.style.background = t.color + "25"; e.currentTarget.style.borderColor = t.color + "88"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = t.color + "10"; e.currentTarget.style.borderColor = t.color + "33"; }}
+        >
+          <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: t.color, flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#fff" }}>{t.name}</div>
+            <div style={{ fontSize: "9px", color: "#444", marginTop: "1px" }}>{t.drivers}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Next race countdown
+const NEXT_RACES = [
+  { name: "Japanese Grand Prix", location: "Suzuka", date: "2026-04-05", flag: "🇯🇵" },
+  { name: "Bahrain Grand Prix", location: "Sakhir", date: "2026-04-19", flag: "🇧🇭" },
+];
+
+function NextRaceCard({ visible }) {
+  const [timeLeft, setTimeLeft] = useState({});
+  const next = NEXT_RACES[0];
+
+  useEffect(() => {
+    function calc() {
+      const diff = new Date(next.date) - new Date();
+      if (diff <= 0) { setTimeLeft({ done: true }); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setTimeLeft({ d, h, m, s });
+    }
+    calc();
+    const t = setInterval(calc, 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div style={{
+      background: "rgba(225,6,0,0.04)",
+      border: "1px solid rgba(225,6,0,0.15)",
+      borderRadius: "16px",
+      padding: "24px 28px",
+      maxWidth: "600px",
+      margin: "0 auto",
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0)" : "translateY(20px)",
+      transition: "all 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      <div style={{
+        position: "absolute", top: 0, left: "10%", right: "10%", height: "1px",
+        background: "linear-gradient(90deg, transparent, rgba(225,6,0,0.4), transparent)"
+      }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
+        <div>
+          <div style={{ fontSize: "10px", color: "#e10600", textTransform: "uppercase", letterSpacing: "2px", marginBottom: "8px", fontFamily: "'Space Mono', monospace" }}>Next Race</div>
+          <div style={{ fontSize: "18px", fontWeight: "800", marginBottom: "4px" }}>
+            {next.flag} {next.name}
+          </div>
+          <div style={{ fontSize: "12px", color: "#555" }}>{next.location} · {new Date(next.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div>
+        </div>
+        <div style={{ display: "flex", gap: "12px" }}>
+          {[
+            { val: timeLeft.d, label: "Days" },
+            { val: timeLeft.h, label: "Hrs" },
+            { val: timeLeft.m, label: "Min" },
+            { val: timeLeft.s, label: "Sec" },
+          ].map((t, i) => (
+            <div key={i} style={{ textAlign: "center" }}>
+              <div style={{
+                background: "rgba(225,6,0,0.1)",
+                border: "0.5px solid rgba(225,6,0,0.2)",
+                borderRadius: "8px",
+                padding: "8px 12px",
+                fontSize: "22px",
+                fontWeight: "900",
+                fontFamily: "'Space Mono', monospace",
+                color: "#fff",
+                minWidth: "52px",
+              }}>
+                {String(t.val ?? 0).padStart(2, "0")}
+              </div>
+              <div style={{ fontSize: "9px", color: "#444", marginTop: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>{t.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function FeatureCard({ icon, title, desc, color, delay, visible }) {
@@ -229,6 +488,8 @@ export default function Landing() {
   const [statRef, statVisible] = useInView(0.2);
   const [ctaRef, ctaVisible] = useInView(0.2);
   const [previewRef, previewVisible] = useInView(0.1);
+  const [teamsRef, teamsVisible] = useInView(0.1);
+  const [nextRaceRef, nextRaceVisible] = useInView(0.1);
   const [scrolledPast, setScrolledPast] = useState(false);
 
   useEffect(() => {
@@ -271,6 +532,7 @@ export default function Landing() {
         @keyframes glowPulse { 0%,100% { box-shadow:0 0 20px rgba(225,6,0,0.2),0 0 60px rgba(225,6,0,0.1); } 50% { box-shadow:0 0 30px rgba(225,6,0,0.4),0 0 80px rgba(225,6,0,0.15); } }
         @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
         @keyframes scanline { 0% { top:-10%; } 100% { top:110%; } }
+        @keyframes drawLine { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
         * { box-sizing:border-box; }
         ::selection { background:rgba(225,6,0,0.3); color:#fff; }
         html { scroll-behavior:smooth; }
@@ -281,11 +543,10 @@ export default function Landing() {
         .nav-link { position:relative; }
         .nav-link::after { content:''; position:absolute; bottom:-2px; left:0; width:0; height:1px; background:#e10600; transition:width 0.3s; }
         .nav-link:hover::after { width:100%; }
-        .preview-card { transition: all 0.3s; }
-        .preview-card:hover { border-color: rgba(225,6,0,0.3) !important; }
       `}</style>
 
       <GridCanvas />
+      <SpeedLines />
 
       {/* NAV */}
       <nav style={{
@@ -317,8 +578,9 @@ export default function Landing() {
           {[
             { label: "Race Replay", path: "/replay" },
             { label: "Head to Head", path: "/h2h" },
+            { label: "Drivers", path: "/drivers" },
+            { label: "Calendar", path: "/calendar" },
             { label: "Support", path: "/support" },
-            { label: "Contact", path: "/contact" },
           ].map(({ label, path }) => (
             <a key={label} className="nav-link" onClick={() => navigate(path)}
               style={{
@@ -345,22 +607,25 @@ export default function Landing() {
         </div>
       </nav>
 
+      {/* LIVE TICKER */}
+      <div style={{ position: "relative", zIndex: 2, paddingTop: "64px" }}>
+        <LiveTicker />
+      </div>
+
       {/* HERO */}
       <section ref={heroRef} style={{
         position: "relative",
-        minHeight: "100vh",
+        minHeight: "92vh",
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
-        padding: "120px 40px 80px",
+        padding: "80px 40px 80px",
         textAlign: "center",
       }}>
         <Particles />
-
-        {/* Radial glow behind hero */}
         <div style={{
           position: "absolute", top: "50%", left: "50%",
           transform: "translate(-50%, -50%)",
-          width: "600px", height: "400px",
+          width: "700px", height: "500px",
           background: "radial-gradient(ellipse, rgba(225,6,0,0.08), transparent 70%)",
           pointerEvents: "none",
         }} />
@@ -393,7 +658,7 @@ export default function Landing() {
         {/* Heading */}
         <h1 style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: "clamp(42px, 6vw, 72px)",
+          fontSize: "clamp(42px, 6vw, 76px)",
           fontWeight: 900, lineHeight: 1.05,
           letterSpacing: "-0.03em",
           marginBottom: "24px",
@@ -412,7 +677,6 @@ export default function Landing() {
           }}>fans actually want</span>
         </h1>
 
-        {/* Red accent line */}
         <div style={{
           width: heroVisible ? "80px" : "0px",
           height: "3px",
@@ -424,7 +688,6 @@ export default function Landing() {
           position: "relative", zIndex: 1,
         }} />
 
-        {/* Subtitle */}
         <p style={{
           fontFamily: "'Outfit', sans-serif",
           fontSize: "17px", fontWeight: 300,
@@ -436,10 +699,9 @@ export default function Landing() {
           marginBottom: "44px",
           position: "relative", zIndex: 1,
         }}>
-          Race replays, driver comparisons, tire strategy, sector times and AI-powered race analysis — all in one place. Free forever.
+          Race replays, driver comparisons, tire strategy, sector times and AI-powered race analysis. All in one place. Free forever.
         </p>
 
-        {/* CTA Buttons */}
         <div style={{
           display: "flex", gap: "14px", flexWrap: "wrap", justifyContent: "center",
           opacity: heroVisible ? 1 : 0,
@@ -459,7 +721,7 @@ export default function Landing() {
           }}>
             Analyze a race →
           </button>
-          <button onClick={() => navigate("/h2h")} style={{
+          <button onClick={() => navigate("/drivers")} style={{
             fontFamily: "'Outfit', sans-serif",
             background: "rgba(255,255,255,0.03)",
             color: "rgba(255,255,255,0.7)",
@@ -474,11 +736,10 @@ export default function Landing() {
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "#fff"; }}
             onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
           >
-            Compare drivers
+            Driver profiles
           </button>
         </div>
 
-        {/* Tags */}
         <div style={{
           display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center",
           marginTop: "32px",
@@ -491,7 +752,6 @@ export default function Landing() {
           ))}
         </div>
 
-        {/* Scroll indicator */}
         <div style={{
           position: "absolute", bottom: "40px",
           display: "flex", flexDirection: "column", alignItems: "center", gap: "8px",
@@ -503,6 +763,15 @@ export default function Landing() {
           <div style={{ fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", fontFamily: "'Space Mono', monospace" }}>Scroll</div>
           <div style={{ width: "1px", height: "24px", background: "linear-gradient(to bottom, rgba(255,255,255,0.3), transparent)" }} />
         </div>
+      </section>
+
+      {/* NEXT RACE COUNTDOWN */}
+      <section ref={nextRaceRef} style={{
+        position: "relative", zIndex: 1,
+        maxWidth: "900px", margin: "0 auto",
+        padding: "0 40px 60px",
+      }}>
+        <NextRaceCard visible={nextRaceVisible} />
       </section>
 
       {/* PREVIEW */}
@@ -519,8 +788,8 @@ export default function Landing() {
           backdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.06)",
           borderRadius: "20px", padding: "24px", overflow: "hidden",
+          position: "relative",
         }}>
-          {/* Scanline effect */}
           <div style={{
             position: "absolute", left: 0, right: 0, height: "2px",
             background: "linear-gradient(90deg, transparent, rgba(225,6,0,0.3), transparent)",
@@ -531,7 +800,7 @@ export default function Landing() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
             <div>
               <div style={{ fontSize: "14px", fontWeight: 700, letterSpacing: "-0.01em" }}>2026 Chinese Grand Prix</div>
-              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginTop: "2px", fontFamily: "'Space Mono', monospace" }}>58 laps · 22 drivers · Live data</div>
+              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginTop: "2px", fontFamily: "'Space Mono', monospace" }}>56 laps · 22 drivers · Live data</div>
             </div>
             <div style={{ display: "flex", gap: "6px" }}>
               {["positions", "laptimes", "tires", "gap", "sectors"].map((t, i) => (
@@ -548,17 +817,17 @@ export default function Landing() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "10px", marginBottom: "20px" }}>
             {[
-              { val: "RUS", lbl: "Race winner" },
-              { val: "58", lbl: "Total laps" },
-              { val: "22", lbl: "Drivers" },
-              { val: "Live", lbl: "2026 season" },
+              { val: "ANT", lbl: "Race winner", color: "#00d2be" },
+              { val: "56", lbl: "Total laps", color: "#fff" },
+              { val: "22", lbl: "Drivers", color: "#fff" },
+              { val: "Live", lbl: "2026 season", color: "#e10600" },
             ].map((s, i) => (
               <div key={i} style={{
                 background: "rgba(255,255,255,0.03)",
                 border: "1px solid rgba(255,255,255,0.05)",
                 borderRadius: "10px", padding: "12px 14px"
               }}>
-                <div style={{ fontSize: "18px", fontWeight: 700, fontFamily: "'Space Mono', monospace" }}>{s.val}</div>
+                <div style={{ fontSize: "18px", fontWeight: 700, fontFamily: "'Space Mono', monospace", color: s.color }}>{s.val}</div>
                 <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", marginTop: "3px" }}>{s.lbl}</div>
               </div>
             ))}
@@ -566,17 +835,32 @@ export default function Landing() {
 
           <div style={{ background: "rgba(0,0,0,0.3)", borderRadius: "12px", padding: "16px" }}>
             <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)", marginBottom: "12px", fontFamily: "'Space Mono', monospace", letterSpacing: "1px" }}>POSITION CHANGES — EVERY LAP</div>
-            <svg width="100%" height="80" viewBox="0 0 800 80" preserveAspectRatio="none">
+            <svg width="100%" height="100" viewBox="0 0 800 100" preserveAspectRatio="none">
               {[
-                { points: "0,8 100,8 200,8 300,8 400,8 500,8 600,8 700,8 800,8", color: "#00d2be" },
-                { points: "0,18 100,18 200,14 300,18 400,18 500,18 600,14 700,18 800,18", color: "#e8002d" },
-                { points: "0,48 100,38 200,28 300,22 400,28 500,22 600,18 700,24 800,28", color: "#ff8000" },
-                { points: "0,28 100,34 200,38 300,32 400,22 500,28 600,32 700,28 800,22", color: "#3671c6" },
-                { points: "0,38 100,48 200,42 300,48 400,42 500,38 600,42 700,38 800,38", color: "#52e252" },
+                { points: "0,10 80,10 160,8 240,6 320,6 400,6 480,6 560,6 640,6 720,6 800,6", color: "#00d2be", width: 2.5 },
+                { points: "0,20 80,22 160,18 240,14 320,12 400,14 480,18 560,14 640,12 720,10 800,8", color: "#e8002d", width: 2 },
+                { points: "0,55 80,45 160,38 240,30 320,25 400,22 480,20 560,22 640,20 720,18 800,14", color: "#ff8000", width: 2 },
+                { points: "0,35 80,40 160,45 240,38 320,32 400,28 480,25 560,28 640,25 720,22 800,18", color: "#3671c6", width: 1.5 },
+                { points: "0,45 80,55 160,55 240,50 320,45 400,40 480,38 560,35 640,30 720,28 800,25", color: "#52e252", width: 1.5 },
+                { points: "0,65 80,60 160,62 240,58 320,55 400,50 480,45 560,42 640,40 720,38 800,35", color: "#f5c842", width: 1 },
               ].map((line, i) => (
-                <polyline key={i} points={line.points} fill="none" stroke={line.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+                <polyline key={i} points={line.points} fill="none" stroke={line.color} strokeWidth={line.width} strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
               ))}
             </svg>
+            <div style={{ display: "flex", gap: "16px", marginTop: "10px", flexWrap: "wrap" }}>
+              {[
+                { code: "ANT", color: "#00d2be" },
+                { code: "RUS", color: "#00d2be" },
+                { code: "LEC", color: "#e8002d" },
+                { code: "NOR", color: "#ff8000" },
+                { code: "VER", color: "#3671c6" },
+              ].map((d, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <div style={{ width: "20px", height: "2px", background: d.color, borderRadius: "1px" }} />
+                  <span style={{ fontSize: "10px", color: "#555", fontFamily: "'Space Mono', monospace" }}>{d.code}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           <button onClick={() => navigate("/replay")} style={{
@@ -595,6 +879,28 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* 2026 TEAMS */}
+      <section ref={teamsRef} style={{
+        position: "relative", zIndex: 1,
+        maxWidth: "1000px", margin: "0 auto",
+        padding: "0 40px 80px",
+      }}>
+        <div style={{
+          textAlign: "center", marginBottom: "32px",
+          opacity: teamsVisible ? 1 : 0,
+          transform: teamsVisible ? "translateY(0)" : "translateY(20px)",
+          transition: "all 0.6s cubic-bezier(0.16,1,0.3,1)",
+        }}>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", letterSpacing: "3px", textTransform: "uppercase", color: "#e10600", marginBottom: "8px" }}>
+            2026 Grid
+          </div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "26px", fontWeight: 800, letterSpacing: "-0.02em" }}>
+            11 teams. 22 drivers. Every race.
+          </div>
+        </div>
+        <TeamsStrip visible={teamsVisible} />
+      </section>
+
       {/* FEATURES */}
       <section ref={featRef} style={{
         position: "relative", zIndex: 1,
@@ -608,17 +914,8 @@ export default function Landing() {
           transform: featVisible ? "translateY(0)" : "translateY(20px)",
           transition: "all 0.6s cubic-bezier(0.16,1,0.3,1)",
         }}>
-          <div style={{
-            fontFamily: "'Space Mono', monospace",
-            fontSize: "10px", letterSpacing: "3px",
-            textTransform: "uppercase", color: "#e10600",
-            marginBottom: "12px",
-          }}>What's inside</div>
-          <div style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: "32px", fontWeight: 800,
-            letterSpacing: "-0.02em",
-          }}>Every tool you need</div>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", letterSpacing: "3px", textTransform: "uppercase", color: "#e10600", marginBottom: "12px" }}>What's inside</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "32px", fontWeight: 800, letterSpacing: "-0.02em" }}>Every tool you need</div>
         </div>
 
         <div className="features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
@@ -649,7 +946,7 @@ export default function Landing() {
         }}>
           <StatItem value={<><AnimatedCounter end={9} duration={1200} />+ seasons</>} label="Race data" delay={0} visible={statVisible} />
           <StatItem value={<><AnimatedCounter end={200} duration={1500} />+</>} label="Races analyzed" delay={100} visible={statVisible} />
-          <StatItem value={<AnimatedCounter end={20} duration={1000} />} label="Drivers tracked" delay={200} visible={statVisible} />
+          <StatItem value={<AnimatedCounter end={22} duration={1000} />} label="Drivers tracked" delay={200} visible={statVisible} />
           <StatItem value="Free" label="Always" delay={300} visible={statVisible} />
         </div>
       </section>
@@ -674,34 +971,12 @@ export default function Landing() {
           transform: ctaVisible ? "translateY(0)" : "translateY(30px)",
           transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)",
         }}>
-          <div style={{
-            fontFamily: "'Space Mono', monospace",
-            fontSize: "10px", color: "rgba(255,255,255,0.2)",
-            letterSpacing: "3px", textTransform: "uppercase",
-            marginBottom: "20px",
-          }}>Ready to go deeper?</div>
-          <div style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: "clamp(28px, 4vw, 48px)",
-            fontWeight: 800,
-            letterSpacing: "-0.02em",
-            marginBottom: "16px",
-            lineHeight: 1.1,
-          }}>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", color: "rgba(255,255,255,0.2)", letterSpacing: "3px", textTransform: "uppercase", marginBottom: "20px" }}>Ready to go deeper?</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.02em", marginBottom: "16px", lineHeight: 1.1 }}>
             The race data you've<br />
-            <span style={{
-              background: "linear-gradient(135deg, #e10600, #ff4040)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}>always wanted</span>
+            <span style={{ background: "linear-gradient(135deg, #e10600, #ff4040)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>always wanted</span>
           </div>
-          <div style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: "15px",
-            color: "rgba(255,255,255,0.25)",
-            marginBottom: "40px",
-          }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "15px", color: "rgba(255,255,255,0.25)", marginBottom: "40px" }}>
             No signup. No paywall. No nonsense. Just real F1 data.
           </div>
           <div style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -755,10 +1030,7 @@ export default function Landing() {
             fontFamily: "'Space Mono', monospace",
             fontWeight: 700, fontSize: "8px", color: "#fff",
           }}>PW</div>
-          <span style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: "12px", color: "rgba(255,255,255,0.2)",
-          }}>PitWall — F1 Race Intelligence</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.2)" }}>PitWall — F1 Race Intelligence</span>
         </div>
         <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
           {["Support", "Contact"].map(l => (
@@ -772,10 +1044,7 @@ export default function Landing() {
               onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.25)"}
             >{l}</a>
           ))}
-          <span style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: "11px", color: "rgba(255,255,255,0.1)",
-          }}>Data from FastF1 & Jolpica · Not affiliated with Formula 1</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.1)" }}>Data from FastF1 & Jolpica · Not affiliated with Formula 1</span>
         </div>
       </footer>
     </div>
