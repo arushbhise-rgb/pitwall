@@ -381,42 +381,6 @@ function Tag({ text }) {
   );
 }
 
-function TeamColorBar() {
-  const teams = [
-    '#ff8000', '#ff8000',
-    '#00d2be', '#00d2be',
-    '#e8002d', '#e8002d',
-    '#3671c6', '#3671c6',
-    '#52e252', '#52e252',
-    '#0093cc', '#0093cc',
-    '#6692ff', '#6692ff',
-    '#005aff', '#005aff',
-    '#b6babd', '#b6babd',
-    '#c92d4b', '#c92d4b',
-    '#dddddd', '#dddddd',
-  ]
-  return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0,
-      height: '3px', zIndex: 200,
-      display: 'flex',
-    }}>
-      {teams.map((color, i) => (
-        <div key={i} style={{
-          flex: 1,
-          background: color,
-          opacity: 0.9,
-        }} />
-      ))}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)',
-        backgroundSize: '200% 100%',
-        animation: 'shimmer 3s linear infinite',
-      }} />
-    </div>
-  )
-}
 
 function LatestResultBanner() {
   const [result, setResult] = useState(null)
@@ -564,8 +528,7 @@ export default function Landing() {
       `}</style>
 
       <GridCanvas />
-      <SpeedLines />
-      <TeamColorBar />
+      <SpeedLines />      
 
       {/* NAV */}
       <nav style={{
