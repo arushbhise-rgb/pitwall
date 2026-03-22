@@ -3,28 +3,49 @@ import fastf1
 import pandas as pd
 import threading
 import requests as req
+import json
+import os
+import hashlib
 
 _cache = {}
 _cache_lock = threading.Lock()
 _fetch_locks = {}
 _fetch_locks_lock = threading.Lock()
 
+DISK_CACHE_DIR = '/app/processed_cache'
+os.makedirs(DISK_CACHE_DIR, exist_ok=True)
+
+def disk_cache_path(key):
+    safe = hashlib.md5(key.encode()).hexdigest()
+    return os.path.join(DISK_CACHE_DIR, f"{safe}.json")
+
 def get_cached(key, fn):
-    # Check cache first
+    # Check memory cache first
     with _cache_lock:
         if key in _cache:
-            print(f"Cache hit: {key}")
+            print(f"Cache hit (memory): {key}")
             return _cache[key]
 
-    # Get or create a per-key lock
+    # Check disk cache
+    path = disk_cache_path(key)
+    if os.path.exists(path):
+        try:
+            with open(path, 'r') as f:
+                result = json.load(f)
+            with _cache_lock:
+                _cache[key] = result
+            print(f"Cache hit (disk): {key}")
+            return result
+        except Exception as e:
+            print(f"Disk cache read failed: {e}")
+
+    # Get or create per-key lock
     with _fetch_locks_lock:
         if key not in _fetch_locks:
             _fetch_locks[key] = threading.Lock()
         key_lock = _fetch_locks[key]
 
-    # Only one thread fetches at a time per key
     with key_lock:
-        # Check cache again after acquiring lock
         with _cache_lock:
             if key in _cache:
                 print(f"Cache hit (after lock): {key}")
@@ -32,8 +53,17 @@ def get_cached(key, fn):
 
         print(f"Cache miss: {key} — fetching...")
         result = fn()
+
         with _cache_lock:
             _cache[key] = result
+
+        try:
+            with open(disk_cache_path(key), 'w') as f:
+                json.dump(result, f)
+            print(f"Disk cache written: {key}")
+        except Exception as e:
+            print(f"Disk cache write failed: {e}")
+
         return result
 
 fastf1.Cache.enable_cache('cache')
