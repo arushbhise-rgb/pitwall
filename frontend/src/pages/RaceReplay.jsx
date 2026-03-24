@@ -33,12 +33,13 @@ function LoadingTimer() {
   const [seconds, setSeconds] = useState(0)
   const msgs = [
     'Connecting to F1 data servers...',
-    'Downloading lap telemetry...',
-    'Processing position data...',
-    'Building lap time charts...',
-    'Almost there...',
-    'Still loading — first load takes up to 30 seconds...',
-    'Worth the wait — real F1 data incoming...',
+    'Fetching lap timing data...',
+    'Processing driver positions...',
+    'Calculating tire strategies...',
+    'Building race charts...',
+    'Almost ready...',
+    'Still loading — first load takes up to 30s...',
+    'Worth the wait — real F1 telemetry incoming...',
   ]
   useEffect(() => {
     const t = setInterval(() => setSeconds(s => s + 1), 1000)
