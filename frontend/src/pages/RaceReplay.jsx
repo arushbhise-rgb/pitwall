@@ -388,7 +388,7 @@ ${allLapPositions.join('\n')}`
       <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', overflow: 'auto', background: '#0a0a0a' }}>
 
         {/* EMPTY STATE */}
-        {!raceData && !loading && (
+        {!raceData && !qualiData && !loading && !qualiLoading && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '0', padding: '40px 20px', position: 'relative', overflow: 'hidden', minHeight: '400px' }}>
 
             {/* Grid background */}
@@ -722,7 +722,41 @@ ${allLapPositions.join('\n')}`
               </div>
             )}
 
-            {/* QUALIFYING DATA */}
+
+            {/* AI Analyst */}
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#e10600', animation: 'pulse 2s infinite' }}></div>
+                <div style={{ fontSize: '12px', fontWeight: '600' }}>AI race analyst</div>
+                <div style={{ fontSize: '10px', color: '#444', background: '#1a1a1a', padding: '2px 8px', borderRadius: '8px', marginLeft: 'auto', border: '0.5px solid #2a2a2a' }}>GPT-4o-mini</div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input value={question} onChange={e => setQuestion(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && askAI()}
+                  placeholder="Ask about the race... e.g. who was P3 on lap 6?"
+                  style={{ flex: 1, background: '#1a1a1a', border: '0.5px solid #2a2a2a', borderRadius: '7px', color: '#fff', padding: '9px 12px', fontSize: '13px' }}
+                />
+                <button onClick={askAI} disabled={aiLoading} style={{
+                  background: aiLoading ? '#333' : '#e10600', color: '#fff', border: 'none',
+                  padding: '8px 16px', borderRadius: '7px', fontSize: '13px',
+                  fontWeight: '600', cursor: aiLoading ? 'not-allowed' : 'pointer',
+                  transition: 'all .2s'
+                }}>{aiLoading ? '...' : 'Ask'}</button>
+              </div>
+              {aiReply && (
+                <div style={{ marginTop: '12px', background: '#0f0f0f', border: '0.5px solid #1e1e1e', borderRadius: '8px', padding: '14px', fontSize: '13px', color: '#aaa', lineHeight: '1.8' }}>
+                  {aiReply.split('\n').map((line, i) => (
+                    line.trim() === ''
+                      ? <div key={i} style={{ height: '8px' }} />
+                      : <div key={i} style={{ marginBottom: '3px', color: line.startsWith('P') && line.includes(':') ? '#fff' : '#888', fontWeight: line.startsWith('P') && line.includes(':') ? '600' : '400' }}>{line}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* QUALIFYING DATA */}
         {qualiData && !qualiLoading && sessionMode === 'quali' && (
           <>
             <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
@@ -731,26 +765,21 @@ ${allLapPositions.join('\n')}`
                 <div style={{ fontSize: '11px', color: '#555', marginTop: '3px' }}>Q1 · Q2 · Q3 session times</div>
               </div>
             </div>
-
-            {/* Gap to pole */}
             <div style={cardStyle}>
               <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '14px', color: '#aaa' }}>Gap to pole — qualifying results</div>
               {qualiData.drivers.map((d, i) => {
-                const info = qualiData.driver_info[d] || {}
                 const qd = qualiData.quali_data[d] || {}
                 const best = qd.best
                 const pole = qualiData.pole_time
                 const delta = best && pole ? best - pole : null
                 const pct = best && pole ? (pole / best) * 100 : 0
                 const color = getDriverColor(d, i, year)
-
                 const fmt = s => {
                   if (!s) return '—'
                   const m = Math.floor(s / 60)
                   const sec = (s % 60).toFixed(3).padStart(6, '0')
                   return `${m}:${sec}`
                 }
-
                 return (
                   <div key={d} style={{
                     display: 'grid', gridTemplateColumns: '28px 36px 1fr 90px 70px',
@@ -787,38 +816,6 @@ ${allLapPositions.join('\n')}`
           </>
         )}
 
-            {/* AI Analyst */}
-            <div style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#e10600', animation: 'pulse 2s infinite' }}></div>
-                <div style={{ fontSize: '12px', fontWeight: '600' }}>AI race analyst</div>
-                <div style={{ fontSize: '10px', color: '#444', background: '#1a1a1a', padding: '2px 8px', borderRadius: '8px', marginLeft: 'auto', border: '0.5px solid #2a2a2a' }}>GPT-4o-mini</div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input value={question} onChange={e => setQuestion(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && askAI()}
-                  placeholder="Ask about the race... e.g. who was P3 on lap 6?"
-                  style={{ flex: 1, background: '#1a1a1a', border: '0.5px solid #2a2a2a', borderRadius: '7px', color: '#fff', padding: '9px 12px', fontSize: '13px' }}
-                />
-                <button onClick={askAI} disabled={aiLoading} style={{
-                  background: aiLoading ? '#333' : '#e10600', color: '#fff', border: 'none',
-                  padding: '8px 16px', borderRadius: '7px', fontSize: '13px',
-                  fontWeight: '600', cursor: aiLoading ? 'not-allowed' : 'pointer',
-                  transition: 'all .2s'
-                }}>{aiLoading ? '...' : 'Ask'}</button>
-              </div>
-              {aiReply && (
-                <div style={{ marginTop: '12px', background: '#0f0f0f', border: '0.5px solid #1e1e1e', borderRadius: '8px', padding: '14px', fontSize: '13px', color: '#aaa', lineHeight: '1.8' }}>
-                  {aiReply.split('\n').map((line, i) => (
-                    line.trim() === ''
-                      ? <div key={i} style={{ height: '8px' }} />
-                      : <div key={i} style={{ marginBottom: '3px', color: line.startsWith('P') && line.includes(':') ? '#fff' : '#888', fontWeight: line.startsWith('P') && line.includes(':') ? '600' : '400' }}>{line}</div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
       </div>
     </div>
   )
