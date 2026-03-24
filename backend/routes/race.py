@@ -933,3 +933,21 @@ def get_driver_stats(year: int = Query(..., ge=2018, le=2030), driver: str = Que
         return get_cached(cache_key, fetch)
     except Exception as e:
         return {"error": str(e)}
+    
+@router.get("/qualifying/debug")
+def debug_qualifying(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_length=3)):
+    try:
+        session = fastf1.get_session(year, gp, 'Q')
+        session.load(telemetry=False, weather=False, messages=False)
+        laps = session.laps
+        results = session.results
+        return {
+            "status": "ok",
+            "drivers_in_laps": laps['Driver'].unique().tolist() if not laps.empty else [],
+            "results_columns": results.columns.tolist() if results is not None else [],
+            "laps_columns": laps.columns.tolist() if not laps.empty else [],
+            "sample_results": results[['Abbreviation','Q1','Q2','Q3','Position']].head(5).to_dict() if 'Q1' in results.columns else "no Q1 column",
+            "total_laps": len(laps),
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
