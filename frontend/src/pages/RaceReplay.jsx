@@ -74,6 +74,9 @@ export default function RaceReplay() {
   const [aiLoading, setAiLoading] = useState(false)
   const [selectedDrivers, setSelectedDrivers] = useState([])
   const [activeTab, setActiveTab] = useState('positions')
+  const [sessionMode, setSessionMode] = useState('race') // 'race' or 'quali'
+  const [qualiData, setQualiData] = useState(null)
+  const [qualiLoading, setQualiLoading] = useState(false)
   const [searchParams] = useSearchParams()
 
   useEffect(() => {
@@ -128,6 +131,19 @@ export default function RaceReplay() {
       alert(`No data available for ${gp} ${year} yet — this race may not have happened yet or data is still processing.`)
     }
     setLoading(false)
+  }
+
+  async function loadQualifying() {
+    setQualiLoading(true)
+    setQualiData(null)
+    try {
+      const response = await axios.get(`${API}/qualifying?year=${year}&gp=${encodeURIComponent(gp)}`)
+      setQualiData(response.data)
+      document.title = `${gp} Qualifying ${year} Analysis — PitWall`
+    } catch(e) {
+      alert(`No qualifying data available for ${gp} ${year} yet.`)
+    }
+    setQualiLoading(false)
   }
 
   async function askAI() {
@@ -262,6 +278,19 @@ ${allLapPositions.join('\n')}`
         flexDirection: 'column', gap: '12px', flexShrink: 0,
         overflowY: 'auto'
       }}>
+        <div style={{ fontSize: '10px', color: '#444', letterSpacing: '.8px', textTransform: 'uppercase' }}>Session</div>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {['race', 'quali'].map(mode => (
+            <button key={mode} onClick={() => { setSessionMode(mode); setRaceData(null); setQualiData(null); setAiReply('') }} style={{
+              flex: 1, background: sessionMode === mode ? '#e10600' : '#1a1a1a',
+              color: sessionMode === mode ? '#fff' : '#555',
+              border: `0.5px solid ${sessionMode === mode ? '#e10600' : '#2a2a2a'}`,
+              padding: '7px', borderRadius: '7px', fontSize: '12px',
+              fontWeight: '600', cursor: 'pointer', transition: 'all .15s',
+              textTransform: 'capitalize'
+            }}>{mode === 'quali' ? 'Qualifying' : 'Race'}</button>
+          ))}
+        </div>
         <div style={{ fontSize: '10px', color: '#444', letterSpacing: '.8px', textTransform: 'uppercase' }}>Race selector</div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -279,12 +308,12 @@ ${allLapPositions.join('\n')}`
           </select>
         </div>
 
-        <button onClick={loadRace} disabled={loading} style={{
-          background: loading ? '#333' : '#e10600', color: '#fff', border: 'none',
+        <button onClick={sessionMode === 'race' ? loadRace : loadQualifying} disabled={loading || qualiLoading} style={{
+          background: (loading || qualiLoading) ? '#333' : '#e10600', color: '#fff', border: 'none',
           padding: '10px', borderRadius: '8px', fontSize: '13px',
-          fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer',
-          transition: 'all .2s', boxShadow: loading ? 'none' : '0 0 12px rgba(225,6,0,0.3)'
-        }}>{loading ? 'Loading...' : 'Load race data'}</button>
+          fontWeight: '600', cursor: (loading || qualiLoading) ? 'not-allowed' : 'pointer',
+          transition: 'all .2s', boxShadow: (loading || qualiLoading) ? 'none' : '0 0 12px rgba(225,6,0,0.3)'
+        }}>{loading || qualiLoading ? 'Loading...' : sessionMode === 'race' ? 'Load race data' : 'Load qualifying'}</button>
 
         {/* Empty sidebar state */}
         {!raceData && !loading && (
@@ -440,6 +469,20 @@ ${allLapPositions.join('\n')}`
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* QUALIFYING LOADING */}
+        {qualiLoading && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px', minHeight: '400px' }}>
+            <div style={{ position: 'relative', width: '48px', height: '48px' }}>
+              <div style={{ width: '48px', height: '48px', border: '2px solid #1a1a1a', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite', position: 'absolute' }}></div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '14px', color: '#fff', fontWeight: '600', marginBottom: '6px' }}>Loading qualifying data</div>
+              <div style={{ fontSize: '12px', color: '#444' }}>Fetching Q1, Q2, Q3 lap times</div>
+            </div>
+            <LoadingTimer />
           </div>
         )}
 
@@ -678,6 +721,71 @@ ${allLapPositions.join('\n')}`
                 })()}
               </div>
             )}
+
+            {/* QUALIFYING DATA */}
+        {qualiData && !qualiLoading && sessionMode === 'quali' && (
+          <>
+            <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: '700', letterSpacing: '-0.3px' }}>{qualiData.gp} Qualifying {qualiData.year}</div>
+                <div style={{ fontSize: '11px', color: '#555', marginTop: '3px' }}>Q1 · Q2 · Q3 session times</div>
+              </div>
+            </div>
+
+            {/* Gap to pole */}
+            <div style={cardStyle}>
+              <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '14px', color: '#aaa' }}>Gap to pole — qualifying results</div>
+              {qualiData.drivers.map((d, i) => {
+                const info = qualiData.driver_info[d] || {}
+                const qd = qualiData.quali_data[d] || {}
+                const best = qd.best
+                const pole = qualiData.pole_time
+                const delta = best && pole ? best - pole : null
+                const pct = best && pole ? (pole / best) * 100 : 0
+                const color = getDriverColor(d, i, year)
+
+                const fmt = s => {
+                  if (!s) return '—'
+                  const m = Math.floor(s / 60)
+                  const sec = (s % 60).toFixed(3).padStart(6, '0')
+                  return `${m}:${sec}`
+                }
+
+                return (
+                  <div key={d} style={{
+                    display: 'grid', gridTemplateColumns: '28px 36px 1fr 90px 70px',
+                    alignItems: 'center', gap: '10px',
+                    padding: '8px 10px', borderRadius: '8px',
+                    background: i === 0 ? 'rgba(245,200,66,0.06)' : 'transparent',
+                    border: `0.5px solid ${i === 0 ? 'rgba(245,200,66,0.2)' : 'transparent'}`,
+                    marginBottom: '3px'
+                  }}>
+                    <div style={{ fontSize: '12px', fontWeight: '800', color: i === 0 ? '#f5c842' : i < 3 ? '#fff' : '#555', textAlign: 'center' }}>P{i + 1}</div>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: color + '22', border: `1.5px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: '800', color }}>{d}</div>
+                    <div>
+                      <div style={{ height: '4px', background: '#1a1a1a', borderRadius: '2px', overflow: 'hidden', marginBottom: '3px' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: i === 0 ? '#f5c842' : color, borderRadius: '2px' }}></div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {['q1','q2','q3'].map(q => (
+                          <span key={q} style={{ fontSize: '9px', color: qd[q] ? '#555' : '#2a2a2a' }}>
+                            {q.toUpperCase()}: {fmt(qd[q])}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: '700', color: i === 0 ? '#f5c842' : '#aaa', fontFamily: 'monospace', textAlign: 'right' }}>
+                      {fmt(best)}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#444', fontFamily: 'monospace', textAlign: 'right' }}>
+                      {i === 0 ? '🏆 Pole' : delta ? `+${delta.toFixed(3)}s` : '—'}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
 
             {/* AI Analyst */}
             <div style={cardStyle}>
