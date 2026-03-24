@@ -12,11 +12,20 @@ const COUNTRY_FLAGS = {
   'Qatar': '🇶🇦', 'Las Vegas': '🇺🇸', 'Miami': '🇺🇸',
 }
 
+const COUNTRY_CODES = {
+  'Australia': 'au', 'China': 'cn', 'Japan': 'jp', 'Bahrain': 'bh',
+  'Saudi Arabia': 'sa', 'United States': 'us', 'Italy': 'it', 'Monaco': 'mc',
+  'Spain': 'es', 'Canada': 'ca', 'Austria': 'at', 'United Kingdom': 'gb',
+  'Belgium': 'be', 'Hungary': 'hu', 'Netherlands': 'nl', 'Azerbaijan': 'az',
+  'Singapore': 'sg', 'Mexico': 'mx', 'Brazil': 'br', 'UAE': 'ae',
+  'Qatar': 'qa', 'Las Vegas': 'us', 'Miami': 'us',
+}
+
 function getFlag(country) {
-  for (const [key, flag] of Object.entries(COUNTRY_FLAGS)) {
-    if (country?.includes(key)) return flag
+  for (const [key, code] of Object.entries(COUNTRY_CODES)) {
+    if (country?.includes(key)) return code
   }
-  return '🏁'
+  return null
 }
 
 function Countdown({ dateStr }) {
@@ -136,8 +145,15 @@ export default function Calendar() {
                     </div>
 
                     {/* Flag */}
-                    <div className="cal-flag" style={{ fontSize: '18px', textAlign: 'center' }}>
-                      {getFlag(race.country)}
+                    <div className="cal-flag" style={{ textAlign: 'center' }}>
+                      {getFlag(race.country) ? (
+                        <img
+                          src={`https://flagcdn.com/32x24/${getFlag(race.country)}.png`}
+                          alt={race.country}
+                          style={{ width: '28px', height: '21px', borderRadius: '3px', objectFit: 'cover', display: 'block', margin: '0 auto' }}
+                          onError={e => e.target.style.display = 'none'}
+                        />
+                      ) : <span style={{ fontSize: '16px' }}>🏁</span>}
                     </div>
 
                     {/* Name + location */}
