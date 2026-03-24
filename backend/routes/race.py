@@ -934,20 +934,74 @@ def get_driver_stats(year: int = Query(..., ge=2018, le=2030), driver: str = Que
     except Exception as e:
         return {"error": str(e)}
     
-@router.get("/qualifying/debug")
-def debug_qualifying(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_length=3)):
-    try:
+@router.get("/qualifying")
+def get_qualifying(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_length=3)):
+    cache_key = f"qualifying_{year}_{gp}"
+
+    def fetch():
         session = fastf1.get_session(year, gp, 'Q')
         session.load(telemetry=False, weather=False, messages=False)
-        laps = session.laps
         results = session.results
+
+        quali_data = {}
+        for _, row in results.iterrows():
+            abbr = row['Abbreviation']
+
+            def parse_time(val):
+                if pd.isna(val):
+                    return None
+                try:
+                    # already a float in seconds from debug
+                    return round(float(val), 3)
+                except Exception:
+                    try:
+                        return round(pd.Timedelta(val).total_seconds(), 3)
+                    except Exception:
+                        return None
+
+            q1 = parse_time(row.get('Q1'))
+            q2 = parse_time(row.get('Q2'))
+            q3 = parse_time(row.get('Q3'))
+            best = min([t for t in [q1, q2, q3] if t is not None], default=None)
+
+            quali_data[abbr] = {
+                'q1': q1,
+                'q2': q2,
+                'q3': q3,
+                'best': best
+            }
+
+        driver_info = {}
+        for _, row in results.iterrows():
+            abbr = row['Abbreviation']
+            driver_info[abbr] = {
+                'fullName': row['FullName'],
+                'teamName': row['TeamName'],
+                'teamColor': '#' + str(row['TeamColor']) if pd.notna(row['TeamColor']) else '#888888',
+                'position': int(row['Position']) if pd.notna(row['Position']) else 99,
+            }
+
+        sorted_drivers = sorted(
+            list(quali_data.keys()),
+            key=lambda d: driver_info.get(d, {}).get('position', 99)
+        )
+
+        pole_time = None
+        for d in sorted_drivers:
+            if quali_data[d]['best'] is not None:
+                pole_time = quali_data[d]['best']
+                break
+
         return {
-            "status": "ok",
-            "drivers_in_laps": laps['Driver'].unique().tolist() if not laps.empty else [],
-            "results_columns": results.columns.tolist() if results is not None else [],
-            "laps_columns": laps.columns.tolist() if not laps.empty else [],
-            "sample_results": results[['Abbreviation','Q1','Q2','Q3','Position']].head(5).to_dict() if 'Q1' in results.columns else "no Q1 column",
-            "total_laps": len(laps),
+            'drivers': sorted_drivers,
+            'quali_data': quali_data,
+            'driver_info': driver_info,
+            'pole_time': pole_time,
+            'gp': gp,
+            'year': year
         }
+
+    try:
+        return get_cached(cache_key, fetch)
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {'error': str(e)}
