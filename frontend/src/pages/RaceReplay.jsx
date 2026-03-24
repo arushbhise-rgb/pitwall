@@ -772,7 +772,8 @@ ${allLapPositions.join('\n')}`
                 const best = qd.best
                 const pole = qualiData.pole_time
                 const delta = best && pole ? best - pole : null
-                const pct = best && pole ? Math.max((1 - (best - pole) / pole) * 100, 5) : 5
+                const maxDelta = 4 // seconds — anyone within 4s of pole gets a bar
+                const pct = best && pole ? Math.max(100 - ((best - pole) / maxDelta * 100), 2) : 2
                 const color = getDriverColor(d, i, year)
                 const fmt = s => {
                   if (!s) return '—'
