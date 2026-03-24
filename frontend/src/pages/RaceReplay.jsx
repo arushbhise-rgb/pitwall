@@ -772,7 +772,7 @@ ${allLapPositions.join('\n')}`
                 const best = qd.best
                 const pole = qualiData.pole_time
                 const delta = best && pole ? best - pole : null
-                const pct = best && pole ? (pole / best) * 100 : 0
+                const pct = best && pole ? Math.max((1 - (best - pole) / pole) * 100, 5) : 5
                 const color = getDriverColor(d, i, year)
                 const fmt = s => {
                   if (!s) return '—'
@@ -782,7 +782,7 @@ ${allLapPositions.join('\n')}`
                 }
                 return (
                   <div key={d} style={{
-                    display: 'grid', gridTemplateColumns: '28px 36px 1fr 90px 70px',
+                    display: 'grid', gridTemplateColumns: '28px 36px 1fr 100px 75px',
                     alignItems: 'center', gap: '10px',
                     padding: '8px 10px', borderRadius: '8px',
                     background: i === 0 ? 'rgba(245,200,66,0.06)' : 'transparent',
@@ -799,7 +799,7 @@ ${allLapPositions.join('\n')}`
                         {['q1','q2','q3'].map(q => (
                           <div key={q} style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                             <span style={{ fontSize: '8px', color: '#333', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{q}</span>
-                            <span style={{ fontSize: '10px', color: qd[q] ? (q === 'q3' && qd.q3 ? '#e10600' : q === 'q2' && qd.q2 ? '#aaa' : '#666') : '#2a2a2a', fontFamily: 'monospace', fontWeight: qd[q] === best ? '700' : '400' }}>
+                            <span style={{ fontSize: '10px', color: qd[q] ? (qd[q] === best ? '#fff' : '#555') : '#2a2a2a', fontFamily: 'monospace', fontWeight: qd[q] === best ? '700' : '400' }}>
                               {fmt(qd[q])}
                             </span>
                           </div>
