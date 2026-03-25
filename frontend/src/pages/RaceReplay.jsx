@@ -911,7 +911,7 @@ ${allLapPositions.join('\n')}`
                 const best = qd.best
                 const pole = qualiData.pole_time
                 const delta = best && pole ? best - pole : null
-                const maxDelta = 4 // seconds — anyone within 4s of pole gets a bar
+                const maxDelta = 4
                 const pct = best && pole ? Math.max(100 - ((best - pole) / maxDelta * 100), 2) : 2
                 const color = getDriverColor(d, i, year)
                 const fmt = s => {
@@ -921,21 +921,21 @@ ${allLapPositions.join('\n')}`
                   return `${m}:${sec}`
                 }
                 return (
-                  <div key={d} style={{
-                    display: 'grid', gridTemplateColumns: '28px 36px 1fr 100px 75px',
-                    alignItems: 'center', gap: '10px',
+                  <div key={d} className="quali-row" style={{
                     padding: '8px 10px', borderRadius: '8px',
                     background: i === 0 ? 'rgba(245,200,66,0.06)' : 'transparent',
                     border: `0.5px solid ${i === 0 ? 'rgba(245,200,66,0.2)' : 'transparent'}`,
                     marginBottom: '3px'
                   }}>
-                    <div style={{ fontSize: '12px', fontWeight: '800', color: i === 0 ? '#f5c842' : i < 3 ? '#fff' : '#555', textAlign: 'center' }}>P{i + 1}</div>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: color + '22', border: `1.5px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: '800', color }}>{d}</div>
-                    <div>
+                    {/* Position + Driver badge */}
+                    <div className="quali-pos" style={{ fontSize: '12px', fontWeight: '800', color: i === 0 ? '#f5c842' : i < 3 ? '#fff' : '#555', textAlign: 'center' }}>P{i + 1}</div>
+                    <div className="quali-badge" style={{ width: '32px', height: '32px', borderRadius: '50%', background: color + '22', border: `1.5px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: '800', color }}>{d}</div>
+                    {/* Bar + session times */}
+                    <div className="quali-bar-area">
                       <div style={{ height: '4px', background: '#1a1a1a', borderRadius: '2px', overflow: 'hidden', marginBottom: '3px' }}>
                         <div style={{ height: '100%', width: `${pct}%`, background: i === 0 ? '#f5c842' : color, borderRadius: '2px' }}></div>
                       </div>
-                      <div style={{ display: 'flex', gap: '10px' }}>
+                      <div className="quali-sessions" style={{ display: 'flex', gap: '10px' }}>
                         {['q1','q2','q3'].map(q => (
                           <div key={q} style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                             <span style={{ fontSize: '8px', color: '#333', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{q}</span>
@@ -946,10 +946,12 @@ ${allLapPositions.join('\n')}`
                         ))}
                       </div>
                     </div>
-                    <div style={{ fontSize: '13px', fontWeight: '700', color: i === 0 ? '#f5c842' : '#aaa', fontFamily: 'monospace', textAlign: 'right' }}>
+                    {/* Best time */}
+                    <div className="quali-best" style={{ fontSize: '13px', fontWeight: '700', color: i === 0 ? '#f5c842' : '#aaa', fontFamily: 'monospace', textAlign: 'right' }}>
                       {fmt(best)}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#444', fontFamily: 'monospace', textAlign: 'right' }}>
+                    {/* Delta */}
+                    <div className="quali-delta" style={{ fontSize: '11px', color: '#444', fontFamily: 'monospace', textAlign: 'right' }}>
                       {i === 0 ? '🏆 Pole' : delta ? `+${delta.toFixed(3)}s` : '—'}
                     </div>
                   </div>

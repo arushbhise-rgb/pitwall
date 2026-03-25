@@ -272,7 +272,7 @@ function NextRaceCard({ visible }) {
           </div>
           <div style={{ fontSize: "12px", color: "#555" }}>{next.location} · {new Date(next.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div>
         </div>
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div className="next-race-countdown" style={{ display: "flex", gap: "12px" }}>
           {[
             { val: timeLeft.d, label: "Days" },
             { val: timeLeft.h, label: "Hrs" },
@@ -427,7 +427,7 @@ function LatestResultBanner() {
   const top3 = result.standings.slice(0, 3)
 
   return (
-    <div style={{
+    <div className="landing-result-banner" style={{
       position: 'relative', zIndex: 2,
       background: 'rgba(0,0,0,0.5)',
       backdropFilter: 'blur(10px)',
@@ -450,7 +450,7 @@ function LatestResultBanner() {
         }}>2026 Championship</span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+      <div className="result-drivers" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         {top3.map((d, i) => (
           <div key={i} style={{
             display: 'flex', alignItems: 'center', gap: '7px',
@@ -476,7 +476,7 @@ function LatestResultBanner() {
         ))}
       </div>
 
-      <div style={{
+      <div className="result-round" style={{
         fontSize: '9px', color: '#333',
         fontFamily: "'Space Mono', monospace",
         letterSpacing: '1px',
@@ -553,7 +553,7 @@ export default function Landing() {
       <SpeedLines />      
 
       {/* NAV */}
-      <nav style={{
+      <nav className="landing-nav" style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
         padding: "0 40px", height: "64px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -578,7 +578,7 @@ export default function Landing() {
             <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", letterSpacing: "2px", textTransform: "uppercase" }}>Race Intelligence</div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "28px", alignItems: "center" }}>
+        <div className="landing-nav-links" style={{ display: "flex", gap: "28px", alignItems: "center" }}>
           {[
             { label: "Race Replay", path: "/replay" },
             { label: "Head to Head", path: "/h2h" },
@@ -615,7 +615,7 @@ export default function Landing() {
 
 
       {/* HERO */}
-      <section ref={heroRef} style={{
+      <section ref={heroRef} className="landing-hero-section" style={{
         position: "relative",
         minHeight: "92vh",
         display: "flex", flexDirection: "column",
@@ -768,7 +768,7 @@ export default function Landing() {
       </section>
 
       {/* NEXT RACE COUNTDOWN */}
-      <section ref={nextRaceRef} style={{
+      <section ref={nextRaceRef} className="landing-next-race" style={{
         position: "relative", zIndex: 1,
         maxWidth: "900px", margin: "0 auto",
         padding: "0 40px 60px",
@@ -817,7 +817,7 @@ export default function Landing() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "10px", marginBottom: "20px" }}>
+          <div className="landing-preview-stats" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "10px", marginBottom: "20px" }}>
             {[
               { val: "ANT", lbl: "Race winner", color: "#00d2be" },
               { val: "56", lbl: "Total laps", color: "#fff" },

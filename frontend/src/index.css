@@ -85,6 +85,14 @@ a { transition: color 0.2s; }
 .race-layout { display: flex; min-height: calc(100vh - 52px); }
 .race-sidebar { width: 230px; flex-shrink: 0; }
 
+/* Qualifying rows */
+.quali-row {
+  display: grid;
+  grid-template-columns: 28px 36px 1fr 100px 75px;
+  align-items: center;
+  gap: 10px;
+}
+
 @media (max-width: 768px) {
   .race-layout { flex-direction: column !important; }
   .race-sidebar {
@@ -98,6 +106,26 @@ a { transition: color 0.2s; }
   .tab-row { flex-wrap: wrap !important; gap: 4px !important; }
   .tab-btn { font-size: 11px !important; padding: 5px 8px !important; }
   .race-header-row { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+
+  /* Qualifying mobile layout */
+  .quali-row {
+    grid-template-columns: 24px 28px 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 6px !important;
+    padding: 10px 8px !important;
+  }
+  .quali-pos { font-size: 11px !important; }
+  .quali-badge { width: 28px !important; height: 28px !important; font-size: 8px !important; }
+  .quali-bar-area { grid-column: 1 / -1 !important; }
+  .quali-sessions { gap: 14px !important; }
+  .quali-best {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    font-size: 11px !important;
+  }
+  .quali-delta {
+    display: none !important;
+  }
 }
 
 /* Head to Head */
@@ -136,6 +164,20 @@ a { transition: color 0.2s; }
   .landing-hero p { font-size: 15px !important; }
   .landing-preview { padding: 0 16px 60px !important; }
   .preview-tabs { display: none !important; }
+  .landing-nav-links { display: none !important; }
+  .landing-nav { padding: 0 16px !important; }
+  .landing-result-banner {
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 8px 16px !important;
+  }
+  .landing-result-banner .result-drivers { gap: 12px !important; }
+  .landing-result-banner .result-round { display: none !important; }
+  .landing-preview-stats { grid-template-columns: repeat(2, 1fr) !important; }
+  .landing-hero-section { padding: 40px 20px 60px !important; min-height: 85vh !important; }
+  .landing-next-race { padding: 0 16px 40px !important; }
+  .next-race-countdown { gap: 8px !important; }
+  .next-race-countdown > div > div:first-child { padding: 6px 8px !important; font-size: 18px !important; min-width: 42px !important; }
 }
 
 /* Navbar */
@@ -149,10 +191,25 @@ a { transition: color 0.2s; }
   .mobile-menu { display: block !important; }
 }
 
+/* Footer */
+.footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+
 /* General */
 @media (max-width: 768px) {
   .hide-mobile { display: none !important; }
   .full-width-mobile { width: 100% !important; max-width: 100% !important; }
   .padding-mobile { padding: 16px !important; }
   .font-small-mobile { font-size: 12px !important; }
+
+  /* Footer mobile */
+  footer { padding: 16px 20px !important; flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+  footer > div:last-child { flex-direction: column !important; gap: 8px !important; align-items: flex-start !important; }
+
+  /* Better touch targets */
+  button, a, select { min-height: 36px; }
+  select { font-size: 14px !important; }
+
+  /* Prevent horizontal overflow */
+  body { overflow-x: hidden; }
+  .page-enter { overflow-x: hidden; }
 }
