@@ -1,26 +1,37 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel, Field
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import os
+import logging
 
+logger = logging.getLogger("pitwall")
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 class AnalysisRequest(BaseModel):
-    race_summary: str
-    question: str
+    race_summary: str = Field(..., min_length=10, max_length=50000)
+    question: str = Field(..., min_length=2, max_length=500)
 
 @router.post("/analyze")
-def analyze_race(req: AnalysisRequest):
-    from openai import OpenAI
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+@limiter.limit("10/minute")
+def analyze_race(request: Request, req: AnalysisRequest):
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="AI analysis temporarily unavailable")
 
-    message = client.chat.completions.create(
-        model="gpt-4o-mini",
-        max_tokens=2048,
-        temperature=0.4,
-        messages=[
-            {
-                "role": "system",
-                "content": """You are PitWall AI — an elite F1 race analyst with the tactical mind of a chief strategist and the storytelling ability of Martin Brundle. You have been given complete, accurate race data including lap-by-lap positions, tire compounds, stint lengths, and lap times.
+    from openai import OpenAI
+    client = OpenAI(api_key=api_key)
+
+    try:
+        message = client.chat.completions.create(
+            model="gpt-4o-mini",
+            max_tokens=2048,
+            temperature=0.4,
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are PitWall AI — an elite F1 race analyst with the tactical mind of a chief strategist and the storytelling ability of Martin Brundle. You have been given complete, accurate race data including lap-by-lap positions, tire compounds, stint lengths, and lap times.
 
 DATA ACCURACY — NON-NEGOTIABLE:
 - The race data provided is ground truth. Every answer must come directly from it.
@@ -49,11 +60,14 @@ RESPONSE FORMAT:
 - No bullet points — write in flowing analytical prose like a proper pundit
 - Team data is explicitly provided for this season in the DRIVER TEAMS section. Always use this — never assume teams from previous seasons or your training data. In 2026 Hamilton is at Ferrari, Sainz is at Williams, Antonelli is at Mercedes etc. Trust the data.
 - Aim for 120-200 words — detailed but not padded"""
-            },
-            {
-                "role": "user",
-                "content": f"Race data:\n{req.race_summary}\n\nQuestion: {req.question}"
-            }
-        ]
-    )
-    return {"response": message.choices[0].message.content}
+                },
+                {
+                    "role": "user",
+                    "content": f"Race data:\n{req.race_summary}\n\nQuestion: {req.question}"
+                }
+            ]
+        )
+        return {"response": message.choices[0].message.content}
+    except Exception as e:
+        logger.error(f"AI analysis failed: {e}")
+        raise HTTPException(status_code=500, detail="AI analysis failed. Please try again.")

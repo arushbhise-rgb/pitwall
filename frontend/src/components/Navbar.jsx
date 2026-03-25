@@ -17,7 +17,11 @@ export default function Navbar() {
 
   return (
     <>
-      <nav style={{
+      <a href="#main-content" className="sr-only" style={{ position: 'absolute', top: '-40px', left: 0, background: '#e10600', color: '#fff', padding: '8px 16px', zIndex: 200 }}
+        onFocus={e => e.target.style.top = '0'}
+        onBlur={e => e.target.style.top = '-40px'}
+      >Skip to content</a>
+      <nav aria-label="Main navigation" style={{
         background: 'rgba(10,10,10,0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
@@ -65,6 +69,8 @@ export default function Navbar() {
         <button
           className="mobile-menu-btn"
           onClick={() => setMenuOpen(!menuOpen)}
+          aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-expanded={menuOpen}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             padding: '4px', display: 'none',

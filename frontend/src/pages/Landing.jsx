@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Helmet } from 'react-helmet-async'
 import { DRIVER_TEAMS_BY_YEAR, DRIVER_COLORS_BY_YEAR } from '../constants/driverData'
 import { API } from '../config'
 import { useNavigate } from "react-router-dom";
@@ -52,6 +53,7 @@ function GridCanvas() {
     const ctx = canvas.getContext("2d");
     let frame;
     let t = 0;
+    let visible = true;
     function resize() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -59,6 +61,7 @@ function GridCanvas() {
     resize();
     window.addEventListener("resize", resize);
     function draw() {
+      if (!visible) return;
       t += 0.003;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const gap = 60;
@@ -79,8 +82,13 @@ function GridCanvas() {
       ctx.fillRect(0, pulseY - 40, canvas.width, 80);
       frame = requestAnimationFrame(draw);
     }
+    const obs = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !frame) draw();
+    }, { threshold: 0 });
+    obs.observe(canvas);
     draw();
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); };
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); obs.disconnect(); };
   }, []);
   return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
 }
@@ -92,6 +100,7 @@ function SpeedLines() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     let frame;
+    let visible = true;
     const lines = Array.from({ length: 18 }, (_, i) => ({
       y: (i / 18) * window.innerHeight + Math.random() * 60,
       speed: Math.random() * 4 + 2,
@@ -106,6 +115,7 @@ function SpeedLines() {
     resize();
     window.addEventListener("resize", resize);
     function draw() {
+      if (!visible) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       lines.forEach(l => {
         l.x += l.speed;
@@ -118,8 +128,13 @@ function SpeedLines() {
       });
       frame = requestAnimationFrame(draw);
     }
+    const obs = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !frame) draw();
+    }, { threshold: 0 });
+    obs.observe(canvas);
     draw();
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); };
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); obs.disconnect(); };
   }, []);
   return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
 }
@@ -131,6 +146,7 @@ function Particles() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     let frame;
+    let visible = true;
     const particles = Array.from({ length: 40 }, () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
@@ -145,6 +161,7 @@ function Particles() {
     resize();
     window.addEventListener("resize", resize);
     function draw() {
+      if (!visible) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       particles.forEach((p) => {
         p.y -= p.speed;
@@ -156,8 +173,13 @@ function Particles() {
       });
       frame = requestAnimationFrame(draw);
     }
+    const obs = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !frame) draw();
+    }, { threshold: 0 });
+    obs.observe(canvas);
     draw();
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); };
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", resize); obs.disconnect(); };
   }, []);
   return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
 }
@@ -507,14 +529,14 @@ export default function Landing() {
       position: "relative",
       overflow: "hidden",
     }}>
+      <Helmet>
+        <title>PitWall — Free F1 Race Analytics & Telemetry Tool</title>
+        <meta name="description" content="Free F1 race analytics tool. Replay any race from 2018 to 2026 with real telemetry data, compare drivers head to head, check standings, and ask an AI race analyst." />
+        <meta property="og:title" content="PitWall — Free F1 Race Analytics" />
+        <meta property="og:description" content="Real F1 telemetry data for every race since 2018. Free forever." />
+        <link rel="canonical" href="https://pitwall-f1.com" />
+      </Helmet>
       <style>{`
-        @keyframes fadeInUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-        @keyframes float { 0%,100% { transform:translateY(0px); } 50% { transform:translateY(-10px); } }
-        @keyframes glowPulse { 0%,100% { box-shadow:0 0 20px rgba(225,6,0,0.2),0 0 60px rgba(225,6,0,0.1); } 50% { box-shadow:0 0 30px rgba(225,6,0,0.4),0 0 80px rgba(225,6,0,0.15); } }
-        @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
-        @keyframes scanline { 0% { top:-10%; } 100% { top:110%; } }
-        @keyframes drawLine { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
         * { box-sizing:border-box; }
         ::selection { background:rgba(225,6,0,0.3); color:#fff; }
         html { scroll-behavior:smooth; }

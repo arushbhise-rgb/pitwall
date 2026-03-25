@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { API } from '../config'
@@ -50,6 +51,7 @@ export default function Drivers() {
   const [selectedCode, setSelectedCode] = useState(searchParams.get('driver')?.toUpperCase() || null)
   const [stats, setStats] = useState(null)
   const [statsLoading, setStatsLoading] = useState(false)
+  const [search, setSearch] = useState('')
 
   const drivers = ALL_DRIVERS_BY_YEAR[year] || ALL_DRIVERS_BY_YEAR['2024']
   const colors = DRIVER_COLORS_BY_YEAR[year] || DRIVER_COLORS_BY_YEAR['2024']
@@ -60,6 +62,19 @@ export default function Drivers() {
     const team = teams[d.code] || 'Unknown'
     if (!teamGroups[team]) teamGroups[team] = []
     teamGroups[team].push(d)
+  })
+
+  const searchLower = search.toLowerCase()
+  const filteredTeamGroups = {}
+  Object.entries(teamGroups).forEach(([team, teamDrivers]) => {
+    const filtered = searchLower
+      ? teamDrivers.filter(d =>
+          d.name.toLowerCase().includes(searchLower) ||
+          d.code.toLowerCase().includes(searchLower) ||
+          team.toLowerCase().includes(searchLower)
+        )
+      : teamDrivers
+    if (filtered.length > 0) filteredTeamGroups[team] = filtered
   })
 
   const selectedDriver = drivers.find(d => d.code === selectedCode)
@@ -84,11 +99,14 @@ export default function Drivers() {
 
   return (
     <div style={{ minHeight: 'calc(100vh - 52px)', background: '#0a0a0a' }}>
+      <Helmet>
+        <title>F1 Drivers — Profiles & Season Stats | PitWall</title>
+        <meta name="description" content="Browse all Formula 1 drivers. View season stats, race results, and team info from 2018 to 2026." />
+        <meta property="og:title" content="F1 Drivers | PitWall" />
+        <meta property="og:description" content="F1 driver profiles with season stats and race results." />
+        <link rel="canonical" href="https://pitwall-f1.com/drivers" />
+      </Helmet>
       <style>{`
-        @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes spin { to { transform: rotate(360deg) } }
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
         .driver-card { transition: all .25s cubic-bezier(0.16,1,0.3,1); }
         .driver-card:hover { transform: translateY(-4px) !important; }
       `}</style>
@@ -122,11 +140,24 @@ export default function Drivers() {
       </div>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 16px' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search drivers, teams..."
+            style={{
+              background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '7px',
+              color: '#fff', padding: '10px 14px', fontSize: '13px',
+              width: '100%', outline: 'none', boxSizing: 'border-box',
+            }}
+          />
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: selectedCode ? '1fr 420px' : '1fr', gap: '24px', alignItems: 'start' }}>
 
           {/* Driver grid */}
           <div>
-            {Object.entries(teamGroups).map(([team, teamDrivers], ti) => {
+            {Object.entries(filteredTeamGroups).map(([team, teamDrivers], ti) => {
               const teamColor = colors[teamDrivers[0]?.code] || '#888'
               return (
                 <div key={team} style={{ marginBottom: '32px', animation: `fadeUp .4s ease ${ti * 0.06}s both` }}>
@@ -174,7 +205,8 @@ export default function Drivers() {
                             }}>{d.initials}</div>
                             <img
                               src={`https://flagcdn.com/24x18/${DRIVER_NATIONALITY_CODES[d.code] || 'un'}.png`}
-                              alt={DRIVER_NATIONALITIES[d.code] || ''}
+                              alt={`${DRIVER_NATIONALITIES[d.code] || 'Unknown'} flag`}
+                              loading="lazy"
                               style={{ width: '24px', height: '18px', borderRadius: '3px', objectFit: 'cover' }}
                               onError={e => e.target.style.display = 'none'}
                             />
@@ -237,7 +269,8 @@ export default function Drivers() {
                         <div style={{ fontSize: '22px', fontWeight: '900', letterSpacing: '-0.5px' }}>{selectedDriver.name}</div>
                         <img
                           src={`https://flagcdn.com/24x18/${DRIVER_NATIONALITY_CODES[selectedCode] || 'un'}.png`}
-                          alt={DRIVER_NATIONALITIES[selectedCode] || ''}
+                          alt={`${DRIVER_NATIONALITIES[selectedCode] || 'Unknown'} flag`}
+                          loading="lazy"
                           style={{ width: '24px', height: '18px', borderRadius: '3px', objectFit: 'cover' }}
                           onError={e => e.target.style.display = 'none'}
                         />

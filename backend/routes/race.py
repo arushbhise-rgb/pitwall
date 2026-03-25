@@ -192,7 +192,7 @@ def get_sectors(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., m
     return get_cached(cache_key, fetch)
 
 @router.get("/h2h")
-def get_h2h(year: int, driver1: str, driver2: str):
+def get_h2h(year: int = Query(..., ge=2018, le=2030), driver1: str = Query(..., min_length=2, max_length=5), driver2: str = Query(..., min_length=2, max_length=5)):
     # cache both orderings so VER vs LEC and LEC vs VER hit same cache
     key_a = f"h2h_{year}_{driver1}_{driver2}"
     key_b = f"h2h_{year}_{driver2}_{driver1}"
@@ -324,7 +324,7 @@ def get_h2h(year: int, driver1: str, driver2: str):
     return result
 
 @router.get("/standings/drivers")
-def get_driver_standings(year: int):
+def get_driver_standings(year: int = Query(..., ge=2018, le=2030)):
     cache_key = f"standings_drivers_{year}"
 
     def fetch():
@@ -355,7 +355,7 @@ def get_driver_standings(year: int):
         return {"error": str(e)}
 
 @router.get("/standings/constructors")
-def get_constructor_standings(year: int):
+def get_constructor_standings(year: int = Query(..., ge=2018, le=2030)):
     cache_key = f"standings_constructors_{year}"
 
     def fetch():
@@ -660,7 +660,7 @@ def get_sectors(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., m
     return get_cached(cache_key, fetch)
 
 @router.get("/h2h")
-def get_h2h(year: int, driver1: str, driver2: str):
+def get_h2h(year: int = Query(..., ge=2018, le=2030), driver1: str = Query(..., min_length=2, max_length=5), driver2: str = Query(..., min_length=2, max_length=5)):
     # cache both orderings so VER vs LEC and LEC vs VER hit same cache
     key_a = f"h2h_{year}_{driver1}_{driver2}"
     key_b = f"h2h_{year}_{driver2}_{driver1}"
@@ -792,7 +792,7 @@ def get_h2h(year: int, driver1: str, driver2: str):
     return result
 
 @router.get("/standings/drivers")
-def get_driver_standings(year: int):
+def get_driver_standings(year: int = Query(..., ge=2018, le=2030)):
     cache_key = f"standings_drivers_{year}"
 
     def fetch():
@@ -823,7 +823,7 @@ def get_driver_standings(year: int):
         return {"error": str(e)}
 
 @router.get("/standings/constructors")
-def get_constructor_standings(year: int):
+def get_constructor_standings(year: int = Query(..., ge=2018, le=2030)):
     cache_key = f"standings_constructors_{year}"
 
     def fetch():

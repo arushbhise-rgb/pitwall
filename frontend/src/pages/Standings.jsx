@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { Helmet } from 'react-helmet-async'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { getDriverColor, getConstructorColor } from '../constants/driverData'
 import { API } from '../config'
+import { SkeletonRow } from '../components/Skeleton'
 
 export default function Standings() {
   const [year, setYear] = useState('2026')
@@ -35,9 +37,14 @@ export default function Standings() {
 
   return (
     <div style={{ minHeight: 'calc(100vh - 52px)', background: '#0a0a0a', padding: '20px 16px' }}>
+      <Helmet>
+        <title>F1 Standings {year} — Driver & Constructor Championships | PitWall</title>
+        <meta name="description" content={`Live ${year} F1 championship standings. Driver and constructor points, wins, and podiums updated after every race.`} />
+        <meta property="og:title" content={`F1 Standings ${year} | PitWall`} />
+        <meta property="og:description" content={`${year} Formula 1 championship standings — drivers and constructors.`} />
+        <link rel="canonical" href="https://pitwall-f1.com/standings" />
+      </Helmet>
       <style>{`
-        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes spin { to { transform: rotate(360deg); } }
         .s-row { transition: all .2s; }
         .s-row:hover { background: rgba(255,255,255,0.04) !important; transform: translateX(3px); }
       `}</style>
@@ -79,12 +86,7 @@ export default function Standings() {
         </div>
 
         {/* Loading */}
-        {loading && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px', gap: '12px' }}>
-            <div style={{ width: '28px', height: '28px', border: '2.5px solid #1e1e1e', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite' }}></div>
-            <div style={{ fontSize: '13px', color: '#555' }}>Loading standings...</div>
-          </div>
-        )}
+        {loading && <SkeletonRow count={10} />}
 
         {/* Driver Standings */}
         {!loading && tab === 'drivers' && drivers?.standings && (

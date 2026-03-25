@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 
 export default function Support() {
@@ -31,12 +32,13 @@ export default function Support() {
 
   return (
     <div style={{ minHeight: 'calc(100vh - 52px)', background: '#0a0a0a' }}>
+      <Helmet>
+        <title>Support PitWall — Buy Me a Coffee</title>
+        <meta name="description" content="Support PitWall development. Free F1 analytics tool built by a student — every coffee helps keep the servers running." />
+        <link rel="canonical" href="https://pitwall-f1.com/support" />
+      </Helmet>
       <style>{`
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes sparkle { 0% { opacity: 1; transform: translate(0,0) scale(1); } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); } }
-        @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(225,6,0,0.4); } 50% { box-shadow: 0 0 0 12px rgba(225,6,0,0); } }
-        @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .support-btn { animation: pulse 2s infinite; }
         .support-btn:hover { opacity: 0.9; transform: scale(1.03); transition: all .2s; }
         .card-hover:hover { border-color: #e10600 !important; transform: translateY(-2px); transition: all .2s; }

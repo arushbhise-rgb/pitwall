@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#050505"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <linearGradient id="redGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e10600"/>
+      <stop offset="100%" stop-color="#b30500"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="40%">
+      <stop offset="0%" stop-color="rgba(225,6,0,0.15)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <linearGradient id="chartLine1" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3671c6" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#3671c6" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="chartLine2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e10600" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#e10600" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="chartLine3" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff8000" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ff8000" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Grid lines -->
+  <g opacity="0.04" stroke="#e10600">
+    <line x1="0" y1="100" x2="1200" y2="100" stroke-width="0.5"/>
+    <line x1="0" y1="200" x2="1200" y2="200" stroke-width="0.5"/>
+    <line x1="0" y1="300" x2="1200" y2="300" stroke-width="0.5"/>
+    <line x1="0" y1="400" x2="1200" y2="400" stroke-width="0.5"/>
+    <line x1="0" y1="500" x2="1200" y2="500" stroke-width="0.5"/>
+    <line x1="200" y1="0" x2="200" y2="630" stroke-width="0.5"/>
+    <line x1="400" y1="0" x2="400" y2="630" stroke-width="0.5"/>
+    <line x1="600" y1="0" x2="600" y2="630" stroke-width="0.5"/>
+    <line x1="800" y1="0" x2="800" y2="630" stroke-width="0.5"/>
+    <line x1="1000" y1="0" x2="1000" y2="630" stroke-width="0.5"/>
+  </g>
+
+  <!-- Glow behind content -->
+  <ellipse cx="600" cy="280" rx="500" ry="250" fill="url(#glow)"/>
+
+  <!-- Decorative chart polylines (position traces) -->
+  <g transform="translate(100, 340)">
+    <polyline points="0,80 80,60 160,40 240,20 320,10 400,5 480,8 560,5 640,3 720,2 800,0 880,2 960,5" fill="none" stroke="url(#chartLine1)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="0,20 80,30 160,50 240,55 320,30 400,25 480,35 560,50 640,45 720,30 800,20 880,15 960,10" fill="none" stroke="url(#chartLine2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="0,50 80,70 160,65 240,80 320,90 400,85 480,70 560,60 640,65 720,75 800,80 880,90 960,95" fill="none" stroke="url(#chartLine3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- PW Logo -->
+  <rect x="520" y="120" width="54" height="54" rx="13" fill="url(#redGlow)"/>
+  <text x="547" y="155" font-family="Arial, sans-serif" font-size="20" font-weight="800" fill="white" text-anchor="middle">PW</text>
+
+  <!-- Title -->
+  <text x="600" y="220" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="800" fill="white" text-anchor="middle" letter-spacing="-2">PitWall</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="260" font-family="'Courier New', monospace" font-size="18" fill="#888888" text-anchor="middle" letter-spacing="3">F1 RACE ANALYTICS</text>
+
+  <!-- Description -->
+  <text x="600" y="300" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#555555" text-anchor="middle">Real telemetry data for every race since 2018. Free forever.</text>
+
+  <!-- Bottom accent line -->
+  <rect x="500" y="560" width="200" height="3" rx="1.5" fill="#e10600" opacity="0.6"/>
+
+  <!-- Bottom tags -->
+  <g font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#444444" text-anchor="middle">
+    <text x="380" y="590">Race Replay</text>
+    <text x="490" y="590">Head to Head</text>
+    <text x="600" y="590">AI Analyst</text>
+    <text x="710" y="590">Standings</text>
+    <text x="820" y="590">Tire Strategy</text>
+  </g>
+</svg>
