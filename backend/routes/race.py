@@ -192,26 +192,32 @@ def get_sectors(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., m
 
     return get_cached(cache_key, fetch)
 
-def _fetch_all_paginated(url, timeout=15):
-    """Fetch all pages from a paginated Ergast API endpoint in parallel."""
-    # First request to get total count
-    r = req.get(f'{url}?limit=100&offset=0', timeout=timeout)
-    data = r.json()
-    races = data['MRData']['RaceTable']['Races']
+def _fetch_with_retry(url, timeout=20, retries=3):
+    """Fetch a URL with retry logic."""
+    for attempt in range(retries):
+        try:
+            r = req.get(url, timeout=timeout)
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            if attempt < retries - 1:
+                import time
+                time.sleep(1 * (attempt + 1))
+            else:
+                raise e
+
+def _fetch_all_paginated(url, timeout=20):
+    """Fetch all pages from a paginated Ergast API endpoint."""
+    data = _fetch_with_retry(f'{url}?limit=100&offset=0', timeout=timeout)
+    races = list(data['MRData']['RaceTable']['Races'])
     total = int(data['MRData']['total'])
     if total <= 100:
         return races
 
-    # Fetch remaining pages in parallel
-    offsets = list(range(100, total, 100))
-    def fetch_page(offset):
-        r = req.get(f'{url}?limit=100&offset={offset}', timeout=timeout)
-        return r.json()['MRData']['RaceTable']['Races']
-
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        batches = pool.map(fetch_page, offsets)
-    for batch in batches:
-        races.extend(batch)
+    # Fetch remaining pages sequentially to avoid rate limits
+    for offset in range(100, total, 100):
+        page = _fetch_with_retry(f'{url}?limit=100&offset={offset}', timeout=timeout)
+        races.extend(page['MRData']['RaceTable']['Races'])
     return races
 
 def _dedup_races(races):
