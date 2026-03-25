@@ -7,3 +7,4 @@ cache/
 dist/
 .DS_Store
 frontend/node_modules/
+.claude/
