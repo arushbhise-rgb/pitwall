@@ -1,7 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import { HelmetProvider } from 'react-helmet-async'
 import ErrorBoundary from './components/ErrorBoundary'
+import { ToastProvider } from './components/Toast'
 import App from './App'
 import './index.css'
 
@@ -13,10 +15,14 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter>
+        <ErrorBoundary>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </ErrorBoundary>
+      </BrowserRouter>
+    </HelmetProvider>
   </StrictMode>
 )

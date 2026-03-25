@@ -1,10 +1,14 @@
 import { useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import axios from 'axios'
 import { API } from '../config'
 import { getDriverColor, DRIVER_TEAMS_BY_YEAR, ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
+import { useToast } from '../components/Toast'
+import { SkeletonCard } from '../components/Skeleton'
 
 
 export default function HeadToHead() {
+  const toast = useToast()
   const [year, setYear] = useState('2024')
   const [d1Code, setD1Code] = useState('VER')
   const [d2Code, setD2Code] = useState('LEC')
@@ -23,14 +27,14 @@ export default function HeadToHead() {
     const finalD1 = overrideD1 || d1Code
     const finalD2 = overrideD2 || d2Code
     const finalYear = overrideYear || year
-    if (finalD1 === finalD2) { alert('Pick two different drivers'); return }
+    if (finalD1 === finalD2) { toast('Pick two different drivers'); return }
     setLoading(true)
     setData(null)
     try {
       const r = await axios.get(`${API}/h2h?year=${finalYear}&driver1=${finalD1}&driver2=${finalD2}`)
       setData(r.data)
       document.title = `${finalD1} vs ${finalD2} ${finalYear} — PitWall Head to Head`
-    } catch(e) { alert('Error loading H2H data') }
+    } catch(e) { toast('Error loading H2H data') }
     setLoading(false)
   }
 
@@ -54,10 +58,14 @@ export default function HeadToHead() {
 
   return (
     <div style={{ padding: '20px 16px', maxWidth: '900px', margin: '0 auto', minHeight: 'calc(100vh - 52px)', background: '#0a0a0a' }}>
+      <Helmet>
+        <title>Head to Head — Compare F1 Drivers | PitWall</title>
+        <meta name="description" content="Compare any two F1 drivers head to head across a full season. Wins, podiums, points, and race-by-race results from 2018 to 2026." />
+        <meta property="og:title" content="Head to Head — Compare F1 Drivers | PitWall" />
+        <meta property="og:description" content="Compare any two F1 drivers head to head across a full season." />
+        <link rel="canonical" href="https://pitwall-f1.com/h2h" />
+      </Helmet>
       <style>{`
-        @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes progressBar { from { width: 0%; } to { width: 90%; } }
         .matchup-row { transition: all .2s; }
         .matchup-row:hover { background: rgba(255,255,255,0.04) !important; border-color: rgba(225,6,0,0.2) !important; }
       `}</style>
@@ -124,14 +132,12 @@ export default function HeadToHead() {
       </div>
 
       {loading && (
-        <div style={{ textAlign: 'center', padding: '50px 40px' }}>
-          <div style={{ width: '36px', height: '36px', border: '2.5px solid #1e1e1e', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite', margin: '0 auto 16px' }}></div>
-          <div style={{ fontSize: '14px', color: '#fff', fontWeight: '600', marginBottom: '6px' }}>Comparing drivers</div>
-          <div style={{ fontSize: '12px', color: '#444', marginBottom: '20px' }}>Fetching full season race by race data</div>
-          <div style={{ width: '220px', height: '3px', background: '#1a1a1a', borderRadius: '2px', margin: '0 auto', overflow: 'hidden' }}>
-            <div style={{ height: '100%', background: '#e10600', borderRadius: '2px', animation: 'progressBar 12s linear forwards' }}></div>
+        <div style={{ padding: '20px 0' }}>
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ fontSize: '14px', color: '#fff', fontWeight: '600', marginBottom: '6px' }}>Comparing drivers</div>
+            <div style={{ fontSize: '12px', color: '#444' }}>Fetching full season race by race data</div>
           </div>
-          <div style={{ fontSize: '11px', color: '#333', marginTop: '10px' }}>Cached comparisons load instantly on repeat</div>
+          <SkeletonCard count={3} />
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { API } from '../config'
@@ -67,10 +68,14 @@ export default function Calendar() {
 
   return (
     <div style={{ minHeight: 'calc(100vh - 52px)', background: '#0a0a0a', padding: '16px 12px' }}>
+      <Helmet>
+        <title>F1 Calendar 2026 — Race Schedule & Dates | PitWall</title>
+        <meta name="description" content="Full 2026 Formula 1 race calendar with dates, circuits, and countdown timers. Never miss a Grand Prix." />
+        <meta property="og:title" content="F1 Calendar 2026 | PitWall" />
+        <meta property="og:description" content="Complete 2026 F1 race schedule with dates and circuits." />
+        <link rel="canonical" href="https://pitwall-f1.com/calendar" />
+      </Helmet>
       <style>{`
-        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes spin { to { transform: rotate(360deg) } }
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
         .cal-row { transition: all .2s; }
         .cal-row:hover { background: rgba(255,255,255,0.04) !important; border-color: rgba(225,6,0,0.2) !important; cursor: pointer; }
         .circuit-svg { transition: opacity .3s; opacity: 0.5; }
@@ -149,7 +154,8 @@ export default function Calendar() {
                       {getFlag(race.country) ? (
                         <img
                           src={`https://flagcdn.com/32x24/${getFlag(race.country)}.png`}
-                          alt={race.country}
+                          alt={`${race.country} flag`}
+                          loading="lazy"
                           style={{ width: '28px', height: '21px', borderRadius: '3px', objectFit: 'cover', display: 'block', margin: '0 auto' }}
                           onError={e => e.target.style.display = 'none'}
                         />

@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from dotenv import load_dotenv
 import os
+import logging
 import threading
 import requests as req
 import time
@@ -9,22 +11,39 @@ import fastf1
 
 load_dotenv()
 
+# Logging setup
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger("pitwall")
+
+# Validate required env vars
+if not os.getenv("OPENAI_API_KEY"):
+    logger.warning("OPENAI_API_KEY not set — /analyze endpoint will fail")
+
+ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "https://pitwall-f1.com,https://www.pitwall-f1.com,https://pitwall-nine.vercel.app,http://localhost:5173").split(",")
+
 app = FastAPI()
+
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://pitwall-f1.com",
-        "https://www.pitwall-f1.com",
-        "https://pitwall-nine.vercel.app",
-        "http://localhost:5173"
-    ],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from routes import race, ai
 from routes.race import get_cached, _cache, _cache_lock
+
+app.state.limiter = ai.limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(race.router)
 app.include_router(ai.router)
@@ -42,6 +61,8 @@ POPULAR_RACES = [
     (2023, 'British Grand Prix'),
 ]
 
+KEEP_ALIVE_URL = os.getenv("KEEP_ALIVE_URL", "https://pitwall-production-c292.up.railway.app/health")
+
 def precache_races():
     time.sleep(10)
     import pandas as pd
@@ -50,7 +71,7 @@ def precache_races():
             cache_key = f"race_{year}_{gp}"
             with _cache_lock:
                 if cache_key in _cache:
-                    print(f"Already cached: {year} {gp}")
+                    logger.info(f"Already cached: {year} {gp}")
                     continue
 
             def fetch(y=year, g=gp):
@@ -87,16 +108,16 @@ def precache_races():
                 }
 
             get_cached(cache_key, fetch)
-            print(f"Pre-cached: {year} {gp}")
+            logger.info(f"Pre-cached: {year} {gp}")
             time.sleep(2)
 
         except Exception as e:
-            print(f"Pre-cache failed for {year} {gp}: {e}")
+            logger.error(f"Pre-cache failed for {year} {gp}: {e}")
 
 def keep_alive():
     while True:
         try:
-            req.get('https://pitwall-production-c292.up.railway.app/health', timeout=10)
+            req.get(KEEP_ALIVE_URL, timeout=10)
         except Exception:
             pass
         time.sleep(600)

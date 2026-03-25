@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { Line } from 'react-chartjs-2'
@@ -6,11 +7,14 @@ import {
   Chart, LineElement, PointElement,
   LinearScale, CategoryScale, Tooltip, Legend
 } from 'chart.js'
-Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend)
+import zoomPlugin from 'chartjs-plugin-zoom'
+Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, zoomPlugin)
 
 import { API } from '../config'
 import { getDriverColor } from '../constants/driverData'
 import { DRIVER_TEAMS_BY_YEAR } from '../constants/driverData'
+import { useToast } from '../components/Toast'
+import { useKeyboardShortcuts, KeyboardShortcutsHelp } from '../hooks/useKeyboardShortcuts'
 
 const TIRE_COLORS = {
   SOFT: '#e8002d', MEDIUM: '#f5c842',
@@ -64,41 +68,66 @@ function setMetaDescription(desc) {
 }
 
 export default function RaceReplay() {
+  const toast = useToast()
   const [year, setYear] = useState('2026')
   const [gp, setGp] = useState('Australian Grand Prix')
   const [races, setRaces] = useState(RACES_BY_YEAR['2026'])
   const [raceData, setRaceData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [question, setQuestion] = useState('')
-  const [aiReply, setAiReply] = useState('')
+  const [aiHistory, setAiHistory] = useState([])
   const [aiLoading, setAiLoading] = useState(false)
   const [selectedDrivers, setSelectedDrivers] = useState([])
   const [activeTab, setActiveTab] = useState('positions')
   const [sessionMode, setSessionMode] = useState('race') // 'race' or 'quali'
   const [qualiData, setQualiData] = useState(null)
   const [qualiLoading, setQualiLoading] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false)
   const [searchParams] = useSearchParams()
+  const posChartRef = useRef(null)
+  const lapChartRef = useRef(null)
+
+  useKeyboardShortcuts([
+    { key: '1', action: () => raceData && setActiveTab('positions') },
+    { key: '2', action: () => raceData && setActiveTab('laptimes') },
+    { key: '3', action: () => raceData && setActiveTab('tires') },
+    { key: '4', action: () => raceData && setActiveTab('gap') },
+    { key: '5', action: () => raceData && setActiveTab('sectors') },
+    { key: '6', action: () => raceData && setActiveTab('fastest') },
+    { key: '7', action: () => raceData && setActiveTab('distribution') },
+    { key: '?', action: () => setShowShortcuts(s => !s) },
+    { key: 'Escape', action: () => setShowShortcuts(false) },
+    { key: 'Enter', ctrl: true, action: () => { if (question && raceData) askAI(); else if (!raceData) sessionMode === 'race' ? loadRace() : loadQualifying() } },
+  ])
 
   useEffect(() => {
     const urlYear = searchParams.get('year')
     const urlGp = searchParams.get('gp')
+    const urlTab = searchParams.get('tab')
+    const urlDrivers = searchParams.get('drivers')
     if (!urlYear || !urlGp) return
     setYear(urlYear)
     setGp(urlGp)
+    if (urlTab && ['positions','laptimes','tires','gap','sectors','fastest','distribution'].includes(urlTab)) setActiveTab(urlTab)
     setRaces(RACES_BY_YEAR[urlYear] || RACES_BY_YEAR['2024'])
     setLoading(true)
     setRaceData(null)
-    setAiReply('')
+    setAiHistory([])
     axios.get(`${API}/race?year=${urlYear}&gp=${encodeURIComponent(urlGp)}`)
       .then(response => {
         setRaceData(response.data)
-        setSelectedDrivers(response.data.drivers.slice(0, 6))
+        if (urlDrivers) {
+          const driverList = urlDrivers.split(',').filter(d => response.data.drivers.includes(d))
+          setSelectedDrivers(driverList.length > 0 ? driverList : response.data.drivers.slice(0, 6))
+        } else {
+          setSelectedDrivers(response.data.drivers.slice(0, 6))
+        }
         window.history.replaceState(null, '', `/replay?year=${urlYear}&gp=${encodeURIComponent(urlGp)}`)
         document.title = `${response.data.gp} Grand Prix ${response.data.year} Analysis — PitWall`
         setLoading(false)
       })
       .catch(() => {
-        alert(`No data available for ${urlGp} ${urlYear} yet.`)
+        toast(`No data available for ${urlGp} ${urlYear} yet.`)
         setLoading(false)
       })
   }, [])
@@ -120,7 +149,7 @@ export default function RaceReplay() {
   async function loadRace() {
     setLoading(true)
     setRaceData(null)
-    setAiReply('')
+    setAiHistory([])
     try {
       const response = await axios.get(`${API}/race?year=${year}&gp=${encodeURIComponent(gp)}`)
       setRaceData(response.data)
@@ -128,7 +157,7 @@ export default function RaceReplay() {
       window.history.replaceState(null, '', `/replay?year=${year}&gp=${encodeURIComponent(gp)}`)
       document.title = `${response.data.gp} Grand Prix ${response.data.year} Analysis — PitWall`
     } catch(e) {
-      alert(`No data available for ${gp} ${year} yet — this race may not have happened yet or data is still processing.`)
+      toast(`No data available for ${gp} ${year} yet — this race may not have happened yet or data is still processing.`)
     }
     setLoading(false)
   }
@@ -141,7 +170,7 @@ export default function RaceReplay() {
       setQualiData(response.data)
       document.title = `${gp} Qualifying ${year} Analysis — PitWall`
     } catch(e) {
-      alert(`No qualifying data available for ${gp} ${year} yet.`)
+      toast(`No qualifying data available for ${gp} ${year} yet.`)
     }
     setQualiLoading(false)
   }
@@ -225,9 +254,9 @@ ${allLapPositions.join('\n')}`
 
   try {
     const r = await axios.post(`${API}/analyze`, { race_summary: summary, question })
-    setAiReply(r.data.response)
+    setAiHistory(prev => [...prev, { q: question, a: r.data.response }])
   } catch(e) {
-    setAiReply('AI unavailable right now — try again in a moment.')
+    setAiHistory(prev => [...prev, { q: question, a: 'AI unavailable right now — try again in a moment.' }])
   }
   setAiLoading(false)
 }
@@ -258,14 +287,14 @@ ${allLapPositions.join('\n')}`
 
   return (
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 52px)', background: '#0a0a0a' }} className="race-layout">
+      <KeyboardShortcutsHelp show={showShortcuts} onClose={() => setShowShortcuts(false)} />
+      <Helmet>
+        <title>{raceData ? `${raceData.gp} ${raceData.year} Race Analysis` : 'Race Replay'} — PitWall</title>
+        <meta name="description" content={raceData ? `Lap by lap analysis of the ${raceData.year} ${raceData.gp}. Position changes, tire strategy, gap to leader, sector times and AI race analysis.` : 'Replay any F1 race from 2018 to 2026 with real telemetry data. Position battles, lap times, tire strategy and sector data.'} />
+        <meta property="og:title" content={raceData ? `${raceData.gp} ${raceData.year} | PitWall` : 'Race Replay | PitWall'} />
+        <link rel="canonical" href="https://pitwall-f1.com/replay" />
+      </Helmet>
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg) } }
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-        @keyframes orbitSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes orbitSpinR { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-        @keyframes glowPulse { 0%,100% { opacity:0.4; } 50% { opacity:0.8; } }
-        @keyframes tagFloat { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-4px); } }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
         .sidebar-item:hover { background: rgba(255,255,255,0.04) !important; }
         .tab-btn:hover { opacity: 0.8; }
       `}</style>
@@ -281,7 +310,7 @@ ${allLapPositions.join('\n')}`
         <div style={{ fontSize: '10px', color: '#444', letterSpacing: '.8px', textTransform: 'uppercase' }}>Session</div>
         <div style={{ display: 'flex', gap: '4px' }}>
           {['race', 'quali'].map(mode => (
-            <button key={mode} onClick={() => { setSessionMode(mode); setRaceData(null); setQualiData(null); setAiReply('') }} style={{
+            <button key={mode} onClick={() => { setSessionMode(mode); setRaceData(null); setQualiData(null); setAiHistory([]) }} style={{
               flex: 1, background: sessionMode === mode ? '#e10600' : '#1a1a1a',
               color: sessionMode === mode ? '#fff' : '#555',
               border: `0.5px solid ${sessionMode === mode ? '#e10600' : '#2a2a2a'}`,
@@ -441,7 +470,7 @@ ${allLapPositions.join('\n')}`
                     setGp(item.r)
                     setLoading(true)
                     setRaceData(null)
-                    setAiReply('')
+                    setAiHistory([])
                     try {
                       const response = await axios.get(`${API}/race?year=${year}&gp=${encodeURIComponent(gp)}`)
                       setRaceData(response.data)
@@ -449,7 +478,7 @@ ${allLapPositions.join('\n')}`
                       window.history.replaceState(null, '', `/replay?year=${year}&gp=${encodeURIComponent(gp)}`)
                       document.title = `${response.data.gp} Grand Prix ${response.data.year} Analysis — PitWall`
                       setMetaDescription(`Lap by lap analysis of the ${response.data.year} ${response.data.gp} Grand Prix. Position changes, tire strategy, gap to leader, sector times and AI race analysis. Free on PitWall.`)
-                    } catch(e) { alert('Error loading race') }
+                    } catch(e) { toast('Error loading race') }
                     setLoading(false)
                   }} style={{
                   background: '#111', border: '0.5px solid #1e1e1e',
@@ -518,7 +547,9 @@ ${allLapPositions.join('\n')}`
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button onClick={() => {
-                    const url = `${window.location.origin}/replay?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`
+                    let url = `${window.location.origin}/replay?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`
+                    if (activeTab !== 'positions') url += `&tab=${activeTab}`
+                    if (selectedDrivers.length > 0 && selectedDrivers.length < raceData.drivers.length) url += `&drivers=${selectedDrivers.join(',')}`
                     navigator.clipboard.writeText(url).then(() => {
                       const btn = document.getElementById('share-btn')
                       if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = '🔗 Share' }, 2000) }
@@ -533,7 +564,8 @@ ${allLapPositions.join('\n')}`
                   >🔗 Share</button>
 
                   <button onClick={() => {
-                    const url = `${window.location.origin}/replay?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`
+                    let url = `${window.location.origin}/replay?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`
+                    if (activeTab !== 'positions') url += `&tab=${activeTab}`
                     const text = `Just analyzed the ${raceData.year} ${raceData.gp} Grand Prix on PitWall 🏎️\n\nReal F1 telemetry — lap times, tire strategy, AI race analyst. Free forever.\n\n${url}`
                     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank')
                   }} style={{
@@ -547,7 +579,7 @@ ${allLapPositions.join('\n')}`
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '8px' }}>
-                {['positions','laptimes','tires','gap','sectors','fastest'].map(tab => (
+                {['positions','laptimes','tires','gap','sectors','fastest','distribution'].map(tab => (
                   <button key={tab} className="tab-btn" onClick={() => setActiveTab(tab)} style={{
                     background: activeTab === tab ? '#e10600' : '#1a1a1a',
                     color: activeTab === tab ? '#fff' : '#666',
@@ -723,6 +755,98 @@ ${allLapPositions.join('\n')}`
             )}
 
 
+            {activeTab === 'distribution' && (
+              <div style={cardStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '14px', color: '#aaa' }}>Lap time distribution — pace consistency</div>
+                {(() => {
+                  const driverStats = selectedDrivers.map((d, i) => {
+                    const times = (raceData.lap_time_data[d] || []).filter(t => t && t > 0)
+                    if (times.length < 3) return null
+                    const sorted = [...times].sort((a, b) => a - b)
+                    const q1Idx = Math.floor(sorted.length * 0.25)
+                    const q3Idx = Math.floor(sorted.length * 0.75)
+                    const medIdx = Math.floor(sorted.length * 0.5)
+                    return {
+                      driver: d, index: i,
+                      min: sorted[0], max: sorted[sorted.length - 1],
+                      q1: sorted[q1Idx], q3: sorted[q3Idx],
+                      median: sorted[medIdx],
+                      mean: times.reduce((a, b) => a + b, 0) / times.length,
+                      count: times.length
+                    }
+                  }).filter(Boolean)
+
+                  if (driverStats.length === 0) return <div style={{ color: '#444', fontSize: '13px' }}>Select drivers to see distribution</div>
+
+                  // Find global min/max for scale
+                  const allMin = Math.min(...driverStats.map(d => d.min))
+                  const allMax = Math.max(...driverStats.map(d => d.max))
+                  const padding = (allMax - allMin) * 0.05 || 1
+                  const scaleMin = allMin - padding
+                  const scaleMax = allMax + padding
+                  const range = scaleMax - scaleMin
+
+                  const svgW = 700, svgH = driverStats.length * 48 + 40
+                  const leftPad = 50, rightPad = 20, plotW = svgW - leftPad - rightPad
+                  const toX = v => leftPad + ((v - scaleMin) / range) * plotW
+
+                  const fmt = s => {
+                    const m = Math.floor(s / 60)
+                    const sec = (s % 60).toFixed(1).padStart(4, '0')
+                    return `${m}:${sec}`
+                  }
+
+                  // Generate tick values
+                  const tickStep = range > 10 ? 2 : range > 5 ? 1 : 0.5
+                  const ticks = []
+                  for (let v = Math.ceil(scaleMin / tickStep) * tickStep; v <= scaleMax; v += tickStep) ticks.push(v)
+
+                  return (
+                    <svg width="100%" viewBox={`0 0 ${svgW} ${svgH}`} style={{ maxWidth: '100%' }}>
+                      {/* Grid lines */}
+                      {ticks.map((v, i) => (
+                        <g key={i}>
+                          <line x1={toX(v)} y1={20} x2={toX(v)} y2={svgH - 20} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
+                          <text x={toX(v)} y={svgH - 4} fill="#333" fontSize="9" textAnchor="middle" fontFamily="'Space Mono', monospace">{fmt(v)}</text>
+                        </g>
+                      ))}
+                      {/* Box plots */}
+                      {driverStats.map((d, i) => {
+                        const y = 28 + i * 48
+                        const color = getDriverColor(d.driver, d.index, year)
+                        return (
+                          <g key={d.driver}>
+                            <text x={4} y={y + 16} fill={color} fontSize="11" fontWeight="700" fontFamily="'Space Mono', monospace">{d.driver}</text>
+                            {/* Whisker line min to max */}
+                            <line x1={toX(d.min)} y1={y + 12} x2={toX(d.max)} y2={y + 12} stroke={color} strokeWidth="1" opacity="0.5" />
+                            {/* Min whisker cap */}
+                            <line x1={toX(d.min)} y1={y + 6} x2={toX(d.min)} y2={y + 18} stroke={color} strokeWidth="1" opacity="0.5" />
+                            {/* Max whisker cap */}
+                            <line x1={toX(d.max)} y1={y + 6} x2={toX(d.max)} y2={y + 18} stroke={color} strokeWidth="1" opacity="0.5" />
+                            {/* IQR box */}
+                            <rect x={toX(d.q1)} y={y + 2} width={toX(d.q3) - toX(d.q1)} height={20} rx="3" fill={color + '22'} stroke={color} strokeWidth="1.5" />
+                            {/* Median line */}
+                            <line x1={toX(d.median)} y1={y + 2} x2={toX(d.median)} y2={y + 22} stroke={color} strokeWidth="2" />
+                            {/* Median label */}
+                            <text x={toX(d.median)} y={y + 36} fill="#666" fontSize="9" textAnchor="middle" fontFamily="'Space Mono', monospace">{fmt(d.median)}</text>
+                          </g>
+                        )
+                      })}
+                    </svg>
+                  )
+                })()}
+                <div style={{ display: 'flex', gap: '16px', marginTop: '12px', flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'Box', desc: 'Q1–Q3 interquartile range' },
+                    { label: 'Line', desc: 'Median lap time' },
+                    { label: 'Whiskers', desc: 'Min / max lap time' },
+                  ].map((item, i) => (
+                    <div key={i} style={{ fontSize: '10px', color: '#444' }}><span style={{ color: '#666', fontWeight: '600' }}>{item.label}:</span> {item.desc}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* AI Analyst */}
             <div style={cardStyle}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
@@ -743,12 +867,27 @@ ${allLapPositions.join('\n')}`
                   transition: 'all .2s'
                 }}>{aiLoading ? '...' : 'Ask'}</button>
               </div>
-              {aiReply && (
-                <div style={{ marginTop: '12px', background: '#0f0f0f', border: '0.5px solid #1e1e1e', borderRadius: '8px', padding: '14px', fontSize: '13px', color: '#aaa', lineHeight: '1.8' }}>
-                  {aiReply.split('\n').map((line, i) => (
-                    line.trim() === ''
-                      ? <div key={i} style={{ height: '8px' }} />
-                      : <div key={i} style={{ marginBottom: '3px', color: line.startsWith('P') && line.includes(':') ? '#fff' : '#888', fontWeight: line.startsWith('P') && line.includes(':') ? '600' : '400' }}>{line}</div>
+              {aiHistory.length > 0 && (
+                <div style={{ marginTop: '12px', maxHeight: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', padding: '4px' }}>
+                  {aiHistory.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {/* User question bubble */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <div style={{ background: 'rgba(225,6,0,0.12)', border: '0.5px solid rgba(225,6,0,0.25)', borderRadius: '12px 12px 4px 12px', padding: '10px 14px', maxWidth: '75%', fontSize: '13px', color: '#ddd', lineHeight: '1.6' }}>
+                          {item.q}
+                        </div>
+                      </div>
+                      {/* AI answer bubble */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                        <div style={{ background: '#0f0f0f', border: '0.5px solid #1e1e1e', borderRadius: '12px 12px 12px 4px', padding: '12px 14px', maxWidth: '85%', fontSize: '13px', color: '#aaa', lineHeight: '1.8' }}>
+                          {item.a.split('\n').map((line, i) => (
+                            line.trim() === ''
+                              ? <div key={i} style={{ height: '8px' }} />
+                              : <div key={i} style={{ marginBottom: '3px', color: line.startsWith('P') && line.includes(':') ? '#fff' : '#888', fontWeight: line.startsWith('P') && line.includes(':') ? '600' : '400' }}>{line}</div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

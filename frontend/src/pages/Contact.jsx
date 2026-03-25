@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 
 export default function Contact() {
@@ -43,10 +44,12 @@ export default function Contact() {
 
   return (
     <div style={{ minHeight: 'calc(100vh - 52px)', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', overflow: 'hidden' }}>
+      <Helmet>
+        <title>Contact — PitWall F1 Race Analyzer</title>
+        <meta name="description" content="Get in touch with the PitWall team. Bug reports, feature requests, and feedback welcome." />
+        <link rel="canonical" href="https://pitwall-f1.com/contact" />
+      </Helmet>
       <style>{`
-        @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-        @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
         .contact-card { transition: all 0.3s cubic-bezier(0.16,1,0.3,1); }
         .contact-card:hover { transform: translateY(-4px) !important; }
       `}</style>
