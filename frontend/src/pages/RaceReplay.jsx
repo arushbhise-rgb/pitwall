@@ -15,6 +15,7 @@ import { getDriverColor } from '../constants/driverData'
 import { DRIVER_TEAMS_BY_YEAR } from '../constants/driverData'
 import { useToast } from '../components/Toast'
 import { useKeyboardShortcuts, KeyboardShortcutsHelp } from '../hooks/useKeyboardShortcuts'
+import AdBanner from '../components/AdBanner'
 
 const TIRE_COLORS = {
   SOFT: '#e8002d', MEDIUM: '#f5c842',
@@ -894,6 +895,9 @@ ${allLapPositions.join('\n')}`
             </div>
           </>
         )}
+
+        {/* AD BANNER */}
+        {(data || qualiData) && <AdBanner slot="YOUR_AD_SLOT_ID" format="horizontal" />}
 
         {/* QUALIFYING DATA */}
         {qualiData && !qualiLoading && sessionMode === 'quali' && (

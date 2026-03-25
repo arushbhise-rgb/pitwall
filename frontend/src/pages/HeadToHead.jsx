@@ -5,6 +5,7 @@ import { API } from '../config'
 import { getDriverColor, DRIVER_TEAMS_BY_YEAR, ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
 import { useToast } from '../components/Toast'
 import { SkeletonCard } from '../components/Skeleton'
+import AdBanner from '../components/AdBanner'
 
 
 export default function HeadToHead() {
@@ -218,6 +219,8 @@ export default function HeadToHead() {
               )
             })}
           </div>
+
+          <AdBanner slot="YOUR_AD_SLOT_ID" format="horizontal" />
 
           {data.race_names && (
             <div style={cardStyle}>
