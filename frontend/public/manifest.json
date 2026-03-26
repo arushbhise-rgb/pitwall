@@ -1,36 +1,76 @@
 {
   "name": "PitWall — F1 Race Analytics",
   "short_name": "PitWall",
-  "description": "Real F1 telemetry data for every race since 2018. Free forever.",
+  "description": "Real F1 telemetry data for every race since 2018. Race replays, driver comparisons, tire strategy, and AI race analysis. Free forever.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#e10600",
   "orientation": "portrait-primary",
+  "categories": ["sports", "entertainment"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
     {
       "name": "Race Replay",
+      "short_name": "Replay",
       "url": "/replay",
-      "description": "Analyze any F1 race"
+      "description": "Analyze any F1 race with telemetry data",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Head to Head",
+      "short_name": "H2H",
+      "url": "/h2h",
+      "description": "Compare two F1 drivers"
     },
     {
       "name": "Standings",
+      "short_name": "Standings",
       "url": "/standings",
-      "description": "Championship standings"
+      "description": "Championship standings and points"
+    },
+    {
+      "name": "Calendar",
+      "short_name": "Calendar",
+      "url": "/calendar",
+      "description": "F1 race calendar and countdown"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "PitWall F1 Race Analytics Dashboard"
     }
   ]
 }

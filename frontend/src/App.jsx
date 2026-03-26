@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import { Suspense, lazy, useEffect } from 'react'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
+import InstallPrompt from './components/InstallPrompt'
 
 const RaceReplay = lazy(() => import('./pages/RaceReplay'))
 const HeadToHead = lazy(() => import('./pages/HeadToHead'))
@@ -31,6 +32,8 @@ export default function App() {
   }, [])
 
   return (
+    <>
+    <InstallPrompt />
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/replay" element={<Suspense fallback={<PageLoader />}><Layout><RaceReplay /></Layout></Suspense>} />
@@ -42,5 +45,6 @@ export default function App() {
       <Route path="/support" element={<Suspense fallback={<PageLoader />}><Layout><Support /></Layout></Suspense>} />
       <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
     </Routes>
+    </>
   )
 }
