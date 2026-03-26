@@ -57,7 +57,7 @@ export default function AdBanner({ slot, format = 'horizontal', style = {} }) {
           display: 'block',
           ...sizes,
         }}
-        data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+        data-ad-client="ca-pub-8843767538393029"
         data-ad-slot={slot || '0000000000'}
         data-ad-format={format === 'responsive' ? 'auto' : undefined}
         data-full-width-responsive={format === 'responsive' ? 'true' : undefined}
