@@ -153,7 +153,7 @@ export default function Drivers() {
             }}
           />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: selectedCode ? '1fr 420px' : '1fr', gap: '24px', alignItems: 'start' }}>
+        <div className="drivers-layout" style={{ display: 'grid', gridTemplateColumns: selectedCode ? '1fr 420px' : '1fr', gap: '24px', alignItems: 'start' }}>
 
           {/* Driver grid */}
           <div>
@@ -240,7 +240,7 @@ export default function Drivers() {
 
           {/* Profile panel */}
           {selectedCode && selectedDriver && (
-            <div style={{ position: 'sticky', top: '72px', animation: 'fadeUp .3s ease both' }}>
+            <div className="driver-profile-panel" style={{ position: 'sticky', top: '72px', animation: 'fadeUp .3s ease both' }}>
               <div style={{
                 background: 'linear-gradient(145deg, #161616, #111)',
                 border: `1px solid ${selectedColor}33`,
@@ -254,8 +254,8 @@ export default function Drivers() {
                     {selectedDriver.number}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '18px', position: 'relative' }}>
-                    <div style={{
+                  <div className="driver-profile-header" style={{ display: 'flex', alignItems: 'center', gap: '18px', position: 'relative' }}>
+                    <div className="driver-profile-avatar" style={{
                       width: '72px', height: '72px', borderRadius: '50%',
                       background: `radial-gradient(circle, ${selectedColor}30, ${selectedColor}10)`,
                       border: `2.5px solid ${selectedColor}`,
@@ -265,8 +265,8 @@ export default function Drivers() {
                     }}>{selectedDriver.initials}</div>
 
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                        <div style={{ fontSize: '22px', fontWeight: '900', letterSpacing: '-0.5px' }}>{selectedDriver.name}</div>
+                      <div className="driver-profile-name-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                        <div className="driver-profile-name" style={{ fontSize: '22px', fontWeight: '900', letterSpacing: '-0.5px' }}>{selectedDriver.name}</div>
                         <img
                           src={`https://flagcdn.com/24x18/${DRIVER_NATIONALITY_CODES[selectedCode] || 'un'}.png`}
                           alt={`${DRIVER_NATIONALITIES[selectedCode] || 'Unknown'} flag`}

@@ -191,6 +191,32 @@ a { transition: color 0.2s; }
   .mobile-menu { display: block !important; }
 }
 
+/* Drivers */
+@media (max-width: 768px) {
+  .drivers-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .driver-profile-panel {
+    position: relative !important;
+    top: 0 !important;
+    order: -1;
+  }
+  .driver-profile-avatar {
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 16px !important;
+  }
+  .driver-profile-name {
+    font-size: 17px !important;
+  }
+  .driver-profile-header {
+    gap: 12px !important;
+  }
+  .driver-profile-name-row {
+    flex-wrap: wrap !important;
+  }
+}
+
 /* Footer */
 .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 
