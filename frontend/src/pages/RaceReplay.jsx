@@ -897,7 +897,7 @@ ${allLapPositions.join('\n')}`
         )}
 
         {/* AD BANNER */}
-        {(data || qualiData) && <AdBanner slot="YOUR_AD_SLOT_ID" format="horizontal" />}
+        {(raceData || qualiData) && <AdBanner slot="YOUR_AD_SLOT_ID" format="horizontal" />}
 
         {/* QUALIFYING DATA */}
         {qualiData && !qualiLoading && sessionMode === 'quali' && (
