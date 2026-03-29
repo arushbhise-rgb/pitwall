@@ -7,6 +7,7 @@ import requests as req
 import json
 import os
 import hashlib
+import time
 
 _cache = {}
 _cache_lock = threading.Lock()
@@ -66,6 +67,60 @@ def get_cached(key, fn):
             print(f"Disk cache write failed: {e}")
 
         return result
+
+# TTL-aware cache for data that changes (like current season standings)
+_ttl_cache = {}
+
+def get_cached_ttl(key, fn, ttl_seconds=3600):
+    """Cache with time-based expiry. Falls back to stale data if refresh fails."""
+    now = time.time()
+
+    # Check memory cache
+    with _cache_lock:
+        if key in _ttl_cache:
+            entry = _ttl_cache[key]
+            if now - entry['ts'] < ttl_seconds:
+                print(f"TTL cache hit (memory): {key}")
+                return entry['data']
+            print(f"TTL cache expired (memory): {key}")
+
+    # Check disk cache
+    path = disk_cache_path(f"ttl_{key}")
+    stale_data = None
+    if os.path.exists(path):
+        try:
+            with open(path, 'r') as f:
+                entry = json.load(f)
+            if now - entry.get('ts', 0) < ttl_seconds:
+                with _cache_lock:
+                    _ttl_cache[key] = entry
+                print(f"TTL cache hit (disk): {key}")
+                return entry['data']
+            stale_data = entry['data']
+        except Exception:
+            pass
+
+    # Fetch fresh data
+    try:
+        print(f"TTL cache miss: {key} — fetching fresh...")
+        result = fn()
+        entry = {'data': result, 'ts': now}
+        with _cache_lock:
+            _ttl_cache[key] = entry
+        try:
+            with open(path, 'w') as f:
+                json.dump(entry, f)
+        except Exception:
+            pass
+        return result
+    except Exception as e:
+        # Fall back to stale cache if API fails
+        if stale_data:
+            print(f"TTL fetch failed, using stale cache: {key}")
+            return stale_data
+        raise e
+
+CURRENT_SEASON = 2025
 
 fastf1.Cache.enable_cache('cache')
 router = APIRouter()
@@ -332,6 +387,8 @@ def get_driver_standings(year: int = Query(..., ge=2018, le=2030)):
         return {"standings": drivers, "year": year, "round": standings[0].get('round', '?')}
 
     try:
+        if year >= CURRENT_SEASON:
+            return get_cached_ttl(cache_key, fetch, ttl_seconds=3600)
         return get_cached(cache_key, fetch)
     except Exception as e:
         return {"error": str(e)}
@@ -361,9 +418,32 @@ def get_constructor_standings(year: int = Query(..., ge=2018, le=2030)):
         return {"standings": teams, "year": year, "round": standings[0].get('round', '?')}
 
     try:
+        if year >= CURRENT_SEASON:
+            return get_cached_ttl(cache_key, fetch, ttl_seconds=3600)
         return get_cached(cache_key, fetch)
     except Exception as e:
         return {"error": str(e)}
+
+@router.get("/cache/clear-standings")
+def clear_standings_cache():
+    """Clear cached standings so next request fetches fresh data."""
+    cleared = []
+    with _cache_lock:
+        keys_to_remove = [k for k in _ttl_cache if 'standings' in k]
+        for k in keys_to_remove:
+            del _ttl_cache[k]
+            cleared.append(k)
+        keys_to_remove = [k for k in _cache if 'standings' in k]
+        for k in keys_to_remove:
+            del _cache[k]
+            cleared.append(k)
+    # Also clear disk cache for standings
+    for k in cleared:
+        for prefix in ['', 'ttl_']:
+            path = disk_cache_path(f"{prefix}{k}")
+            if os.path.exists(path):
+                os.remove(path)
+    return {"cleared": cleared, "message": "Standings cache cleared"}
 
 @router.get("/calendar")
 def get_calendar(year: int = Query(..., ge=2018, le=2030)):
