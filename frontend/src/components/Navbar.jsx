@@ -1,15 +1,9 @@
 import { Link, useLocation } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export default function Navbar() {
   const loc = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [theme, setTheme] = useState(() => localStorage.getItem('pw_theme') || 'dark')
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('pw_theme', theme)
-  }, [theme])
 
   const tabs = [
     { label: 'Race replay', path: '/replay' },
@@ -28,7 +22,7 @@ export default function Navbar() {
         onBlur={e => e.target.style.top = '-40px'}
       >Skip to content</a>
       <nav aria-label="Main navigation" style={{
-        background: 'var(--nav-bg)',
+        background: 'rgba(10,10,10,0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         padding: '0 20px',
@@ -36,7 +30,7 @@ export default function Navbar() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '0.5px solid var(--nav-border)',
+        borderBottom: '0.5px solid #1a1a1a',
         position: 'sticky',
         top: 0,
         zIndex: 100,
@@ -72,15 +66,6 @@ export default function Navbar() {
           })}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <button
-          onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          style={{
-            background: 'none', border: '0.5px solid var(--border-subtle)',
-            borderRadius: '6px', cursor: 'pointer', padding: '4px 7px',
-            fontSize: '14px', display: 'flex', alignItems: 'center', lineHeight: 1,
-          }}>{theme === 'dark' ? '☀️' : '🌙'}</button>
         <button
           className="mobile-menu-btn"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -91,11 +76,10 @@ export default function Navbar() {
             padding: '4px', display: 'none',
             flexDirection: 'column', gap: '5px', alignItems: 'center'
           }}>
-          <div style={{ width: '22px', height: '2px', background: menuOpen ? '#e10600' : 'var(--text-primary)', transition: 'all .2s', transform: menuOpen ? 'rotate(45deg) translate(5px,5px)' : 'none', borderRadius: '2px' }}></div>
-          <div style={{ width: '22px', height: '2px', background: 'var(--text-primary)', opacity: menuOpen ? 0 : 1, transition: 'all .2s', borderRadius: '2px' }}></div>
-          <div style={{ width: '22px', height: '2px', background: menuOpen ? '#e10600' : 'var(--text-primary)', transition: 'all .2s', transform: menuOpen ? 'rotate(-45deg) translate(5px,-5px)' : 'none', borderRadius: '2px' }}></div>
+          <div style={{ width: '22px', height: '2px', background: menuOpen ? '#e10600' : '#fff', transition: 'all .2s', transform: menuOpen ? 'rotate(45deg) translate(5px,5px)' : 'none', borderRadius: '2px' }}></div>
+          <div style={{ width: '22px', height: '2px', background: '#fff', opacity: menuOpen ? 0 : 1, transition: 'all .2s', borderRadius: '2px' }}></div>
+          <div style={{ width: '22px', height: '2px', background: menuOpen ? '#e10600' : '#fff', transition: 'all .2s', transform: menuOpen ? 'rotate(-45deg) translate(5px,-5px)' : 'none', borderRadius: '2px' }}></div>
         </button>
-        </div>
       </nav>
 
       {menuOpen && (
