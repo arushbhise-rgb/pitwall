@@ -38,10 +38,68 @@
   --nav-border: #e0e0e0;
 }
 
-[data-theme="light"] body { background: var(--bg-primary); color: var(--text-primary); }
-[data-theme="light"] ::-webkit-scrollbar-track { background: #f5f5f5; }
-[data-theme="light"] select, [data-theme="light"] input { background: var(--bg-input) !important; color: var(--text-primary) !important; border-color: var(--border-input) !important; }
-[data-theme="light"] option { background: #fff; color: #111; }
+/* ═══ LIGHT MODE — full-site overrides for hardcoded inline styles ═══ */
+html[data-theme="light"] body,
+html[data-theme="light"] #root { background: #f5f5f5 !important; color: #111 !important; }
+
+/* Page backgrounds */
+html[data-theme="light"] [style*="background: #0a0a0a"] { background: #f5f5f5 !important; }
+html[data-theme="light"] [style*="background: #0f0f0f"] { background: #f2f2f2 !important; }
+html[data-theme="light"] [style*="background: #111;"] { background: #ffffff !important; }
+html[data-theme="light"] [style*="background: #111 "] { background: #ffffff !important; }
+html[data-theme="light"] [style*="background:#111"] { background: #ffffff !important; }
+html[data-theme="light"] [style*="background: #131313"] { background: #f5f5f5 !important; }
+html[data-theme="light"] [style*="background: #161616"] { background: #fafafa !important; }
+html[data-theme="light"] [style*="background: #1a1a1a"] { background: #efefef !important; }
+html[data-theme="light"] [style*="background: #1e1e1e"] { background: #e8e8e8 !important; }
+html[data-theme="light"] [style*="background: #222;"] { background: #e5e5e5 !important; }
+html[data-theme="light"] [style*="background: #222 "] { background: #e5e5e5 !important; }
+html[data-theme="light"] [style*="background: #2a2a2a"] { background: #ddd !important; }
+html[data-theme="light"] [style*="background: #333;"] { background: #ccc !important; }
+html[data-theme="light"] [style*="background: #333 "] { background: #ccc !important; }
+
+/* Text colors */
+html[data-theme="light"] [style*="color: #fff;"] { color: #111 !important; }
+html[data-theme="light"] [style*="color: #fff "] { color: #111 !important; }
+html[data-theme="light"] [style*="color: #ffffff"] { color: #111 !important; }
+html[data-theme="light"] [style*="color: #ccc;"] { color: #444 !important; }
+html[data-theme="light"] [style*="color: #ccc "] { color: #444 !important; }
+html[data-theme="light"] [style*="color: #bbb"] { color: #555 !important; }
+html[data-theme="light"] [style*="color: #aaa;"] { color: #444 !important; }
+html[data-theme="light"] [style*="color: #aaa "] { color: #444 !important; }
+html[data-theme="light"] [style*="color: #888;"] { color: #666 !important; }
+html[data-theme="light"] [style*="color: #888 "] { color: #666 !important; }
+html[data-theme="light"] [style*="color: #777;"] { color: #555 !important; }
+html[data-theme="light"] [style*="color: #777 "] { color: #555 !important; }
+html[data-theme="light"] [style*="color: #666;"] { color: #555 !important; }
+html[data-theme="light"] [style*="color: #666 "] { color: #555 !important; }
+html[data-theme="light"] [style*="color: #555;"] { color: #777 !important; }
+html[data-theme="light"] [style*="color: #555 "] { color: #777 !important; }
+html[data-theme="light"] [style*="color: #444;"] { color: #666 !important; }
+html[data-theme="light"] [style*="color: #444 "] { color: #666 !important; }
+html[data-theme="light"] [style*="color: #333;"] { color: #888 !important; }
+html[data-theme="light"] [style*="color: #333 "] { color: #888 !important; }
+html[data-theme="light"] [style*="color: #2a2a2a"] { color: #999 !important; }
+
+/* Border line colors */
+html[data-theme="light"] [style*="solid #0a0a0a"] { border-color: #ddd !important; }
+html[data-theme="light"] [style*="solid #111;"] { border-color: #ddd !important; }
+html[data-theme="light"] [style*="solid #1a1a1a"] { border-color: #ddd !important; }
+html[data-theme="light"] [style*="solid #1e1e1e"] { border-color: #e0e0e0 !important; }
+html[data-theme="light"] [style*="solid #222;"] { border-color: #ddd !important; }
+html[data-theme="light"] [style*="solid #222 "] { border-color: #ddd !important; }
+html[data-theme="light"] [style*="solid #2a2a2a"] { border-color: #ccc !important; }
+html[data-theme="light"] [style*="solid #333;"] { border-color: #bbb !important; }
+html[data-theme="light"] [style*="solid #333 "] { border-color: #bbb !important; }
+
+/* Inputs / selects */
+html[data-theme="light"] select,
+html[data-theme="light"] input { background: #efefef !important; color: #111 !important; border-color: #ccc !important; }
+html[data-theme="light"] option { background: #fff; color: #111; }
+
+/* Scrollbar */
+html[data-theme="light"] ::-webkit-scrollbar-track { background: #f5f5f5; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background: #ccc; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 

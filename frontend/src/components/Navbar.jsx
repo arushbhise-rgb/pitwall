@@ -17,7 +17,7 @@ export default function Navbar() {
     { label: 'Standings', path: '/standings' },
     { label: 'Drivers', path: '/drivers' },
     { label: 'Calendar', path: '/calendar' },
-    { label: 'Community', path: '/community' },
+    { label: 'Paddock', path: '/community' },
     { label: 'Support', path: '/support' },
   ]
 
