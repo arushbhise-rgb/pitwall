@@ -20,7 +20,28 @@
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 40px;
+  --nav-bg: rgba(10,10,10,0.95);
+  --nav-border: #1a1a1a;
 }
+
+[data-theme="light"] {
+  --bg-primary: #f5f5f5;
+  --bg-card: #ffffff;
+  --bg-input: #efefef;
+  --border-subtle: #e0e0e0;
+  --border-input: #ccc;
+  --text-primary: #111111;
+  --text-secondary: #444;
+  --text-muted: #888;
+  --text-dim: #bbb;
+  --nav-bg: rgba(255,255,255,0.95);
+  --nav-border: #e0e0e0;
+}
+
+[data-theme="light"] body { background: var(--bg-primary); color: var(--text-primary); }
+[data-theme="light"] ::-webkit-scrollbar-track { background: #f5f5f5; }
+[data-theme="light"] select, [data-theme="light"] input { background: var(--bg-input) !important; color: var(--text-primary) !important; border-color: var(--border-input) !important; }
+[data-theme="light"] option { background: #fff; color: #111; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -109,23 +130,18 @@ a { transition: color 0.2s; }
 
   /* Qualifying mobile layout */
   .quali-row {
-    grid-template-columns: 24px 28px 1fr !important;
+    grid-template-columns: 22px 26px 1fr auto !important;
     grid-template-rows: auto auto !important;
-    gap: 6px !important;
-    padding: 10px 8px !important;
+    gap: 5px !important;
+    padding: 8px 6px !important;
   }
-  .quali-pos { font-size: 11px !important; }
-  .quali-badge { width: 28px !important; height: 28px !important; font-size: 8px !important; }
-  .quali-bar-area { grid-column: 1 / -1 !important; }
-  .quali-sessions { gap: 14px !important; }
-  .quali-best {
-    grid-column: 3 !important;
-    grid-row: 1 !important;
-    font-size: 11px !important;
-  }
-  .quali-delta {
-    display: none !important;
-  }
+  .quali-pos { font-size: 10px !important; }
+  .quali-badge { width: 26px !important; height: 26px !important; font-size: 8px !important; flex-shrink: 0; }
+  .quali-bar-area { grid-column: 1 / -1 !important; padding-top: 2px; }
+  .quali-sessions { gap: 8px !important; flex-wrap: nowrap; overflow: hidden; }
+  .quali-sessions span { font-size: 8px !important; }
+  .quali-best { font-size: 10px !important; white-space: nowrap; }
+  .quali-delta { display: none !important; }
 }
 
 /* Head to Head */

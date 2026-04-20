@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { API } from '../config'
 import { getDriverColor, DRIVER_TEAMS_BY_YEAR, ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
@@ -10,11 +11,19 @@ import AdBanner from '../components/AdBanner'
 
 export default function HeadToHead() {
   const toast = useToast()
-  const [year, setYear] = useState('2024')
-  const [d1Code, setD1Code] = useState('VER')
-  const [d2Code, setD2Code] = useState('LEC')
+  const [searchParams] = useSearchParams()
+  const [year, setYear] = useState(searchParams.get('year') || '2024')
+  const [d1Code, setD1Code] = useState(searchParams.get('d1')?.toUpperCase() || 'VER')
+  const [d2Code, setD2Code] = useState(searchParams.get('d2')?.toUpperCase() || 'LEC')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  // Auto-load if URL has params
+  useEffect(() => {
+    if (searchParams.get('d1') && searchParams.get('d2')) {
+      compare(searchParams.get('d1').toUpperCase(), searchParams.get('d2').toUpperCase(), searchParams.get('year') || '2024')
+    }
+  }, [])
 
   const drivers = ALL_DRIVERS_BY_YEAR[String(year)] || ALL_DRIVERS_BY_YEAR['2024']
   const d1 = drivers.find(d => d.code === d1Code) || drivers[0]
@@ -24,6 +33,8 @@ export default function HeadToHead() {
   const d1Team = DRIVER_TEAMS_BY_YEAR[String(year)]?.[d1Code] || 'Unknown'
   const d2Team = DRIVER_TEAMS_BY_YEAR[String(year)]?.[d2Code] || 'Unknown'
 
+  const [error, setError] = useState(false)
+
   async function compare(overrideD1, overrideD2, overrideYear) {
     const finalD1 = overrideD1 || d1Code
     const finalD2 = overrideD2 || d2Code
@@ -31,12 +42,22 @@ export default function HeadToHead() {
     if (finalD1 === finalD2) { toast('Pick two different drivers'); return }
     setLoading(true)
     setData(null)
+    setError(false)
     try {
       const r = await axios.get(`${API}/h2h?year=${finalYear}&driver1=${finalD1}&driver2=${finalD2}`)
       setData(r.data)
       document.title = `${finalD1} vs ${finalD2} ${finalYear} — PitWall Head to Head`
-    } catch(e) { toast('Error loading H2H data') }
+    } catch(e) { setError(true); toast('Error loading H2H data') }
     setLoading(false)
+  }
+
+  function shareH2H() {
+    const url = `${window.location.origin}/h2h?year=${year}&d1=${d1Code}&d2=${d2Code}`
+    if (navigator.share) {
+      navigator.share({ title: `${d1Code} vs ${d2Code} ${year} — PitWall`, url })
+    } else {
+      navigator.clipboard.writeText(url).then(() => toast('Link copied!'))
+    }
   }
 
   function handleYearChange(newYear) {
@@ -111,6 +132,7 @@ export default function HeadToHead() {
             fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap',
             opacity: loading ? .6 : 1, boxShadow: '0 0 12px rgba(225,6,0,0.2)'
           }}>{loading ? 'Loading...' : 'Compare'}</button>
+          {data && <button onClick={shareH2H} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border-input)', color: 'var(--text-secondary)', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer' }}>🔗 Share</button>}
         </div>
 
         <div style={cardStyle}>
@@ -286,9 +308,10 @@ export default function HeadToHead() {
         </>
       )}
 
-      {data && data.error && (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#555', fontSize: '13px' }}>
-          Failed to load data — try again
+      {(error || (data && data.error)) && (
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <div style={{ fontSize: '13px', color: '#555', marginBottom: '14px' }}>Failed to load data</div>
+          <button onClick={() => compare()} style={{ background: '#e10600', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>Try again</button>
         </div>
       )}
     </div>
