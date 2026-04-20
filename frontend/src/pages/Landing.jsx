@@ -222,16 +222,50 @@ function TeamsStrip({ visible }) {
 }
 
 // Next race countdown
-const NEXT_RACES = [
-  { name: "Japanese Grand Prix", location: "Suzuka", date: "2026-04-05", flag: "🇯🇵" },
-  { name: "Bahrain Grand Prix", location: "Sakhir", date: "2026-04-19", flag: "🇧🇭" },
-];
+const COUNTRY_FLAGS = {
+  'Japan': '🇯🇵', 'Bahrain': '🇧🇭', 'Saudi Arabia': '🇸🇦', 'Australia': '🇦🇺',
+  'China': '🇨🇳', 'United States': '🇺🇸', 'Monaco': '🇲🇨', 'Canada': '🇨🇦',
+  'Spain': '🇪🇸', 'Austria': '🇦🇹', 'Great Britain': '🇬🇧', 'United Kingdom': '🇬🇧',
+  'Hungary': '🇭🇺', 'Belgium': '🇧🇪', 'Netherlands': '🇳🇱', 'Italy': '🇮🇹',
+  'Azerbaijan': '🇦🇿', 'Singapore': '🇸🇬', 'Mexico': '🇲🇽', 'Brazil': '🇧🇷',
+  'Qatar': '🇶🇦', 'Abu Dhabi': '🇦🇪', 'UAE': '🇦🇪', 'Las Vegas': '🇺🇸', 'Miami': '🇺🇸',
+}
 
 function NextRaceCard({ visible }) {
   const [timeLeft, setTimeLeft] = useState({});
-  const next = NEXT_RACES[0];
+  const [next, setNext] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch live calendar from backend, find the next upcoming race
+  useEffect(() => {
+    async function loadNext() {
+      const now = new Date();
+      const year = now.getFullYear();
+      try {
+        for (const y of [year, year + 1]) {
+          const res = await fetch(`${API}/calendar?year=${y}`);
+          const data = await res.json();
+          const upcoming = data.races?.find(r => new Date(r.date) > now);
+          if (upcoming) {
+            setNext({
+              name: upcoming.name,
+              location: upcoming.location,
+              country: upcoming.country,
+              date: upcoming.date,
+              flag: COUNTRY_FLAGS[upcoming.country] || '🏁',
+            });
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (e) {}
+      setLoading(false);
+    }
+    loadNext();
+  }, []);
 
   useEffect(() => {
+    if (!next) return;
     function calc() {
       const diff = new Date(next.date) - new Date();
       if (diff <= 0) { setTimeLeft({ done: true }); return; }
@@ -244,7 +278,20 @@ function NextRaceCard({ visible }) {
     calc();
     const t = setInterval(calc, 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [next]);
+
+  if (loading) return (
+    <div style={{ textAlign: "center", padding: "32px", color: "#333", fontSize: "12px" }}>
+      <div style={{ width: "20px", height: "20px", border: "2px solid #e1060033", borderTopColor: "#e10600", borderRadius: "50%", animation: "spin .7s linear infinite", margin: "0 auto 8px" }} />
+      Loading next race...
+    </div>
+  );
+
+  if (!next) return (
+    <div style={{ textAlign: "center", padding: "32px", color: "#444", fontSize: "13px" }}>
+      🏁 Season complete — see you next year
+    </div>
+  );
 
   return (
     <div style={{
@@ -273,7 +320,9 @@ function NextRaceCard({ visible }) {
           <div style={{ fontSize: "12px", color: "#555" }}>{next.location} · {new Date(next.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div>
         </div>
         <div className="next-race-countdown" style={{ display: "flex", gap: "12px" }}>
-          {[
+          {timeLeft.done ? (
+            <div style={{ fontSize: "13px", color: "#e10600", fontWeight: "700" }}>Race Weekend! 🏎️</div>
+          ) : [
             { val: timeLeft.d, label: "Days" },
             { val: timeLeft.h, label: "Hrs" },
             { val: timeLeft.m, label: "Min" },
