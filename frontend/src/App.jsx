@@ -13,6 +13,7 @@ const Contact = lazy(() => import('./pages/Contact'))
 const Support = lazy(() => import('./pages/Support'))
 const Community = lazy(() => import('./pages/Community'))
 const Team = lazy(() => import('./pages/Team'))
+const Profile = lazy(() => import('./pages/Profile'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function PageLoader() {
@@ -47,6 +48,7 @@ export default function App() {
       <Route path="/support" element={<Suspense fallback={<PageLoader />}><Layout><Support /></Layout></Suspense>} />
       <Route path="/community" element={<Suspense fallback={<PageLoader />}><Layout><Community /></Layout></Suspense>} />
       <Route path="/team" element={<Suspense fallback={<PageLoader />}><Layout><Team /></Layout></Suspense>} />
+      <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Layout><Profile /></Layout></Suspense>} />
       <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
     </Routes>
     </>
