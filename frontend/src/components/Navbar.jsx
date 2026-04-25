@@ -52,7 +52,7 @@ export default function Navbar() {
         borderBottom: '0.5px solid #1a1a1a',
         position: 'sticky',
         top: 0,
-        zIndex: 100,
+        zIndex: 200,
       }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
           <div style={{
@@ -110,7 +110,7 @@ export default function Navbar() {
                   position: 'absolute', top: '40px', right: 0,
                   background: '#111', border: '0.5px solid #2a2a2a',
                   borderRadius: '12px', padding: '6px', minWidth: '210px',
-                  zIndex: 150, boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+                  zIndex: 201, boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
                   animation: 'pwFadeIn .15s ease',
                 }}>
                   {/* Profile header */}
@@ -218,7 +218,7 @@ export default function Navbar() {
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {needsOnboarding && <OnboardingModal />}
-      {showUserMenu && <div onClick={() => setShowUserMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 149 }} />}
+      {showUserMenu && <div onClick={() => setShowUserMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 199 }} />}
 
       <style>{`
         @keyframes pwFadeIn { from { opacity:0; transform:translateY(-4px) } to { opacity:1; transform:translateY(0) } }
