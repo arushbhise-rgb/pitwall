@@ -1111,42 +1111,44 @@ function TelemetryChart({ telemetryData, selectedDrivers, getDriverColor, year }
   const drivers = telemetryData.drivers.filter(d => selectedDrivers.includes(d))
   if (drivers.length === 0) return <div style={{ color: '#444', fontSize: '13px', padding: '20px 0' }}>Select drivers from the sidebar to compare telemetry</div>
 
-  const maxDist = Math.max(...drivers.map(d => {
-    const dist = telemetryData.telemetry_data[d]?.distance || []
-    return dist[dist.length - 1] || 0
-  }))
-  // Sample every N points to keep chart fast
   const SAMPLE = 5
   const sample = arr => arr ? arr.filter((_, i) => i % SAMPLE === 0) : []
-
   const labels = sample(telemetryData.telemetry_data[drivers[0]]?.distance || []).map(v => Math.round(v))
 
-  const datasets = drivers.map((d, i) => {
+  const datasets = drivers.map(d => {
     const tel = telemetryData.telemetry_data[d]
-    const raw = metric === 'speed' ? tel?.speed : metric === 'throttle' ? tel?.throttle : tel?.brake
+    const raw = metric === 'speed' ? tel?.speed : metric === 'throttle' ? tel?.throttle : tel?.gear
     return {
       label: d,
       data: sample(raw || []),
       borderColor: getDriverColor(d, telemetryData.drivers.indexOf(d), year),
       backgroundColor: 'transparent',
-      borderWidth: 1.5, pointRadius: 0, tension: 0.1
+      borderWidth: 1.5, pointRadius: 0, tension: metric === 'gear' ? 0 : 0.1
     }
   })
 
-  const yLabel = metric === 'speed' ? 'Speed (km/h)' : metric === 'throttle' ? 'Throttle (%)' : 'Brake'
-  const yMax = metric === 'speed' ? 360 : 100
+  const metricConfig = {
+    speed:    { label: 'Speed (km/h)', max: 360 },
+    throttle: { label: 'Throttle (%)', max: 100 },
+    gear:     { label: 'Gear', max: 8, min: 1, stepSize: 1 },
+  }
+  const cfg = metricConfig[metric]
 
   return (
     <>
       <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
-        {['speed','throttle','brake'].map(m => (
-          <button key={m} onClick={() => setMetric(m)} style={{
-            background: metric === m ? '#e10600' : '#1a1a1a',
-            color: metric === m ? '#fff' : '#555',
-            border: `0.5px solid ${metric === m ? '#e10600' : '#2a2a2a'}`,
+        {[
+          { key: 'speed', label: 'Speed' },
+          { key: 'throttle', label: 'Throttle' },
+          { key: 'gear', label: 'Gear' },
+        ].map(m => (
+          <button key={m.key} onClick={() => setMetric(m.key)} style={{
+            background: metric === m.key ? '#e10600' : '#1a1a1a',
+            color: metric === m.key ? '#fff' : '#555',
+            border: `0.5px solid ${metric === m.key ? '#e10600' : '#2a2a2a'}`,
             padding: '5px 14px', borderRadius: '6px', fontSize: '12px',
-            cursor: 'pointer', textTransform: 'capitalize', transition: 'all .15s'
-          }}>{m}</button>
+            cursor: 'pointer', transition: 'all .15s'
+          }}>{m.label}</button>
         ))}
       </div>
       <Line
@@ -1156,15 +1158,15 @@ function TelemetryChart({ telemetryData, selectedDrivers, getDriverColor, year }
           animation: false,
           plugins: {
             legend: { labels: { color: '#666', font: { size: 11 }, boxWidth: 12 } },
-            tooltip: { mode: 'index', intersect: false, callbacks: { title: items => `${items[0].label}m`, label: c => `${c.dataset.label}: ${c.raw}` } }
+            tooltip: { mode: 'index', intersect: false, callbacks: { title: items => `${items[0].label}m`, label: c => `${c.dataset.label}: ${c.raw}${metric === 'speed' ? ' km/h' : metric === 'gear' ? 'G' : '%'}` } }
           },
           scales: {
             x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', maxTicksLimit: 12, font: { size: 10 } }, title: { display: true, text: 'Distance (m)', color: '#444', font: { size: 10 } } },
-            y: { min: 0, max: yMax, grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', font: { size: 10 } }, title: { display: true, text: yLabel, color: '#444', font: { size: 10 } } }
+            y: { min: cfg.min || 0, max: cfg.max, grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', font: { size: 10 }, stepSize: cfg.stepSize }, title: { display: true, text: cfg.label, color: '#444', font: { size: 10 } } }
           }
         }}
       />
-      <div style={{ marginTop: '8px', fontSize: '10px', color: '#333' }}>Fastest lap for each driver · Sampled every {SAMPLE} data points</div>
+      <div style={{ marginTop: '8px', fontSize: '10px', color: '#333' }}>Fastest lap per driver · Gear shows every braking point and corner entry</div>
     </>
   )
 }

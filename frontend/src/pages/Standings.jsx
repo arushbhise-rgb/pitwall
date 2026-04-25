@@ -30,7 +30,7 @@ export default function Standings() {
 
   useEffect(() => {
     if (tab === 'progress' && !progress && !progressLoading) loadProgress()
-  }, [tab])
+  }, [tab, year, progress])
 
   async function loadStandings() {
     setLoading(true)

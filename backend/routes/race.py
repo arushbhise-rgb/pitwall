@@ -584,7 +584,7 @@ def get_telemetry(year: int = Query(..., ge=2018, le=2030), gp: str = Query(...,
                     'distance': tel['Distance'].round(1).tolist(),
                     'speed': tel['Speed'].round(1).tolist(),
                     'throttle': tel['Throttle'].round(1).tolist(),
-                    'brake': tel['Brake'].astype(int).tolist(),
+                    'gear': tel['nGear'].astype(int).tolist(),
                     'lap': int(fastest['LapNumber'])
                 }
             except Exception as ex:
