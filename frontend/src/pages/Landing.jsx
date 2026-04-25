@@ -666,12 +666,12 @@ export default function Landing() {
                   ? `linear-gradient(135deg, ${TEAM_COLORS[profile.fav_team] || '#e10600'}, ${TEAM_COLORS[profile.fav_team] || '#b30500'}99)`
                   : "linear-gradient(135deg, #e10600, #b30500)",
                 border: "none", color: "#fff", fontWeight: 800,
-                fontSize: "13px", cursor: "pointer", display: "flex",
+                fontSize: profile?.avatar ? "18px" : "13px", cursor: "pointer", display: "flex",
                 alignItems: "center", justifyContent: "center",
                 boxShadow: `0 0 14px ${TEAM_COLORS[profile?.fav_team] || '#e10600'}55`,
                 fontFamily: "'Outfit', sans-serif",
               }}>
-                {(profile?.username?.[0] || user.email[0]).toUpperCase()}
+                {profile?.avatar || (profile?.username?.[0] || user.email[0]).toUpperCase()}
               </button>
               {showUserMenu && (
                 <div style={{
@@ -688,8 +688,8 @@ export default function Landing() {
                         width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
                         background: `linear-gradient(135deg, ${TEAM_COLORS[profile?.fav_team] || '#e10600'}, ${TEAM_COLORS[profile?.fav_team] || '#b30500'}99)`,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "14px", fontWeight: 800, color: "#fff",
-                      }}>{(profile?.username?.[0] || user.email[0]).toUpperCase()}</div>
+                        fontSize: profile?.avatar ? "20px" : "14px", fontWeight: 800, color: "#fff",
+                      }}>{profile?.avatar || (profile?.username?.[0] || user.email[0]).toUpperCase()}</div>
                       <div style={{ overflow: "hidden" }}>
                         <div style={{ fontSize: "13px", fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {profile?.username || user.email.split("@")[0]}
