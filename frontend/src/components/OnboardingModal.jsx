@@ -21,6 +21,10 @@ export const AVATAR_OPTIONS = [
   '🎯','🌟','🔧','🛞','🪖','🏴','🎪','🎽','🥊','🎮',
 ]
 
+// Creator-exclusive avatar — not shown to regular users
+export const CREATOR_AVATAR = '🛠️'
+const CREATOR_USERNAMES = new Set(['arushbhise', 'arush', 'arushbhise-rgb'])
+
 const YEAR = String(new Date().getFullYear())
 const CURRENT_DRIVERS = ALL_DRIVERS_BY_YEAR[YEAR] || ALL_DRIVERS_BY_YEAR['2025'] || []
 
@@ -32,7 +36,7 @@ const STEPS = [
 ]
 
 export default function OnboardingModal() {
-  const { updateProfile, dismissOnboarding } = useAuth()
+  const { updateProfile, dismissOnboarding, user } = useAuth()
   const [step, setStep] = useState(0) // 0-indexed
   const [username, setUsername] = useState('')
   const [avatar, setAvatar] = useState('')
@@ -161,6 +165,15 @@ export default function OnboardingModal() {
                     }}>{emoji}</button>
                   )
                 })}
+                {CREATOR_USERNAMES.has(username.trim().toLowerCase()) && (
+                  <button onClick={() => setAvatar(a => a === CREATOR_AVATAR ? '' : CREATOR_AVATAR)} title="Creator exclusive 🛠️" style={{
+                    height: '52px', background: avatar === CREATOR_AVATAR ? 'rgba(245,200,66,0.15)' : 'rgba(245,200,66,0.04)',
+                    border: `1.5px solid ${avatar === CREATOR_AVATAR ? '#f5c842' : 'rgba(245,200,66,0.3)'}`,
+                    borderRadius: '10px', fontSize: '24px', cursor: 'pointer', transition: 'all .15s',
+                    transform: avatar === CREATOR_AVATAR ? 'scale(1.08)' : 'scale(1)',
+                    boxShadow: '0 0 10px rgba(245,200,66,0.1)',
+                  }}>{CREATOR_AVATAR}</button>
+                )}
               </div>
               {/* Letter preview */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: '#141414', border: '1px solid #222', borderRadius: '10px' }}>
