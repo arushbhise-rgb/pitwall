@@ -3,8 +3,11 @@ import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import AuthModal from '../components/AuthModal'
-import { AVATAR_OPTIONS } from '../components/OnboardingModal'
+import { AVATAR_OPTIONS, CREATOR_AVATAR } from '../components/OnboardingModal'
 import { ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
+
+// Update this with your username after onboarding
+const CREATOR_USERNAMES = new Set(['arushbhise', 'arush', 'arushbhise-rgb'])
 
 const F1_TEAMS = [
   { id: 'Red Bull Racing', color: '#3671c6' }, { id: 'Ferrari', color: '#e8002d' },
@@ -51,6 +54,32 @@ const YEARS = Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i)
 
 function teamColor(team) { return F1_TEAMS.find(t => t.id === team)?.color || '#e10600' }
 
+function getActivityTags(votes, preds, ratings, hotTakesCount) {
+  const tags = []
+  // DOTD voting
+  if (votes >= 30) tags.push({ label: 'DOTD Oracle', icon: '🔮', color: '#f5c842' })
+  else if (votes >= 15) tags.push({ label: 'DOTD Devotee', icon: '🗳️', color: '#00d2be' })
+  else if (votes >= 5) tags.push({ label: 'Regular Voter', icon: '✅', color: '#34d399' })
+  else if (votes >= 1) tags.push({ label: 'First Vote', icon: '🗳️', color: '#555' })
+  // Predictions
+  if (preds >= 15) tags.push({ label: 'Grid Guru', icon: '🎯', color: '#c0c0c0' })
+  else if (preds >= 5) tags.push({ label: 'Race Prophet', icon: '🎯', color: '#8b5cf6' })
+  else if (preds >= 1) tags.push({ label: 'Predictor', icon: '🎯', color: '#555' })
+  // Ratings
+  if (ratings >= 20) tags.push({ label: 'Chief Analyst', icon: '📊', color: '#f59e0b' })
+  else if (ratings >= 8) tags.push({ label: 'Driver Scout', icon: '👀', color: '#6692ff' })
+  else if (ratings >= 1) tags.push({ label: 'Analyst', icon: '📊', color: '#555' })
+  // Hot takes
+  if (hotTakesCount >= 10) tags.push({ label: 'Hot Takes Legend', icon: '🔥', color: '#ef4444' })
+  else if (hotTakesCount >= 3) tags.push({ label: 'Controversialist', icon: '🌶️', color: '#f97316' })
+  else if (hotTakesCount >= 1) tags.push({ label: 'Takes Haver', icon: '💬', color: '#555' })
+  // Combined
+  const totalActions = votes + preds + ratings + hotTakesCount
+  if (totalActions >= 50) tags.push({ label: 'Paddock Veteran', icon: '🏆', color: '#f5c842' })
+  else if (totalActions >= 20) tags.push({ label: 'Paddock Regular', icon: '🏁', color: '#aaa' })
+  return tags
+}
+
 function getPaddockRank(pts) {
   if (pts >= 50) return { label: 'World Champion', color: '#f5c842', icon: '👑', next: null }
   if (pts >= 25) return { label: 'Team Principal', color: '#c0c0c0', icon: '🏆', next: 50, nextLabel: 'World Champion' }
@@ -91,6 +120,7 @@ export default function Profile() {
   const [votes, setVotes] = useState([])
   const [preds, setPreds] = useState([])
   const [ratings, setRatings] = useState([])
+  const [hotTakesCount, setHotTakesCount] = useState(0)
   const [dataLoading, setDataLoading] = useState(true)
 
   const [editUsername, setEditUsername] = useState('')
@@ -120,10 +150,12 @@ export default function Profile() {
       supabase.from('votes').select('race_name, driver_code').eq('user_id', user.id).order('race_name'),
       supabase.from('predictions').select('race_name, p1, p2, p3').eq('user_id', user.id).order('race_name'),
       supabase.from('ratings').select('driver_code, rating, year').eq('user_id', user.id).order('year', { ascending: false }),
-    ]).then(([v, p, r]) => {
+      supabase.from('hot_takes').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+    ]).then(([v, p, r, ht]) => {
       setVotes(v.data || [])
       setPreds(p.data || [])
       setRatings(r.data || [])
+      setHotTakesCount(ht.count || 0)
       setDataLoading(false)
     })
   }, [user])
@@ -164,6 +196,8 @@ export default function Profile() {
   const color = teamColor(profile?.fav_team)
   const fanId = profile?.fav_team ? FAN_IDENTITY[profile.fav_team] : null
   const circuit = F1_CIRCUITS.find(c => c.id === profile?.fav_circuit)
+  const isCreator = CREATOR_USERNAMES.has(profile?.username?.toLowerCase())
+  const activityTags = getActivityTags(votes.length, preds.length, ratings.length, hotTakesCount)
 
   return (
     <div style={{ padding: '20px 16px', maxWidth: '760px', margin: '0 auto', minHeight: 'calc(100vh - 52px)', background: 'var(--bg-primary)' }}>
@@ -186,10 +220,17 @@ export default function Profile() {
                 <span style={{ fontSize: '12px' }}>{rank.icon}</span>
                 <span style={{ fontSize: '10px', fontWeight: '700', color: rank.color }}>{rank.label}</span>
               </div>
+              {/* Creator badge */}
+              {isCreator && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'linear-gradient(135deg, rgba(225,6,0,0.2), rgba(245,200,66,0.12))', border: '0.5px solid rgba(245,200,66,0.5)', borderRadius: '20px', padding: '3px 10px', boxShadow: '0 0 10px rgba(245,200,66,0.15)' }}>
+                  <span style={{ fontSize: '11px' }}>🛠️</span>
+                  <span style={{ fontSize: '10px', fontWeight: '800', background: 'linear-gradient(90deg, #e10600, #f5c842)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Creator</span>
+                </div>
+              )}
             </div>
             <div style={{ fontSize: '12px', color: '#444', marginTop: '2px' }}>{user?.email}</div>
 
-            {/* Tags */}
+            {/* Identity tags */}
             <div style={{ display: 'flex', gap: '6px', marginTop: '10px', flexWrap: 'wrap' }}>
               {profile?.fav_team && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: `${color}15`, border: `0.5px solid ${color}44`, borderRadius: '20px', padding: '3px 10px' }}>
@@ -213,6 +254,22 @@ export default function Profile() {
                 </div>
               )}
             </div>
+
+            {/* Activity achievement tags */}
+            {!dataLoading && activityTags.length > 0 && (
+              <div style={{ display: 'flex', gap: '5px', marginTop: '7px', flexWrap: 'wrap' }}>
+                {activityTags.map(tag => (
+                  <div key={tag.label} title={tag.label} style={{
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    background: `${tag.color}12`, border: `0.5px solid ${tag.color}44`,
+                    borderRadius: '20px', padding: '2px 9px',
+                  }}>
+                    <span style={{ fontSize: '10px' }}>{tag.icon}</span>
+                    <span style={{ fontSize: '10px', fontWeight: '700', color: tag.color }}>{tag.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -374,6 +431,14 @@ export default function Profile() {
                     borderRadius: '8px', fontSize: '20px', cursor: 'pointer', transition: 'all .1s',
                   }}>{emoji}</button>
                 ))}
+                {isCreator && (
+                  <button onClick={() => setEditAvatar(CREATOR_AVATAR)} title="Creator exclusive" style={{
+                    height: '40px', background: editAvatar === CREATOR_AVATAR ? 'rgba(245,200,66,0.15)' : 'rgba(245,200,66,0.04)',
+                    border: `1.5px solid ${editAvatar === CREATOR_AVATAR ? '#f5c842' : 'rgba(245,200,66,0.25)'}`,
+                    borderRadius: '8px', fontSize: '20px', cursor: 'pointer', transition: 'all .1s',
+                    boxShadow: '0 0 8px rgba(245,200,66,0.1)',
+                  }}>{CREATOR_AVATAR}</button>
+                )}
               </div>
               <div style={{ fontSize: '11px', color: '#444' }}>Select "A" to use your initial instead</div>
             </div>
