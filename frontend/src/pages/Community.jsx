@@ -4,6 +4,7 @@ import { API } from '../config'
 import { ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import AuthModal from '../components/AuthModal'
 
 const COUNTRY_FLAGS = {
   'Japan': '🇯🇵', 'Bahrain': '🇧🇭', 'Saudi Arabia': '🇸🇦', 'Australia': '🇦🇺',
@@ -95,7 +96,7 @@ export default function Community() {
         >Sign In to Enter</button>
         <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>Free account — no credit card needed</div>
 
-        {showAuth && <AuthModalInline onClose={() => setShowAuth(false)} />}
+        {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       </div>
     )
   }
@@ -140,69 +141,8 @@ export default function Community() {
       {tab === 'predict' && <RacePredictions onSignIn={() => setShowAuth(true)} />}
       {tab === 'rate' && <DriverRatings onSignIn={() => setShowAuth(true)} />}
 
-      {showAuth && <AuthModalInline onClose={() => setShowAuth(false)} />}
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
-  )
-}
-
-// Inline auth modal to avoid Navbar circular dependency
-function AuthModalInline({ onClose }) {
-  const { signIn, signUp } = useAuth()
-  const [mode, setMode] = useState('signin')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setError(''); setSuccess(''); setLoading(true)
-    if (mode === 'signup') {
-      const { error } = await signUp(email, password)
-      if (error) setError(error.message)
-      else { setSuccess('Check your email to confirm, then sign in.'); setMode('signin') }
-    } else {
-      const { error } = await signIn(email, password)
-      if (error) setError(error.message)
-      else onClose()
-    }
-    setLoading(false)
-  }
-
-  return (
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 200 }} />
-      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: '#111', border: '0.5px solid #2a2a2a', borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '380px', zIndex: 201, boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-          <div>
-            <div style={{ fontSize: '18px', fontWeight: '800' }}>{mode === 'signin' ? 'Sign in to PitWall' : 'Create account'}</div>
-            <div style={{ fontSize: '12px', color: '#555', marginTop: '4px' }}>Votes & predictions saved forever</div>
-          </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '0.5px solid #2a2a2a', color: '#555', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', fontSize: '16px' }}>×</button>
-        </div>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {[
-            { label: 'Email', type: 'email', val: email, set: setEmail, ph: 'your@email.com' },
-            { label: 'Password', type: 'password', val: password, set: setPassword, ph: mode === 'signup' ? 'Min 6 characters' : '••••••••' }
-          ].map(f => (
-            <div key={f.label}>
-              <label style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '6px' }}>{f.label}</label>
-              <input type={f.type} value={f.val} onChange={e => f.set(e.target.value)} required placeholder={f.ph}
-                style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #2a2a2a', borderRadius: '8px', color: '#fff', padding: '10px 12px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
-            </div>
-          ))}
-          {error && <div style={{ background: 'rgba(225,6,0,0.1)', border: '0.5px solid rgba(225,6,0,0.3)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: '#ff6b6b' }}>{error}</div>}
-          {success && <div style={{ background: 'rgba(82,226,82,0.08)', border: '0.5px solid rgba(82,226,82,0.3)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: '#52e252' }}>{success}</div>}
-          <button type="submit" disabled={loading} style={{ background: loading ? '#333' : '#e10600', color: '#fff', border: 'none', padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '4px' }}>
-            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
-          </button>
-        </form>
-        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#555' }}>
-          {mode === 'signin' ? <>No account? <button onClick={() => { setMode('signup'); setError(''); setSuccess('') }} style={{ background: 'none', border: 'none', color: '#e10600', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>Create one</button></> : <>Already registered? <button onClick={() => { setMode('signin'); setError(''); setSuccess('') }} style={{ background: 'none', border: 'none', color: '#e10600', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>Sign in</button></>}
-        </div>
-      </div>
-    </>
   )
 }
 
