@@ -105,6 +105,7 @@ export default function Community() {
           { id: 'dotd', label: '🏆 Driver of the Day' },
           { id: 'predict', label: '🔮 Predictions' },
           { id: 'rate', label: '⭐ Driver Ratings' },
+          { id: 'hottakes', label: '🔥 Hot Takes' },
           { id: 'leaderboard', label: '🥇 Leaderboard' },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
@@ -119,6 +120,7 @@ export default function Community() {
       {tab === 'dotd' && <DriverOfTheDay />}
       {tab === 'predict' && <RacePredictions />}
       {tab === 'rate' && <DriverRatings />}
+      {tab === 'hottakes' && <HotTakes />}
       {tab === 'leaderboard' && <Leaderboard />}
     </div>
   )
@@ -477,6 +479,200 @@ function DriverRatings() {
           })}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── Hot Takes ────────────────────────────────────────────────────────────────
+function HotTakes() {
+  const { user, profile } = useAuth()
+  const [takes, setTakes] = useState([])
+  const [myReactions, setMyReactions] = useState({}) // take_id -> '🔥'|'❄️'
+  const [text, setText] = useState('')
+  const [posting, setPosting] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  async function loadTakes() {
+    const { data: takesData } = await supabase
+      .from('hot_takes')
+      .select('id, content, created_at, user_id, profiles(username, avatar, fav_team)')
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    const { data: reactionsData } = await supabase
+      .from('hot_take_reactions')
+      .select('take_id, reaction, user_id')
+
+    const reactions = reactionsData || []
+    const counts = {}
+    reactions.forEach(r => {
+      if (!counts[r.take_id]) counts[r.take_id] = { '🔥': 0, '❄️': 0 }
+      counts[r.take_id][r.reaction] = (counts[r.take_id][r.reaction] || 0) + 1
+    })
+
+    const mine = {}
+    if (user) reactions.filter(r => r.user_id === user.id).forEach(r => { mine[r.take_id] = r.reaction })
+
+    setTakes((takesData || []).map(t => ({ ...t, counts: counts[t.id] || { '🔥': 0, '❄️': 0 } })))
+    setMyReactions(mine)
+    setLoading(false)
+  }
+
+  useEffect(() => { loadTakes() }, [user])
+
+  async function postTake() {
+    if (!user || !text.trim() || posting) return
+    setPosting(true)
+    await supabase.from('hot_takes').insert({ user_id: user.id, content: text.trim() })
+    setText('')
+    await loadTakes()
+    setPosting(false)
+  }
+
+  async function react(takeId, emoji) {
+    if (!user) return
+    const current = myReactions[takeId]
+    if (current === emoji) {
+      // Remove reaction
+      await supabase.from('hot_take_reactions').delete().eq('take_id', takeId).eq('user_id', user.id)
+      setMyReactions(m => { const n = { ...m }; delete n[takeId]; return n })
+    } else {
+      // Upsert reaction
+      await supabase.from('hot_take_reactions').upsert(
+        { take_id: takeId, user_id: user.id, reaction: emoji },
+        { onConflict: 'take_id,user_id' }
+      )
+      setMyReactions(m => ({ ...m, [takeId]: emoji }))
+    }
+    await loadTakes()
+  }
+
+  async function deleteTake(id) {
+    await supabase.from('hot_takes').delete().eq('id', id).eq('user_id', user.id)
+    setTakes(t => t.filter(x => x.id !== id))
+  }
+
+  const charLeft = 140 - text.length
+
+  return (
+    <div>
+      {/* Post box */}
+      <div style={card}>
+        <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>🔥 Hot Takes</div>
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>Drop your spiciest F1 opinion. The paddock will judge.</div>
+
+        <div style={{ position: 'relative' }}>
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value.slice(0, 140))}
+            placeholder="Ferrari's pit wall cost them another championship..."
+            rows={3}
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: '#141414', border: '1.5px solid #222', borderRadius: '10px',
+              color: '#fff', padding: '12px 14px', fontSize: '14px',
+              outline: 'none', resize: 'none', fontFamily: 'inherit',
+              transition: 'border-color .15s',
+            }}
+            onFocus={e => e.target.style.borderColor = '#e10600'}
+            onBlur={e => e.target.style.borderColor = '#222'}
+          />
+          <div style={{ position: 'absolute', bottom: '10px', right: '12px', fontSize: '11px', color: charLeft < 20 ? '#e10600' : '#444' }}>{charLeft}</div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+          <button onClick={postTake} disabled={!text.trim() || posting || !user} style={{
+            background: !text.trim() || !user ? '#1a1a1a' : '#e10600',
+            color: !text.trim() || !user ? '#444' : '#fff',
+            border: 'none', borderRadius: '8px', padding: '9px 20px',
+            fontSize: '13px', fontWeight: '700', cursor: !text.trim() || !user ? 'not-allowed' : 'pointer',
+            boxShadow: !text.trim() || !user ? 'none' : '0 4px 16px rgba(225,6,0,0.3)',
+            transition: 'all .2s',
+          }}>{posting ? 'Posting…' : !user ? 'Sign in to post' : '🔥 Drop Take'}</button>
+        </div>
+      </div>
+
+      {/* Takes list */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '32px', color: '#555' }}>Loading takes...</div>
+      ) : takes.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#555' }}>
+          <div style={{ fontSize: '32px', marginBottom: '10px' }}>🔥</div>
+          No hot takes yet — be the first!
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {takes.map(take => {
+            const p = take.profiles
+            const color = p?.fav_team ? (TEAM_COLORS[p.fav_team] || '#e10600') : '#e10600'
+            const myR = myReactions[take.id]
+            const isOwn = user?.id === take.user_id
+            const fireCount = take.counts['🔥']
+            const coldCount = take.counts['❄️']
+
+            return (
+              <div key={take.id} style={{
+                ...card, marginBottom: 0, padding: '14px 16px',
+                borderLeft: myR === '🔥' ? '3px solid #e10600' : myR === '❄️' ? '3px solid #6692ff' : '3px solid transparent',
+                transition: 'border-color .3s',
+              }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {/* Avatar */}
+                  <div style={{
+                    width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+                    background: `linear-gradient(135deg, ${color}, ${color}99)`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: p?.avatar ? '18px' : '13px', fontWeight: '800', color: '#fff',
+                  }}>
+                    {p?.avatar || p?.username?.[0]?.toUpperCase() || '?'}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>{p?.username || 'Anonymous'}</span>
+                      {p?.fav_team && <span style={{ fontSize: '10px', color, fontWeight: '600' }}>{p.fav_team}</span>}
+                      <span style={{ fontSize: '10px', color: '#333', marginLeft: 'auto' }}>
+                        {new Date(take.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '10px' }}>
+                      {take.content}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {[['🔥', fireCount], ['❄️', coldCount]].map(([emoji, count]) => (
+                        <button key={emoji} onClick={() => react(take.id, emoji)} style={{
+                          display: 'flex', alignItems: 'center', gap: '5px',
+                          background: myR === emoji ? (emoji === '🔥' ? 'rgba(225,6,0,0.15)' : 'rgba(102,146,255,0.15)') : '#141414',
+                          border: `1px solid ${myR === emoji ? (emoji === '🔥' ? '#e10600' : '#6692ff') : '#2a2a2a'}`,
+                          borderRadius: '20px', padding: '4px 12px', cursor: user ? 'pointer' : 'default',
+                          fontSize: '12px', fontWeight: '700',
+                          color: myR === emoji ? (emoji === '🔥' ? '#e10600' : '#6692ff') : '#555',
+                          transition: 'all .15s',
+                        }}>
+                          <span>{emoji}</span>
+                          <span>{count}</span>
+                        </button>
+                      ))}
+                      {isOwn && (
+                        <button onClick={() => deleteTake(take.id)} style={{
+                          marginLeft: 'auto', background: 'none', border: 'none',
+                          color: '#333', fontSize: '11px', cursor: 'pointer', padding: '4px 8px',
+                          borderRadius: '6px',
+                        }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#e10600'}
+                          onMouseLeave={e => e.currentTarget.style.color = '#333'}
+                        >delete</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

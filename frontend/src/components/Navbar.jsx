@@ -30,7 +30,7 @@ export default function Navbar() {
   ]
 
   const teamColor = profile?.fav_team ? (TEAM_COLORS[profile.fav_team] || '#e10600') : '#e10600'
-  const avatarLabel = profile?.username ? profile.username[0].toUpperCase() : user?.email?.[0]?.toUpperCase() || '?'
+  const avatarLabel = profile?.avatar || (profile?.username ? profile.username[0].toUpperCase() : user?.email?.[0]?.toUpperCase() || '?')
   const displayName = profile?.username || user?.email?.split('@')[0] || 'Paddock member'
 
   return (
@@ -94,7 +94,7 @@ export default function Navbar() {
                 background: `linear-gradient(135deg, ${teamColor}, ${teamColor}99)`,
                 border: `2px solid ${teamColor}44`,
                 color: '#fff', fontWeight: '800',
-                fontSize: '13px', cursor: 'pointer', display: 'flex',
+                fontSize: profile?.avatar ? '16px' : '13px', cursor: 'pointer', display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
                 boxShadow: `0 0 12px ${teamColor}44`,
                 position: 'relative',
@@ -120,7 +120,7 @@ export default function Navbar() {
                         width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
                         background: `linear-gradient(135deg, ${teamColor}, ${teamColor}99)`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '14px', fontWeight: '800', color: '#fff',
+                        fontSize: profile?.avatar ? '18px' : '14px', fontWeight: '800', color: '#fff',
                       }}>{avatarLabel}</div>
                       <div style={{ overflow: 'hidden' }}>
                         <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>

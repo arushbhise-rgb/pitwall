@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
     if (!userId) { setProfile(null); return }
     const { data } = await supabase
       .from('profiles')
-      .select('username, fav_team, fav_driver')
+      .select('username, fav_team, fav_driver, avatar, fav_circuit, fan_since')
       .eq('id', userId)
       .single()
     setProfile(data || null)
