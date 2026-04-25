@@ -1,9 +1,14 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import AuthModal from './AuthModal'
 
 export default function Navbar() {
   const loc = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const { user, signOut } = useAuth()
 
   const tabs = [
     { label: 'Race replay', path: '/replay' },
@@ -66,6 +71,49 @@ export default function Navbar() {
           })}
         </div>
 
+        {/* Auth area */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {user ? (
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setShowUserMenu(s => !s)} style={{
+                width: '30px', height: '30px', borderRadius: '50%',
+                background: 'linear-gradient(135deg, #e10600, #b30500)',
+                border: 'none', color: '#fff', fontWeight: '800',
+                fontSize: '12px', cursor: 'pointer', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 10px rgba(225,6,0,0.3)'
+              }}>
+                {user.email[0].toUpperCase()}
+              </button>
+              {showUserMenu && (
+                <div style={{
+                  position: 'absolute', top: '36px', right: 0,
+                  background: '#111', border: '0.5px solid #2a2a2a',
+                  borderRadius: '10px', padding: '8px', minWidth: '180px',
+                  zIndex: 150, boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
+                }}>
+                  <div style={{ padding: '8px 10px', borderBottom: '0.5px solid #1a1a1a', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '11px', color: '#555' }}>Signed in as</div>
+                    <div style={{ fontSize: '12px', color: '#fff', fontWeight: '600', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
+                  </div>
+                  <button onClick={() => { signOut(); setShowUserMenu(false) }} style={{
+                    width: '100%', background: 'rgba(225,6,0,0.08)', border: '0.5px solid rgba(225,6,0,0.2)',
+                    color: '#e10600', padding: '8px 10px', borderRadius: '7px',
+                    fontSize: '12px', fontWeight: '600', cursor: 'pointer', textAlign: 'left'
+                  }}>Sign Out</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button onClick={() => setShowAuth(true)} style={{
+              background: '#e10600', color: '#fff', border: 'none',
+              padding: '5px 14px', borderRadius: '6px', fontSize: '12px',
+              fontWeight: '600', cursor: 'pointer', transition: 'all .15s',
+              boxShadow: '0 0 10px rgba(225,6,0,0.25)'
+            }}>Sign In</button>
+          )}
+        </div>
+
         <button
           className="mobile-menu-btn"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -107,6 +155,8 @@ export default function Navbar() {
           ))}
         </div>
       )}
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      {showUserMenu && <div onClick={() => setShowUserMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 149 }} />}
     </>
   )
 }

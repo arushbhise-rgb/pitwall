@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
+import { AuthProvider } from './contexts/AuthContext'
 import App from './App'
 import './index.css'
 
@@ -17,11 +18,13 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <HelmetProvider>
       <BrowserRouter>
-        <ErrorBoundary>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
-        </ErrorBoundary>
+        <AuthProvider>
+          <ErrorBoundary>
+            <ToastProvider>
+              <App />
+            </ToastProvider>
+          </ErrorBoundary>
+        </AuthProvider>
       </BrowserRouter>
     </HelmetProvider>
   </StrictMode>

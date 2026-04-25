@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { API } from '../config'
 import { ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
+import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 
 const COUNTRY_FLAGS = {
   'Japan': '🇯🇵', 'Bahrain': '🇧🇭', 'Saudi Arabia': '🇸🇦', 'Australia': '🇦🇺',
@@ -35,8 +37,21 @@ function useCalendar() {
   return races
 }
 
+function LoginPrompt({ onSignIn }) {
+  return (
+    <div style={{ background: 'rgba(225,6,0,0.05)', border: '0.5px solid rgba(225,6,0,0.2)', borderRadius: '10px', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+      <div>
+        <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>Sign in to participate</div>
+        <div style={{ fontSize: '12px', color: '#555', marginTop: '2px' }}>Your votes and predictions are saved across all your devices</div>
+      </div>
+      <button onClick={onSignIn} style={{ background: '#e10600', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 }}>Sign In / Sign Up</button>
+    </div>
+  )
+}
+
 export default function Community() {
   const [tab, setTab] = useState('dotd')
+  const [showAuth, setShowAuth] = useState(false)
 
   return (
     <div style={{ padding: '20px 16px', maxWidth: '860px', margin: '0 auto', minHeight: 'calc(100vh - 52px)', background: 'var(--bg-primary)' }}>
@@ -66,43 +81,134 @@ export default function Community() {
         ))}
       </div>
 
-      {tab === 'dotd' && <DriverOfTheDay />}
-      {tab === 'predict' && <RacePredictions />}
-      {tab === 'rate' && <DriverRatings />}
+      {tab === 'dotd' && <DriverOfTheDay onSignIn={() => setShowAuth(true)} />}
+      {tab === 'predict' && <RacePredictions onSignIn={() => setShowAuth(true)} />}
+      {tab === 'rate' && <DriverRatings onSignIn={() => setShowAuth(true)} />}
+
+      {/* Import AuthModal inline to avoid circular dep issues */}
+      {showAuth && <AuthModalInline onClose={() => setShowAuth(false)} />}
     </div>
   )
 }
 
+// Inline auth modal to avoid Navbar circular dependency
+function AuthModalInline({ onClose }) {
+  const { signIn, signUp } = useAuth()
+  const [mode, setMode] = useState('signin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError(''); setSuccess(''); setLoading(true)
+    if (mode === 'signup') {
+      const { error } = await signUp(email, password)
+      if (error) setError(error.message)
+      else { setSuccess('Check your email to confirm, then sign in.'); setMode('signin') }
+    } else {
+      const { error } = await signIn(email, password)
+      if (error) setError(error.message)
+      else onClose()
+    }
+    setLoading(false)
+  }
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 200 }} />
+      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: '#111', border: '0.5px solid #2a2a2a', borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '380px', zIndex: 201, boxShadow: '0 24px 64px rgba(0,0,0,0.6)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+          <div>
+            <div style={{ fontSize: '18px', fontWeight: '800' }}>{mode === 'signin' ? 'Sign in to PitWall' : 'Create account'}</div>
+            <div style={{ fontSize: '12px', color: '#555', marginTop: '4px' }}>Votes & predictions saved forever</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '0.5px solid #2a2a2a', color: '#555', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', fontSize: '16px' }}>×</button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {[
+            { label: 'Email', type: 'email', val: email, set: setEmail, ph: 'your@email.com' },
+            { label: 'Password', type: 'password', val: password, set: setPassword, ph: mode === 'signup' ? 'Min 6 characters' : '••••••••' }
+          ].map(f => (
+            <div key={f.label}>
+              <label style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '6px' }}>{f.label}</label>
+              <input type={f.type} value={f.val} onChange={e => f.set(e.target.value)} required placeholder={f.ph}
+                style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #2a2a2a', borderRadius: '8px', color: '#fff', padding: '10px 12px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+          ))}
+          {error && <div style={{ background: 'rgba(225,6,0,0.1)', border: '0.5px solid rgba(225,6,0,0.3)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: '#ff6b6b' }}>{error}</div>}
+          {success && <div style={{ background: 'rgba(82,226,82,0.08)', border: '0.5px solid rgba(82,226,82,0.3)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: '#52e252' }}>{success}</div>}
+          <button type="submit" disabled={loading} style={{ background: loading ? '#333' : '#e10600', color: '#fff', border: 'none', padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '4px' }}>
+            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+          </button>
+        </form>
+        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#555' }}>
+          {mode === 'signin' ? <>No account? <button onClick={() => { setMode('signup'); setError(''); setSuccess('') }} style={{ background: 'none', border: 'none', color: '#e10600', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>Create one</button></> : <>Already registered? <button onClick={() => { setMode('signin'); setError(''); setSuccess('') }} style={{ background: 'none', border: 'none', color: '#e10600', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>Sign in</button></>}
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ── Driver of the Day ────────────────────────────────────────────────────────
-function DriverOfTheDay() {
+function DriverOfTheDay({ onSignIn }) {
+  const { user } = useAuth()
   const year = String(new Date().getFullYear())
   const drivers = ALL_DRIVERS_BY_YEAR[year] || ALL_DRIVERS_BY_YEAR['2025'] || []
   const { past } = useCalendar()
   const [selectedRace, setSelectedRace] = useState(null)
-  const [voted, setVoted] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('pw_dotd') || '{}') } catch { return {} }
-  })
+  const [myVote, setMyVote] = useState(null)
+  const [voteCounts, setVoteCounts] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [allVotes, setAllVotes] = useState([])
 
-  // Auto-select most recent race
   useEffect(() => {
     if (past.length > 0 && !selectedRace) setSelectedRace(past[0].name)
   }, [past])
 
-  function vote(code) {
+  // Load votes for selected race
+  const loadVotes = useCallback(async () => {
     if (!selectedRace) return
-    const updated = { ...voted, [selectedRace]: code }
-    setVoted(updated)
-    localStorage.setItem('pw_dotd', JSON.stringify(updated))
+    const { data } = await supabase.from('votes').select('driver_code, user_id').eq('race_name', selectedRace)
+    if (!data) return
+    setAllVotes(data)
+    const counts = {}
+    data.forEach(v => { counts[v.driver_code] = (counts[v.driver_code] || 0) + 1 })
+    setVoteCounts(counts)
+    if (user) {
+      const mine = data.find(v => v.user_id === user.id)
+      setMyVote(mine?.driver_code || null)
+    }
+  }, [selectedRace, user])
+
+  useEffect(() => { loadVotes() }, [loadVotes])
+
+  async function vote(code) {
+    if (!user) { onSignIn(); return }
+    if (saving) return
+    setSaving(true)
+    const { error } = await supabase.from('votes').upsert(
+      { user_id: user.id, race_name: selectedRace, driver_code: code },
+      { onConflict: 'user_id,race_name' }
+    )
+    if (!error) { setMyVote(code); await loadVotes() }
+    setSaving(false)
   }
 
-  const myVote = voted[selectedRace]
+  const totalVotes = allVotes.length
   const selectedRaceObj = past.find(r => r.name === selectedRace)
 
   return (
     <div>
+      {!user && <LoginPrompt onSignIn={onSignIn} />}
       <div style={card}>
         <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>Who was Driver of the Day?</div>
-        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>Pick a race then vote for your standout performer</div>
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          Pick a race then vote for your standout performer
+          {totalVotes > 0 && <span style={{ marginLeft: '8px', color: '#e10600', fontWeight: '600' }}>{totalVotes} vote{totalVotes !== 1 ? 's' : ''} total</span>}
+        </div>
 
         {/* Race selector */}
         <div style={{ marginBottom: '18px' }}>
@@ -120,7 +226,6 @@ function DriverOfTheDay() {
                   fontWeight: selectedRace === r.name ? '700' : '400',
                 }}>
                   {COUNTRY_FLAGS[r.country] || '🏁'} {r.name.replace(' Grand Prix', '').replace(' Grande Prémio', '')}
-                  {voted[r.name] && <span style={{ marginLeft: '6px', fontSize: '10px' }}>✅</span>}
                 </button>
               ))}
             </div>
@@ -146,84 +251,89 @@ function DriverOfTheDay() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
           {drivers.map(d => {
             const isVoted = myVote === d.code
+            const count = voteCounts[d.code] || 0
+            const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
             return (
-              <button key={d.code} onClick={() => vote(d.code)} style={{
+              <button key={d.code} onClick={() => vote(d.code)} disabled={saving} style={{
                 background: isVoted ? 'rgba(225,6,0,0.12)' : 'var(--bg-input)',
                 border: `1px solid ${isVoted ? '#e10600' : 'var(--border-input)'}`,
                 borderRadius: '10px', padding: '10px 12px', cursor: 'pointer',
                 textAlign: 'left', transition: 'all .2s', color: 'var(--text-primary)',
+                position: 'relative', overflow: 'hidden'
               }}>
+                {/* Vote % bar background */}
+                {totalVotes > 0 && (
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, height: '2px', width: `${pct}%`, background: isVoted ? '#e10600' : '#333', transition: 'width .5s ease' }} />
+                )}
                 <div style={{ fontSize: '12px', fontWeight: '700', color: isVoted ? '#e10600' : 'var(--text-secondary)' }}>{d.code}</div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{d.name.split(' ').slice(1).join(' ')}</div>
-                {isVoted && <div style={{ fontSize: '14px', marginTop: '4px' }}>✅</div>}
+                <div style={{ fontSize: '10px', color: isVoted ? '#e10600' : '#444', marginTop: '4px', fontWeight: '600' }}>
+                  {isVoted ? '✅' : count > 0 ? `${count} vote${count !== 1 ? 's' : ''}` : ''}
+                </div>
               </button>
             )
           })}
         </div>
       </div>
-
-      {Object.keys(voted).length > 0 && (
-        <div style={card}>
-          <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: 'var(--text-primary)' }}>Your voting history</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {Object.entries(voted).map(([race, code]) => (
-              <div key={race} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'var(--bg-input)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{race.replace(' Grand Prix', ' GP')}</div>
-                <div style={{ fontSize: '13px', fontWeight: '700', color: '#e10600' }}>🏆 {code}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
 
 // ── Race Predictions ─────────────────────────────────────────────────────────
-function RacePredictions() {
+function RacePredictions({ onSignIn }) {
+  const { user } = useAuth()
   const year = String(new Date().getFullYear())
   const drivers = ALL_DRIVERS_BY_YEAR[year] || ALL_DRIVERS_BY_YEAR['2025'] || []
   const { upcoming, past } = useCalendar()
   const [selectedRace, setSelectedRace] = useState(null)
-  const [predictions, setPredictions] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('pw_preds') || '{}') } catch { return {} }
-  })
+  const [myPreds, setMyPreds] = useState({}) // race_name -> {p1,p2,p3}
   const [pick, setPick] = useState({ p1: '', p2: '', p3: '' })
+  const [saving, setSaving] = useState(false)
 
-  // Auto-select next upcoming race
   useEffect(() => {
-    if (upcoming.length > 0 && !selectedRace) {
-      setSelectedRace(upcoming[0].name)
-      if (predictions[upcoming[0].name]) setPick(predictions[upcoming[0].name])
-    }
+    if (upcoming.length > 0 && !selectedRace) setSelectedRace(upcoming[0].name)
   }, [upcoming])
 
   useEffect(() => {
-    if (selectedRace && predictions[selectedRace]) {
-      setPick(predictions[selectedRace])
-    } else {
-      setPick({ p1: '', p2: '', p3: '' })
-    }
+    if (selectedRace && myPreds[selectedRace]) setPick(myPreds[selectedRace])
+    else setPick({ p1: '', p2: '', p3: '' })
   }, [selectedRace])
 
-  function savePick() {
+  // Load all user's predictions
+  useEffect(() => {
+    if (!user) return
+    supabase.from('predictions').select('race_name, p1, p2, p3').eq('user_id', user.id)
+      .then(({ data }) => {
+        if (!data) return
+        const map = {}
+        data.forEach(p => { map[p.race_name] = { p1: p.p1, p2: p.p2, p3: p.p3 } })
+        setMyPreds(map)
+      })
+  }, [user])
+
+  async function savePick() {
+    if (!user) { onSignIn(); return }
     if (!selectedRace || !pick.p1 || !pick.p2 || !pick.p3) return
     if (new Set([pick.p1, pick.p2, pick.p3]).size < 3) return
-    const updated = { ...predictions, [selectedRace]: pick }
-    setPredictions(updated)
-    localStorage.setItem('pw_preds', JSON.stringify(updated))
+    setSaving(true)
+    const { error } = await supabase.from('predictions').upsert(
+      { user_id: user.id, race_name: selectedRace, p1: pick.p1, p2: pick.p2, p3: pick.p3 },
+      { onConflict: 'user_id,race_name' }
+    )
+    if (!error) setMyPreds(p => ({ ...p, [selectedRace]: pick }))
+    setSaving(false)
   }
 
-  const saved = selectedRace && predictions[selectedRace]
+  const saved = selectedRace && myPreds[selectedRace]
   const allRaces = [...upcoming, ...past.slice(0, 3)]
 
   return (
     <div>
+      {!user && <LoginPrompt onSignIn={onSignIn} />}
       <div style={card}>
         <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>Predict the podium</div>
         <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>Pick any race, lock in your P1/P2/P3 before the lights go out</div>
 
-        {/* Race selector */}
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: '6px' }}>Select race</div>
           {allRaces.length === 0 ? (
@@ -239,7 +349,7 @@ function RacePredictions() {
                   fontWeight: selectedRace === r.name ? '700' : '400',
                 }}>
                   {COUNTRY_FLAGS[r.country] || '🏁'} {r.name.replace(' Grand Prix', '').replace(' Grande Prémio', '')}
-                  {predictions[r.name] && <span style={{ marginLeft: '6px', fontSize: '10px' }}>✅</span>}
+                  {myPreds[r.name] && <span style={{ marginLeft: '6px', fontSize: '10px' }}>✅</span>}
                 </button>
               ))}
               {past.slice(0, 3).map(r => (
@@ -250,7 +360,7 @@ function RacePredictions() {
                   fontSize: '12px', color: 'var(--text-muted)', opacity: 0.7,
                 }}>
                   {COUNTRY_FLAGS[r.country] || '🏁'} {r.name.replace(' Grand Prix', '')} <span style={{ fontSize: '9px' }}>(past)</span>
-                  {predictions[r.name] && <span style={{ marginLeft: '4px', fontSize: '10px' }}>✅</span>}
+                  {myPreds[r.name] && <span style={{ marginLeft: '4px', fontSize: '10px' }}>✅</span>}
                 </button>
               ))}
             </div>
@@ -277,7 +387,7 @@ function RacePredictions() {
                 borderRadius: '8px', color: 'var(--text-primary)', padding: '8px 10px', fontSize: '13px',
               }}>
                 <option value="">Pick driver</option>
-                {drivers.filter(d => !Object.values(pick).filter((_,j)=>['p1','p2','p3'][j]!==pos).includes(d.code)).map(d => (
+                {drivers.filter(d => !Object.entries(pick).filter(([k]) => k !== pos).map(([,v]) => v).includes(d.code)).map(d => (
                   <option key={d.code} value={d.code}>{d.name}</option>
                 ))}
               </select>
@@ -285,18 +395,18 @@ function RacePredictions() {
           ))}
         </div>
 
-        <button onClick={savePick} disabled={!selectedRace || !pick.p1 || !pick.p2 || !pick.p3 || new Set([pick.p1,pick.p2,pick.p3]).size < 3} style={{
-          background: '#e10600', color: '#fff', border: 'none', borderRadius: '8px',
+        <button onClick={savePick} disabled={saving || !pick.p1 || !pick.p2 || !pick.p3 || new Set([pick.p1,pick.p2,pick.p3]).size < 3} style={{
+          background: saving ? '#333' : '#e10600', color: '#fff', border: 'none', borderRadius: '8px',
           padding: '10px 20px', fontSize: '13px', fontWeight: '700', cursor: 'pointer',
-          opacity: (!selectedRace || !pick.p1 || !pick.p2 || !pick.p3) ? .5 : 1,
-        }}>Lock in prediction 🔒</button>
+          opacity: (!pick.p1 || !pick.p2 || !pick.p3) ? .5 : 1,
+        }}>{saving ? 'Saving...' : user ? 'Lock in prediction 🔒' : 'Sign in to save 🔒'}</button>
       </div>
 
-      {Object.keys(predictions).length > 0 && (
+      {user && Object.keys(myPreds).length > 0 && (
         <div style={card}>
           <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '12px', color: 'var(--text-primary)' }}>Your predictions</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {Object.entries(predictions).map(([race, p]) => (
+            {Object.entries(myPreds).map(([race, p]) => (
               <div key={race} style={{ padding: '10px 14px', background: 'var(--bg-input)', borderRadius: '8px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>{race.replace(' Grand Prix', ' GP')}</div>
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -314,27 +424,46 @@ function RacePredictions() {
 }
 
 // ── Driver Ratings ───────────────────────────────────────────────────────────
-function DriverRatings() {
+function DriverRatings({ onSignIn }) {
+  const { user } = useAuth()
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const drivers = ALL_DRIVERS_BY_YEAR[year] || []
-  const [ratings, setRatings] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('pw_ratings') || '{}') } catch { return {} }
-  })
+  const [ratings, setRatings] = useState({}) // `${year}_${code}` -> number
   const [hover, setHover] = useState({})
+  const [saving, setSaving] = useState(null) // driver code being saved
 
-  function rate(code, val) {
-    const updated = { ...ratings, [`${year}_${code}`]: val }
-    setRatings(updated)
-    localStorage.setItem('pw_ratings', JSON.stringify(updated))
+  // Load user's ratings for this year
+  useEffect(() => {
+    if (!user) return
+    supabase.from('ratings').select('driver_code, rating').eq('user_id', user.id).eq('year', year)
+      .then(({ data }) => {
+        if (!data) return
+        const map = {}
+        data.forEach(r => { map[`${year}_${r.driver_code}`] = r.rating })
+        setRatings(map)
+      })
+  }, [user, year])
+
+  async function rate(code, val) {
+    if (!user) { onSignIn(); return }
+    const key = `${year}_${code}`
+    setSaving(code)
+    const { error } = await supabase.from('ratings').upsert(
+      { user_id: user.id, driver_code: code, year, rating: val },
+      { onConflict: 'user_id,driver_code,year' }
+    )
+    if (!error) setRatings(r => ({ ...r, [key]: val }))
+    setSaving(null)
   }
 
   return (
     <div>
+      {!user && <LoginPrompt onSignIn={onSignIn} />}
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>Rate every driver</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '3px' }}>Your personal 1–10 season ratings</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '3px' }}>Your personal 1–10 season ratings · synced to your account</div>
           </div>
           <select value={year} onChange={e => setYear(e.target.value)} style={{
             background: 'var(--bg-input)', border: '0.5px solid var(--border-input)', borderRadius: '8px',
@@ -349,8 +478,9 @@ function DriverRatings() {
             const key = `${year}_${d.code}`
             const myRating = ratings[key] || 0
             const hov = hover[key] || 0
+            const isSaving = saving === d.code
             return (
-              <div key={d.code} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', background: myRating ? 'rgba(225,6,0,0.04)' : 'var(--bg-input)', borderRadius: '10px', flexWrap: 'wrap' }}>
+              <div key={d.code} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', background: myRating ? 'rgba(225,6,0,0.04)' : 'var(--bg-input)', borderRadius: '10px', flexWrap: 'wrap', opacity: isSaving ? 0.6 : 1, transition: 'opacity .2s' }}>
                 <div style={{ width: '36px', fontSize: '12px', fontWeight: '800', color: '#e10600', flexShrink: 0 }}>{d.code}</div>
                 <div style={{ flex: 1, minWidth: '100px', fontSize: '13px', color: 'var(--text-secondary)' }}>{d.name}</div>
                 <div style={{ display: 'flex', gap: '3px' }} onMouseLeave={() => setHover(h => ({ ...h, [key]: 0 }))}>
