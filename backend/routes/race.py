@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException, Header
 import fastf1
 import pandas as pd
 import threading
@@ -8,6 +8,9 @@ import json
 import os
 import hashlib
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 _cache = {}
 _cache_lock = threading.Lock()
@@ -22,13 +25,11 @@ def disk_cache_path(key):
     return os.path.join(DISK_CACHE_DIR, f"{safe}.json")
 
 def get_cached(key, fn):
-    # Check memory cache first
     with _cache_lock:
         if key in _cache:
-            print(f"Cache hit (memory): {key}")
+            logger.info(f"Cache hit (memory): {key}")
             return _cache[key]
 
-    # Check disk cache
     path = disk_cache_path(key)
     if os.path.exists(path):
         try:
@@ -36,12 +37,11 @@ def get_cached(key, fn):
                 result = json.load(f)
             with _cache_lock:
                 _cache[key] = result
-            print(f"Cache hit (disk): {key}")
+            logger.info(f"Cache hit (disk): {key}")
             return result
         except Exception as e:
-            print(f"Disk cache read failed: {e}")
+            logger.warning(f"Disk cache read failed: {e}")
 
-    # Get or create per-key lock
     with _fetch_locks_lock:
         if key not in _fetch_locks:
             _fetch_locks[key] = threading.Lock()
@@ -50,10 +50,10 @@ def get_cached(key, fn):
     with key_lock:
         with _cache_lock:
             if key in _cache:
-                print(f"Cache hit (after lock): {key}")
+                logger.info(f"Cache hit (after lock): {key}")
                 return _cache[key]
 
-        print(f"Cache miss: {key} — fetching...")
+        logger.info(f"Cache miss: {key} — fetching...")
         result = fn()
 
         with _cache_lock:
@@ -62,9 +62,9 @@ def get_cached(key, fn):
         try:
             with open(disk_cache_path(key), 'w') as f:
                 json.dump(result, f)
-            print(f"Disk cache written: {key}")
+            logger.info(f"Disk cache written: {key}")
         except Exception as e:
-            print(f"Disk cache write failed: {e}")
+            logger.warning(f"Disk cache write failed: {e}")
 
         return result
 
@@ -75,16 +75,14 @@ def get_cached_ttl(key, fn, ttl_seconds=3600):
     """Cache with time-based expiry. Falls back to stale data if refresh fails."""
     now = time.time()
 
-    # Check memory cache
     with _cache_lock:
         if key in _ttl_cache:
             entry = _ttl_cache[key]
             if now - entry['ts'] < ttl_seconds:
-                print(f"TTL cache hit (memory): {key}")
+                logger.info(f"TTL cache hit (memory): {key}")
                 return entry['data']
-            print(f"TTL cache expired (memory): {key}")
+            logger.info(f"TTL cache expired (memory): {key}")
 
-    # Check disk cache
     path = disk_cache_path(f"ttl_{key}")
     stale_data = None
     if os.path.exists(path):
@@ -94,15 +92,14 @@ def get_cached_ttl(key, fn, ttl_seconds=3600):
             if now - entry.get('ts', 0) < ttl_seconds:
                 with _cache_lock:
                     _ttl_cache[key] = entry
-                print(f"TTL cache hit (disk): {key}")
+                logger.info(f"TTL cache hit (disk): {key}")
                 return entry['data']
             stale_data = entry['data']
         except Exception:
             pass
 
-    # Fetch fresh data
     try:
-        print(f"TTL cache miss: {key} — fetching fresh...")
+        logger.info(f"TTL cache miss: {key} — fetching fresh...")
         result = fn()
         entry = {'data': result, 'ts': now}
         with _cache_lock:
@@ -114,9 +111,8 @@ def get_cached_ttl(key, fn, ttl_seconds=3600):
             pass
         return result
     except Exception as e:
-        # Fall back to stale cache if API fails
         if stale_data:
-            print(f"TTL fetch failed, using stale cache: {key}")
+            logger.warning(f"TTL fetch failed, using stale cache: {key}")
             return stale_data
         raise e
 
@@ -357,8 +353,8 @@ def get_h2h(year: int = Query(..., ge=2018, le=2030), driver1: str = Query(..., 
     try:
         return get_cached(cache_key, fetch)
     except Exception as e:
-        print(f"H2H Error: {e}")
-        return {"error": str(e)}
+        logger.error(f"H2H Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/standings/drivers")
 def get_driver_standings(year: int = Query(..., ge=2018, le=2030)):
@@ -391,7 +387,7 @@ def get_driver_standings(year: int = Query(..., ge=2018, le=2030)):
             return get_cached_ttl(cache_key, fetch, ttl_seconds=3600)
         return get_cached(cache_key, fetch)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/standings/constructors")
 def get_constructor_standings(year: int = Query(..., ge=2018, le=2030)):
@@ -422,10 +418,13 @@ def get_constructor_standings(year: int = Query(..., ge=2018, le=2030)):
             return get_cached_ttl(cache_key, fetch, ttl_seconds=3600)
         return get_cached(cache_key, fetch)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/cache/clear-standings")
-def clear_standings_cache():
+def clear_standings_cache(x_admin_key: str = Header(default=None)):
+    admin_key = os.environ.get("ADMIN_KEY")
+    if admin_key and x_admin_key != admin_key:
+        raise HTTPException(status_code=403, detail="Forbidden")
     """Clear cached standings so next request fetches fresh data."""
     cleared = []
     with _cache_lock:
@@ -468,7 +467,7 @@ def get_calendar(year: int = Query(..., ge=2018, le=2030)):
     try:
         return get_cached(cache_key, fetch)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/driver/stats")
@@ -526,7 +525,7 @@ def get_driver_stats(year: int = Query(..., ge=2018, le=2030), driver: str = Que
     try:
         return get_cached(cache_key, fetch)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/standings/points-progress")
 def get_points_progress(year: int = Query(..., ge=2018, le=2030)):
@@ -558,7 +557,7 @@ def get_points_progress(year: int = Query(..., ge=2018, le=2030)):
             return get_cached_ttl(cache_key, fetch, ttl_seconds=3600)
         return get_cached(cache_key, fetch)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/telemetry")
@@ -588,7 +587,7 @@ def get_telemetry(year: int = Query(..., ge=2018, le=2030), gp: str = Query(...,
                     'lap': int(fastest['LapNumber'])
                 }
             except Exception as ex:
-                print(f"Telemetry error for {driver}: {ex}")
+                logger.warning(f"Telemetry error for {driver}: {ex}")
                 continue
         return {"drivers": list(telemetry_data.keys()), "telemetry_data": telemetry_data, "year": year, "gp": gp}
 
