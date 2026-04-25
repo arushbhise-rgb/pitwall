@@ -6,6 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext'
 import AuthModal from '../components/AuthModal'
 
+const TEAM_COLORS = {
+  'Red Bull Racing': '#3671c6', 'Ferrari': '#e8002d', 'McLaren': '#ff8000',
+  'Mercedes': '#00d2be', 'Aston Martin': '#52e252', 'Alpine': '#0093cc',
+  'Racing Bulls': '#6692ff', 'Williams': '#005aff', 'Haas': '#b6babd',
+  'Audi': '#c92d4b', 'Cadillac': '#888',
+}
+
 function useInView(threshold = 0.15) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
@@ -538,7 +545,7 @@ function LatestResultBanner() {
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   const [showAuth, setShowAuth] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [heroRef, heroVisible] = useInView(0.1);
@@ -608,7 +615,7 @@ export default function Landing() {
 
       {/* NAV */}
       <nav className="landing-nav" style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
         padding: "0 40px", height: "64px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         background: scrolledPast ? "rgba(5,5,5,0.9)" : "transparent",
@@ -654,43 +661,70 @@ export default function Landing() {
           {user ? (
             <div style={{ position: "relative" }}>
               <button onClick={() => setShowUserMenu(s => !s)} style={{
-                width: "32px", height: "32px", borderRadius: "50%",
-                background: "linear-gradient(135deg, #e10600, #b30500)",
+                width: "34px", height: "34px", borderRadius: "50%",
+                background: profile?.fav_team
+                  ? `linear-gradient(135deg, ${TEAM_COLORS[profile.fav_team] || '#e10600'}, ${TEAM_COLORS[profile.fav_team] || '#b30500'}99)`
+                  : "linear-gradient(135deg, #e10600, #b30500)",
                 border: "none", color: "#fff", fontWeight: 800,
                 fontSize: "13px", cursor: "pointer", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                boxShadow: "0 0 12px rgba(225,6,0,0.4)",
+                boxShadow: `0 0 14px ${TEAM_COLORS[profile?.fav_team] || '#e10600'}55`,
                 fontFamily: "'Outfit', sans-serif",
               }}>
-                {user.email[0].toUpperCase()}
+                {(profile?.username?.[0] || user.email[0]).toUpperCase()}
               </button>
               {showUserMenu && (
                 <div style={{
-                  position: "absolute", top: "40px", right: 0,
+                  position: "absolute", top: "44px", right: 0,
                   background: "#111", border: "0.5px solid #2a2a2a",
-                  borderRadius: "10px", padding: "8px", minWidth: "190px",
-                  zIndex: 150, boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                  borderRadius: "12px", padding: "6px", minWidth: "210px",
+                  zIndex: 201, boxShadow: "0 12px 40px rgba(0,0,0,0.7)",
                   fontFamily: "'Outfit', sans-serif",
                 }}>
-                  <div style={{ padding: "8px 10px", borderBottom: "0.5px solid #1a1a1a", marginBottom: "4px" }}>
-                    <div style={{ fontSize: "11px", color: "#555" }}>Signed in as</div>
-                    <div style={{ fontSize: "12px", color: "#fff", fontWeight: 600, marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
+                  {/* Profile header */}
+                  <div style={{ padding: "10px 12px", borderBottom: "0.5px solid #1a1a1a", marginBottom: "4px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{
+                        width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
+                        background: `linear-gradient(135deg, ${TEAM_COLORS[profile?.fav_team] || '#e10600'}, ${TEAM_COLORS[profile?.fav_team] || '#b30500'}99)`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "14px", fontWeight: 800, color: "#fff",
+                      }}>{(profile?.username?.[0] || user.email[0]).toUpperCase()}</div>
+                      <div style={{ overflow: "hidden" }}>
+                        <div style={{ fontSize: "13px", fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {profile?.username || user.email.split("@")[0]}
+                        </div>
+                        {profile?.fav_team && (
+                          <div style={{ fontSize: "10px", color: TEAM_COLORS[profile.fav_team] || "#e10600", marginTop: "1px", fontWeight: 600 }}>{profile.fav_team}</div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <button onClick={() => { navigate("/community"); setShowUserMenu(false); }} style={{
-                    width: "100%", background: "transparent", border: "none",
-                    color: "rgba(255,255,255,0.6)", padding: "8px 10px", borderRadius: "7px",
-                    fontSize: "12px", cursor: "pointer", textAlign: "left",
-                    fontFamily: "'Outfit', sans-serif", marginBottom: "2px",
-                  }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >Paddock →</button>
+                  {/* Menu items */}
+                  {[
+                    { icon: "👤", label: "My Profile", path: "/profile" },
+                    { icon: "🏁", label: "The Paddock", path: "/community" },
+                  ].map(item => (
+                    <button key={item.path} onClick={() => { navigate(item.path); setShowUserMenu(false); }} style={{
+                      width: "100%", background: "transparent", border: "none",
+                      color: "rgba(255,255,255,0.7)", padding: "9px 12px", borderRadius: "8px",
+                      fontSize: "12px", cursor: "pointer", textAlign: "left",
+                      fontFamily: "'Outfit', sans-serif", display: "flex", alignItems: "center", gap: "8px",
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    ><span>{item.icon}</span>{item.label}</button>
+                  ))}
+                  <div style={{ height: "0.5px", background: "#1a1a1a", margin: "4px 0" }} />
                   <button onClick={() => { signOut(); setShowUserMenu(false); }} style={{
-                    width: "100%", background: "rgba(225,6,0,0.08)", border: "0.5px solid rgba(225,6,0,0.2)",
-                    color: "#e10600", padding: "8px 10px", borderRadius: "7px",
+                    width: "100%", background: "rgba(225,6,0,0.06)", border: "0.5px solid rgba(225,6,0,0.15)",
+                    color: "#e10600", padding: "9px 12px", borderRadius: "8px",
                     fontSize: "12px", fontWeight: 600, cursor: "pointer", textAlign: "left",
-                    fontFamily: "'Outfit', sans-serif",
-                  }}>Sign Out</button>
+                    fontFamily: "'Outfit', sans-serif", display: "flex", alignItems: "center", gap: "8px",
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(225,6,0,0.12)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "rgba(225,6,0,0.06)"}
+                  ><span>↩</span> Sign Out</button>
                 </div>
               )}
             </div>
@@ -1150,7 +1184,7 @@ export default function Landing() {
         </div>
       </footer>
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
-      {showUserMenu && <div onClick={() => setShowUserMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 149 }} />}
+      {showUserMenu && <div onClick={() => setShowUserMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 199 }} />}
     </div>
   );
 }
