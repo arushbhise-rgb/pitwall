@@ -52,6 +52,61 @@ function LoginPrompt({ onSignIn }) {
 export default function Community() {
   const [tab, setTab] = useState('dotd')
   const [showAuth, setShowAuth] = useState(false)
+  const { user, loading } = useAuth()
+
+  // Full sign-in wall when not authenticated
+  if (!loading && !user) {
+    return (
+      <div style={{ minHeight: 'calc(100vh - 52px)', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center' }}>
+        <Helmet>
+          <title>The Paddock — PitWall</title>
+        </Helmet>
+
+        {/* Glow */}
+        <div style={{ position: 'absolute', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(225,6,0,0.07), transparent 70%)', pointerEvents: 'none' }} />
+
+        {/* Icon */}
+        <div style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, #e10600, #b30500)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', marginBottom: '24px', boxShadow: '0 0 32px rgba(225,6,0,0.3)' }}>
+          🏁
+        </div>
+
+        <div style={{ fontSize: '28px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px', marginBottom: '8px' }}>The Paddock</div>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '32px', maxWidth: '340px', lineHeight: 1.6 }}>
+          Vote Driver of the Day, predict race results, and rate drivers — all saved to your account.
+        </div>
+
+        {/* Feature pills */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '36px' }}>
+          {['🏆 Driver of the Day', '🔮 Race Predictions', '⭐ Driver Ratings'].map(f => (
+            <div key={f} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border-subtle)', borderRadius: '20px', padding: '6px 14px', fontSize: '12px', color: 'var(--text-secondary)' }}>{f}</div>
+          ))}
+        </div>
+
+        <button onClick={() => setShowAuth(true)} style={{
+          background: 'linear-gradient(135deg, #e10600, #c00500)',
+          border: 'none', color: '#fff',
+          padding: '14px 40px', borderRadius: '10px',
+          fontSize: '15px', fontWeight: '700', cursor: 'pointer',
+          boxShadow: '0 0 24px rgba(225,6,0,0.35)',
+          transition: 'transform 0.15s',
+        }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        >Sign In to Enter</button>
+        <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>Free account — no credit card needed</div>
+
+        {showAuth && <AuthModalInline onClose={() => setShowAuth(false)} />}
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: 'calc(100vh - 52px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+        <div style={{ width: '32px', height: '32px', border: '2px solid #1a1a1a', borderTop: '2px solid #e10600', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: '20px 16px', maxWidth: '860px', margin: '0 auto', minHeight: 'calc(100vh - 52px)', background: 'var(--bg-primary)' }}>
@@ -85,7 +140,6 @@ export default function Community() {
       {tab === 'predict' && <RacePredictions onSignIn={() => setShowAuth(true)} />}
       {tab === 'rate' && <DriverRatings onSignIn={() => setShowAuth(true)} />}
 
-      {/* Import AuthModal inline to avoid circular dep issues */}
       {showAuth && <AuthModalInline onClose={() => setShowAuth(false)} />}
     </div>
   )

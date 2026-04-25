@@ -3,6 +3,8 @@ import { Helmet } from 'react-helmet-async'
 import { DRIVER_TEAMS_BY_YEAR, DRIVER_COLORS_BY_YEAR } from '../constants/driverData'
 import { API } from '../config'
 import { useNavigate } from "react-router-dom";
+import { useAuth } from '../contexts/AuthContext'
+import AuthModal from '../components/AuthModal'
 
 function useInView(threshold = 0.15) {
   const ref = useRef(null);
@@ -536,6 +538,9 @@ function LatestResultBanner() {
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth()
+  const [showAuth, setShowAuth] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const [heroRef, heroVisible] = useInView(0.1);
   const [featRef, featVisible] = useInView(0.1);
   const [statRef, statVisible] = useInView(0.2);
@@ -646,17 +651,63 @@ export default function Landing() {
               onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.5)"}
             >{label}</a>
           ))}
-          <button onClick={() => navigate("/replay")} style={{
-            background: "linear-gradient(135deg, #e10600, #c00500)",
-            border: "none", color: "#fff",
-            padding: "8px 20px", borderRadius: "8px",
-            fontSize: "13px", fontWeight: 600, cursor: "pointer",
-            boxShadow: "0 0 20px rgba(225,6,0,0.3)",
-            transition: "all 0.2s",
-          }}
-            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
-            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-          >Launch app</button>
+          {user ? (
+            <div style={{ position: "relative" }}>
+              <button onClick={() => setShowUserMenu(s => !s)} style={{
+                width: "32px", height: "32px", borderRadius: "50%",
+                background: "linear-gradient(135deg, #e10600, #b30500)",
+                border: "none", color: "#fff", fontWeight: 800,
+                fontSize: "13px", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                boxShadow: "0 0 12px rgba(225,6,0,0.4)",
+                fontFamily: "'Outfit', sans-serif",
+              }}>
+                {user.email[0].toUpperCase()}
+              </button>
+              {showUserMenu && (
+                <div style={{
+                  position: "absolute", top: "40px", right: 0,
+                  background: "#111", border: "0.5px solid #2a2a2a",
+                  borderRadius: "10px", padding: "8px", minWidth: "190px",
+                  zIndex: 150, boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                  fontFamily: "'Outfit', sans-serif",
+                }}>
+                  <div style={{ padding: "8px 10px", borderBottom: "0.5px solid #1a1a1a", marginBottom: "4px" }}>
+                    <div style={{ fontSize: "11px", color: "#555" }}>Signed in as</div>
+                    <div style={{ fontSize: "12px", color: "#fff", fontWeight: 600, marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
+                  </div>
+                  <button onClick={() => { navigate("/community"); setShowUserMenu(false); }} style={{
+                    width: "100%", background: "transparent", border: "none",
+                    color: "rgba(255,255,255,0.6)", padding: "8px 10px", borderRadius: "7px",
+                    fontSize: "12px", cursor: "pointer", textAlign: "left",
+                    fontFamily: "'Outfit', sans-serif", marginBottom: "2px",
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >Paddock →</button>
+                  <button onClick={() => { signOut(); setShowUserMenu(false); }} style={{
+                    width: "100%", background: "rgba(225,6,0,0.08)", border: "0.5px solid rgba(225,6,0,0.2)",
+                    color: "#e10600", padding: "8px 10px", borderRadius: "7px",
+                    fontSize: "12px", fontWeight: 600, cursor: "pointer", textAlign: "left",
+                    fontFamily: "'Outfit', sans-serif",
+                  }}>Sign Out</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button onClick={() => setShowAuth(true)} style={{
+              background: "linear-gradient(135deg, #e10600, #c00500)",
+              border: "none", color: "#fff",
+              padding: "8px 20px", borderRadius: "8px",
+              fontSize: "13px", fontWeight: 600, cursor: "pointer",
+              boxShadow: "0 0 20px rgba(225,6,0,0.3)",
+              transition: "all 0.2s",
+              fontFamily: "'Outfit', sans-serif",
+            }}
+              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+            >Sign In</button>
+          )}
         </div>
       </nav>
 
@@ -1098,6 +1149,8 @@ export default function Landing() {
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.1)" }}>Data from FastF1 & Jolpica · Not affiliated with Formula 1</span>
         </div>
       </footer>
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      {showUserMenu && <div onClick={() => setShowUserMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 149 }} />}
     </div>
   );
 }
