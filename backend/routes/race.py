@@ -528,6 +528,73 @@ def get_driver_stats(year: int = Query(..., ge=2018, le=2030), driver: str = Que
     except Exception as e:
         return {"error": str(e)}
 
+@router.get("/standings/points-progress")
+def get_points_progress(year: int = Query(..., ge=2018, le=2030)):
+    cache_key = f"points_progress_{year}"
+
+    def fetch():
+        all_races = _fetch_all_paginated(f'https://api.jolpi.ca/ergast/f1/{year}/results/')
+        races = _dedup_races(all_races)
+        drivers = {}
+        race_names = []
+        for race in races:
+            name = race['raceName'].replace(' Grand Prix', '').replace(' Grande Prémio', '')
+            race_names.append(name)
+            race_pts = {}
+            for res in race['Results']:
+                code = res['Driver'].get('code', res['Driver']['driverId'][:3].upper())
+                pts = float(res['points'])
+                full_name = f"{res['Driver']['givenName']} {res['Driver']['familyName']}"
+                race_pts[code] = (pts, full_name)
+                if code not in drivers:
+                    drivers[code] = {'name': full_name, 'cumulative': []}
+            for code in list(drivers.keys()):
+                prev = drivers[code]['cumulative'][-1] if drivers[code]['cumulative'] else 0
+                drivers[code]['cumulative'].append(round(prev + race_pts.get(code, (0, ''))[0], 1))
+        return {"race_names": race_names, "drivers": drivers, "year": year}
+
+    try:
+        if year >= CURRENT_SEASON:
+            return get_cached_ttl(cache_key, fetch, ttl_seconds=3600)
+        return get_cached(cache_key, fetch)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.get("/telemetry")
+def get_telemetry(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_length=3)):
+    cache_key = f"telemetry_{year}_{gp}"
+
+    def fetch():
+        session = fastf1.get_session(year, gp, 'R')
+        session.load(telemetry=True, weather=False, messages=False)
+        laps = session.laps
+        drivers = laps['Driver'].unique().tolist()
+        telemetry_data = {}
+        for driver in drivers:
+            try:
+                dl = laps.pick_drivers(driver)
+                fastest = dl.pick_fastest()
+                if fastest is None or (hasattr(fastest, 'empty') and fastest.empty):
+                    continue
+                tel = fastest.get_telemetry()
+                if tel is None or tel.empty:
+                    continue
+                telemetry_data[driver] = {
+                    'distance': tel['Distance'].round(1).tolist(),
+                    'speed': tel['Speed'].round(1).tolist(),
+                    'throttle': tel['Throttle'].round(1).tolist(),
+                    'brake': tel['Brake'].astype(int).tolist(),
+                    'lap': int(fastest['LapNumber'])
+                }
+            except Exception as ex:
+                print(f"Telemetry error for {driver}: {ex}")
+                continue
+        return {"drivers": list(telemetry_data.keys()), "telemetry_data": telemetry_data, "year": year, "gp": gp}
+
+    return get_cached(cache_key, fetch)
+
+
 @router.get("/qualifying")
 def get_qualifying(year: int = Query(..., ge=2018, le=2030), gp: str = Query(..., min_length=3)):
     cache_key = f"qualifying_{year}_{gp}"

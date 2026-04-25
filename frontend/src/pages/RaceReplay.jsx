@@ -84,9 +84,15 @@ export default function RaceReplay() {
   const [qualiData, setQualiData] = useState(null)
   const [qualiLoading, setQualiLoading] = useState(false)
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [deltaQuali, setDeltaQuali] = useState(null)
+  const [telemetryData, setTelemetryData] = useState(null)
+  const [telemetryLoading, setTelemetryLoading] = useState(false)
+  const [touchStart, setTouchStart] = useState(null)
   const [searchParams] = useSearchParams()
   const posChartRef = useRef(null)
   const lapChartRef = useRef(null)
+
+  const ALL_TABS = ['positions','laptimes','tires','gap','sectors','fastest','distribution','telemetry','delta','summary']
 
   useKeyboardShortcuts([
     { key: '1', action: () => raceData && setActiveTab('positions') },
@@ -96,6 +102,9 @@ export default function RaceReplay() {
     { key: '5', action: () => raceData && setActiveTab('sectors') },
     { key: '6', action: () => raceData && setActiveTab('fastest') },
     { key: '7', action: () => raceData && setActiveTab('distribution') },
+    { key: '8', action: () => raceData && setActiveTab('telemetry') },
+    { key: '9', action: () => raceData && setActiveTab('delta') },
+    { key: '0', action: () => raceData && setActiveTab('summary') },
     { key: '?', action: () => setShowShortcuts(s => !s) },
     { key: 'Escape', action: () => setShowShortcuts(false) },
     { key: 'Enter', ctrl: true, action: () => { if (question && raceData) askAI(); else if (!raceData) sessionMode === 'race' ? loadRace() : loadQualifying() } },
@@ -109,7 +118,7 @@ export default function RaceReplay() {
     if (!urlYear || !urlGp) return
     setYear(urlYear)
     setGp(urlGp)
-    if (urlTab && ['positions','laptimes','tires','gap','sectors','fastest','distribution'].includes(urlTab)) setActiveTab(urlTab)
+    if (urlTab && ALL_TABS.includes(urlTab)) setActiveTab(urlTab)
     setRaces(RACES_BY_YEAR[urlYear] || RACES_BY_YEAR['2024'])
     setLoading(true)
     setRaceData(null)
@@ -146,6 +155,26 @@ export default function RaceReplay() {
       })
       .catch(err => console.warn('Failed to fetch races:', err))
   }, [year])
+
+  // Auto-fetch qualifying for delta tab whenever race data loads
+  useEffect(() => {
+    if (!raceData) { setDeltaQuali(null); return }
+    axios.get(`${API}/qualifying?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`)
+      .then(r => setDeltaQuali(r.data))
+      .catch(() => setDeltaQuali(null))
+  }, [raceData])
+
+  // Telemetry: fetch when tab is selected
+  useEffect(() => {
+    if (activeTab !== 'telemetry' || !raceData || telemetryData || telemetryLoading) return
+    setTelemetryLoading(true)
+    axios.get(`${API}/telemetry?year=${raceData.year}&gp=${encodeURIComponent(raceData.gp)}`)
+      .then(r => { setTelemetryData(r.data); setTelemetryLoading(false) })
+      .catch(() => setTelemetryLoading(false))
+  }, [activeTab, raceData])
+
+  // Reset telemetry when race changes
+  useEffect(() => { setTelemetryData(null) }, [raceData])
 
   async function loadRace() {
     setLoading(true)
@@ -415,7 +444,20 @@ ${allLapPositions.join('\n')}`
       </div>
 
       {/* MAIN CONTENT */}
-      <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', overflow: 'auto', background: '#0a0a0a' }}>
+      <div
+        style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', overflow: 'auto', background: '#0a0a0a' }}
+        onTouchStart={e => setTouchStart(e.touches[0].clientX)}
+        onTouchEnd={e => {
+          if (touchStart === null || !raceData) return
+          const diff = touchStart - e.changedTouches[0].clientX
+          if (Math.abs(diff) > 60) {
+            const idx = ALL_TABS.indexOf(activeTab)
+            if (diff > 0 && idx < ALL_TABS.length - 1) setActiveTab(ALL_TABS[idx + 1])
+            else if (diff < 0 && idx > 0) setActiveTab(ALL_TABS[idx - 1])
+          }
+          setTouchStart(null)
+        }}
+      >
 
         {/* EMPTY STATE */}
         {!raceData && !qualiData && !loading && !qualiLoading && (
@@ -579,15 +621,15 @@ ${allLapPositions.join('\n')}`
                   >Post on X</button>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '8px' }}>
-                {['positions','laptimes','tires','gap','sectors','fastest','distribution'].map(tab => (
+              <div style={{ display: 'flex', gap: '5px', marginTop: '8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none', paddingBottom: '2px' }}>
+                {ALL_TABS.map(tab => (
                   <button key={tab} className="tab-btn" onClick={() => setActiveTab(tab)} style={{
                     background: activeTab === tab ? '#e10600' : '#1a1a1a',
                     color: activeTab === tab ? '#fff' : '#666',
                     border: `0.5px solid ${activeTab === tab ? '#e10600' : '#2a2a2a'}`,
                     padding: '7px 14px', borderRadius: '6px',
                     fontSize: '12px', cursor: 'pointer', textTransform: 'capitalize',
-                    transition: 'all .15s', minHeight: '36px'
+                    transition: 'all .15s', minHeight: '36px', whiteSpace: 'nowrap', flexShrink: 0
                   }}>{tab}</button>
                 ))}
               </div>
@@ -848,6 +890,100 @@ ${allLapPositions.join('\n')}`
               </div>
             )}
 
+            {/* TELEMETRY TAB */}
+            {activeTab === 'telemetry' && (
+              <div style={cardStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: '#aaa' }}>Speed & throttle — fastest lap per driver</div>
+                <div style={{ fontSize: '11px', color: '#444', marginBottom: '16px' }}>First load takes ~60s — telemetry data is larger. Cached after first fetch.</div>
+                {telemetryLoading && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px', gap: '12px', flexDirection: 'column' }}>
+                    <div style={{ width: '36px', height: '36px', border: '2px solid #1a1a1a', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite' }}></div>
+                    <div style={{ fontSize: '12px', color: '#444' }}>Fetching telemetry data — this takes longer...</div>
+                  </div>
+                )}
+                {!telemetryLoading && !telemetryData && (
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#444', fontSize: '13px' }}>No telemetry data available</div>
+                )}
+                {!telemetryLoading && telemetryData && (
+                  <TelemetryChart telemetryData={telemetryData} selectedDrivers={selectedDrivers} getDriverColor={getDriverColor} year={year} />
+                )}
+              </div>
+            )}
+
+            {/* QUALI vs RACE DELTA TAB */}
+            {activeTab === 'delta' && (
+              <div style={cardStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: '#aaa' }}>Qualifying → Race — position delta</div>
+                <div style={{ fontSize: '11px', color: '#444', marginBottom: '16px' }}>Green = positions gained · Red = positions lost vs qualifying</div>
+                {!deltaQuali && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '20px 0', color: '#444', fontSize: '13px' }}>
+                    <div style={{ width: '16px', height: '16px', border: '2px solid #1a1a1a', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite', flexShrink: 0 }}></div>
+                    Loading qualifying data...
+                  </div>
+                )}
+                {deltaQuali && (() => {
+                  // Build final race positions
+                  const raceFinish = {}
+                  raceData.drivers.forEach(d => {
+                    const positions = raceData.position_data[d]
+                    const lastPos = positions ? [...positions].reverse().find(p => p > 0) : null
+                    if (lastPos) raceFinish[d] = lastPos
+                  })
+                  // Get qualifying positions
+                  const qualiPos = {}
+                  deltaQuali.drivers.forEach((d, i) => { qualiPos[d] = i + 1 })
+
+                  const deltaRows = raceData.drivers
+                    .filter(d => raceFinish[d] && qualiPos[d])
+                    .map(d => ({ driver: d, quali: qualiPos[d], race: raceFinish[d], delta: qualiPos[d] - raceFinish[d] }))
+                    .sort((a, b) => b.delta - a.delta)
+
+                  return deltaRows.map((row, i) => {
+                    const color = getDriverColor(row.driver, raceData.drivers.indexOf(row.driver), year)
+                    const deltaColor = row.delta > 0 ? '#52e252' : row.delta < 0 ? '#e10600' : '#555'
+                    const deltaText = row.delta > 0 ? `+${row.delta}` : String(row.delta)
+                    return (
+                      <div key={row.driver} style={{
+                        display: 'grid', gridTemplateColumns: '36px 42px 80px 80px 60px',
+                        alignItems: 'center', gap: '12px',
+                        padding: '8px 10px', borderRadius: '8px',
+                        background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                        marginBottom: '2px'
+                      }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: color + '22', border: `1.5px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: '800', color }}>{row.driver}</div>
+                        <div>
+                          <div style={{ fontSize: '9px', color: '#444', marginBottom: '2px' }}>QUALI</div>
+                          <div style={{ fontSize: '15px', fontWeight: '700', color: '#aaa' }}>P{row.quali}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ flex: 1, height: '2px', background: '#1a1a1a', borderRadius: '1px', position: 'relative', overflow: 'visible' }}>
+                            <div style={{ height: '6px', width: '6px', borderRadius: '50%', background: '#555', position: 'absolute', top: '-2px', left: `${((row.quali - 1) / 19) * 100}%`, transform: 'translateX(-50%)' }}></div>
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '9px', color: '#444', marginBottom: '2px' }}>RACE</div>
+                          <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff' }}>P{row.race}</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '18px', fontWeight: '800', color: deltaColor, fontFamily: 'monospace' }}>{deltaText}</div>
+                          <div style={{ fontSize: '9px', color: deltaColor + '88' }}>{row.delta > 0 ? 'gained' : row.delta < 0 ? 'lost' : 'same'}</div>
+                        </div>
+                      </div>
+                    )
+                  })
+                })()}
+              </div>
+            )}
+
+            {/* RACE SUMMARY TAB */}
+            {activeTab === 'summary' && (
+              <div style={cardStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: '#aaa' }}>Race summary — key events</div>
+                <div style={{ fontSize: '11px', color: '#444', marginBottom: '20px' }}>Pit stops, DNFs, and race result extracted from telemetry</div>
+                <RaceSummary raceData={raceData} getDriverColor={getDriverColor} year={year} />
+              </div>
+            )}
+
             {/* AI Analyst */}
             <div style={cardStyle}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
@@ -966,6 +1102,155 @@ ${allLapPositions.join('\n')}`
         )}
 
       </div>
+    </div>
+  )
+}
+
+function TelemetryChart({ telemetryData, selectedDrivers, getDriverColor, year }) {
+  const [metric, setMetric] = useState('speed')
+  const drivers = telemetryData.drivers.filter(d => selectedDrivers.includes(d))
+  if (drivers.length === 0) return <div style={{ color: '#444', fontSize: '13px', padding: '20px 0' }}>Select drivers from the sidebar to compare telemetry</div>
+
+  const maxDist = Math.max(...drivers.map(d => {
+    const dist = telemetryData.telemetry_data[d]?.distance || []
+    return dist[dist.length - 1] || 0
+  }))
+  // Sample every N points to keep chart fast
+  const SAMPLE = 5
+  const sample = arr => arr ? arr.filter((_, i) => i % SAMPLE === 0) : []
+
+  const labels = sample(telemetryData.telemetry_data[drivers[0]]?.distance || []).map(v => Math.round(v))
+
+  const datasets = drivers.map((d, i) => {
+    const tel = telemetryData.telemetry_data[d]
+    const raw = metric === 'speed' ? tel?.speed : metric === 'throttle' ? tel?.throttle : tel?.brake
+    return {
+      label: d,
+      data: sample(raw || []),
+      borderColor: getDriverColor(d, telemetryData.drivers.indexOf(d), year),
+      backgroundColor: 'transparent',
+      borderWidth: 1.5, pointRadius: 0, tension: 0.1
+    }
+  })
+
+  const yLabel = metric === 'speed' ? 'Speed (km/h)' : metric === 'throttle' ? 'Throttle (%)' : 'Brake'
+  const yMax = metric === 'speed' ? 360 : 100
+
+  return (
+    <>
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
+        {['speed','throttle','brake'].map(m => (
+          <button key={m} onClick={() => setMetric(m)} style={{
+            background: metric === m ? '#e10600' : '#1a1a1a',
+            color: metric === m ? '#fff' : '#555',
+            border: `0.5px solid ${metric === m ? '#e10600' : '#2a2a2a'}`,
+            padding: '5px 14px', borderRadius: '6px', fontSize: '12px',
+            cursor: 'pointer', textTransform: 'capitalize', transition: 'all .15s'
+          }}>{m}</button>
+        ))}
+      </div>
+      <Line
+        data={{ labels, datasets }}
+        options={{
+          responsive: true,
+          animation: false,
+          plugins: {
+            legend: { labels: { color: '#666', font: { size: 11 }, boxWidth: 12 } },
+            tooltip: { mode: 'index', intersect: false, callbacks: { title: items => `${items[0].label}m`, label: c => `${c.dataset.label}: ${c.raw}` } }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', maxTicksLimit: 12, font: { size: 10 } }, title: { display: true, text: 'Distance (m)', color: '#444', font: { size: 10 } } },
+            y: { min: 0, max: yMax, grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#444', font: { size: 10 } }, title: { display: true, text: yLabel, color: '#444', font: { size: 10 } } }
+          }
+        }}
+      />
+      <div style={{ marginTop: '8px', fontSize: '10px', color: '#333' }}>Fastest lap for each driver · Sampled every {SAMPLE} data points</div>
+    </>
+  )
+}
+
+function RaceSummary({ raceData, getDriverColor, year }) {
+  const { drivers, position_data, tire_data, total_laps } = raceData
+
+  const events = []
+
+  // Starting positions (lap 1)
+  const startPositions = {}
+  drivers.forEach(d => {
+    const pos = position_data[d]?.[0]
+    if (pos && pos > 0) startPositions[d] = pos
+  })
+  const startOrder = Object.entries(startPositions).sort((a, b) => a[1] - b[1]).map(([d]) => d)
+  if (startOrder.length > 0) {
+    events.push({ lap: 1, type: 'start', icon: '🚦', text: `Race starts — P1: ${startOrder.slice(0, 3).join(', ')} lead the pack` })
+  }
+
+  // Pit stops (tire compound changes)
+  drivers.forEach(d => {
+    const tires = tire_data[d] || []
+    for (let i = 1; i < tires.length; i++) {
+      if (tires[i] && tires[i - 1] && tires[i] !== tires[i - 1]) {
+        events.push({ lap: i + 1, type: 'pit', icon: '🔧', text: `${d} pits — ${tires[i - 1]} → ${tires[i]}` })
+      }
+    }
+  })
+
+  // DNF detection
+  drivers.forEach(d => {
+    const positions = position_data[d] || []
+    let lastValidLap = 0
+    for (let i = 0; i < positions.length; i++) {
+      if (positions[i] > 0) lastValidLap = i + 1
+    }
+    if (lastValidLap > 0 && lastValidLap < total_laps - 2) {
+      events.push({ lap: lastValidLap, type: 'dnf', icon: '🚩', text: `${d} retires from the race` })
+    }
+  })
+
+  // Final result
+  const finalPositions = {}
+  drivers.forEach(d => {
+    const positions = position_data[d] || []
+    const lastPos = [...positions].reverse().find(p => p > 0)
+    if (lastPos) finalPositions[d] = lastPos
+  })
+  const finishOrder = Object.entries(finalPositions).sort((a, b) => a[1] - b[1])
+  if (finishOrder.length >= 3) {
+    events.push({ lap: total_laps, type: 'finish', icon: '🏆', text: `Chequered flag — P1: ${finishOrder[0][0]}  P2: ${finishOrder[1][0]}  P3: ${finishOrder[2][0]}` })
+  }
+
+  events.sort((a, b) => a.lap - b.lap)
+
+  const typeColors = { start: '#3671c6', pit: '#f5c842', dnf: '#e10600', finish: '#52e252' }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+      {events.map((ev, i) => {
+        const color = typeColors[ev.type] || '#555'
+        return (
+          <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '10px 0', borderBottom: '0.5px solid #1a1a1a' }}>
+            {/* Lap badge */}
+            <div style={{ flexShrink: 0, width: '44px', textAlign: 'center' }}>
+              <div style={{ fontSize: '9px', color: '#444', textTransform: 'uppercase', letterSpacing: '0.5px' }}>LAP</div>
+              <div style={{ fontSize: '16px', fontWeight: '800', color: '#555' }}>{ev.lap}</div>
+            </div>
+            {/* Vertical line */}
+            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0', marginTop: '4px' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}88` }}></div>
+              {i < events.length - 1 && <div style={{ width: '1px', height: '100%', minHeight: '24px', background: '#1a1a1a', marginTop: '4px' }}></div>}
+            </div>
+            {/* Event */}
+            <div style={{ flex: 1, paddingTop: '0px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: color + '15', border: `0.5px solid ${color}33`, borderRadius: '4px', padding: '2px 8px', marginBottom: '4px' }}>
+                <span style={{ fontSize: '11px' }}>{ev.icon}</span>
+                <span style={{ fontSize: '10px', color, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{ev.type}</span>
+              </div>
+              <div style={{ fontSize: '13px', color: '#aaa', lineHeight: 1.5 }}>{ev.text}</div>
+            </div>
+          </div>
+        )
+      })}
+      {events.length === 0 && <div style={{ color: '#444', fontSize: '13px' }}>No events detected</div>}
     </div>
   )
 }

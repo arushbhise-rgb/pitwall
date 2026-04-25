@@ -52,6 +52,9 @@ export default function Drivers() {
   const [stats, setStats] = useState(null)
   const [statsLoading, setStatsLoading] = useState(false)
   const [search, setSearch] = useState('')
+  const [showCareer, setShowCareer] = useState(false)
+  const [careerData, setCareerData] = useState(null)
+  const [careerLoading, setCareerLoading] = useState(false)
 
   const drivers = ALL_DRIVERS_BY_YEAR[year] || ALL_DRIVERS_BY_YEAR['2024']
   const colors = DRIVER_COLORS_BY_YEAR[year] || DRIVER_COLORS_BY_YEAR['2024']
@@ -95,6 +98,26 @@ export default function Drivers() {
   function handleSelect(code) {
     setSelectedCode(prev => prev === code ? null : code)
     setStats(null)
+    setShowCareer(false)
+    setCareerData(null)
+  }
+
+  async function loadCareer(code) {
+    setCareerLoading(true)
+    setCareerData(null)
+    const driverId = CODE_TO_ID[code] || code.toLowerCase()
+    const years = ['2018','2019','2020','2021','2022','2023','2024','2025','2026']
+    const results = await Promise.allSettled(
+      years.map(y => axios.get(`${API}/driver/stats?year=${y}&driver=${driverId}`))
+    )
+    const career = {}
+    results.forEach((res, i) => {
+      if (res.status === 'fulfilled' && res.value.data && !res.value.data.error && res.value.data.races > 0) {
+        career[years[i]] = res.value.data
+      }
+    })
+    setCareerData(career)
+    setCareerLoading(false)
   }
 
   return (
@@ -363,7 +386,7 @@ export default function Drivers() {
                     )}
 
                     {/* Actions */}
-                    <div style={{ padding: '0 20px 20px', display: 'flex', gap: '8px' }}>
+                    <div style={{ padding: '0 20px 12px', display: 'flex', gap: '8px' }}>
                       <button onClick={() => navigate(`/h2h`)} style={{
                         flex: 1, background: selectedColor + '18', border: `0.5px solid ${selectedColor}33`,
                         color: selectedColor, padding: '10px', borderRadius: '10px',
@@ -380,6 +403,65 @@ export default function Drivers() {
                         onMouseEnter={e => { e.currentTarget.style.background = '#222'; e.currentTarget.style.color = '#aaa' }}
                         onMouseLeave={e => { e.currentTarget.style.background = '#1a1a1a'; e.currentTarget.style.color = '#666' }}
                       >📊 Standings</button>
+                    </div>
+
+                    {/* Career toggle */}
+                    <div style={{ padding: '0 20px 20px' }}>
+                      <button onClick={() => {
+                        if (!showCareer) { setShowCareer(true); if (!careerData) loadCareer(selectedCode) }
+                        else setShowCareer(false)
+                      }} style={{
+                        width: '100%', background: showCareer ? '#1a1a1a' : 'transparent',
+                        border: '0.5px solid #2a2a2a', color: showCareer ? '#aaa' : '#555',
+                        padding: '9px', borderRadius: '10px', fontSize: '12px',
+                        fontWeight: '600', cursor: 'pointer', transition: 'all .2s'
+                      }}>📈 {showCareer ? 'Hide' : 'View'} Career Overview (2018–2026)</button>
+
+                      {showCareer && (
+                        <div style={{ marginTop: '12px' }}>
+                          {careerLoading && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', padding: '24px', color: '#444', fontSize: '12px' }}>
+                              <div style={{ width: '18px', height: '18px', border: `2px solid ${selectedColor}33`, borderTopColor: selectedColor, borderRadius: '50%', animation: 'spin .7s linear infinite' }}></div>
+                              Loading career data...
+                            </div>
+                          )}
+                          {careerData && !careerLoading && (() => {
+                            const yearEntries = Object.entries(careerData).sort((a, b) => Number(b[0]) - Number(a[0]))
+                            if (yearEntries.length === 0) return <div style={{ fontSize: '12px', color: '#444', textAlign: 'center', padding: '16px' }}>No career data found</div>
+                            return (
+                              <div>
+                                {/* Career stat highlights */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '6px', marginBottom: '12px' }}>
+                                  {[
+                                    { label: 'Seasons', value: yearEntries.length },
+                                    { label: 'Total Wins', value: yearEntries.reduce((s, [, d]) => s + (d.wins || 0), 0) },
+                                    { label: 'Total Pods', value: yearEntries.reduce((s, [, d]) => s + (d.podiums || 0), 0) },
+                                  ].map((s, i) => (
+                                    <div key={i} style={{ background: '#111', border: '0.5px solid #1a1a1a', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
+                                      <div style={{ fontSize: '18px', fontWeight: '800', color: selectedColor }}>{s.value}</div>
+                                      <div style={{ fontSize: '9px', color: '#444', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                                {/* Year by year table */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                  {yearEntries.map(([yr, d]) => (
+                                    <div key={yr} style={{ display: 'grid', gridTemplateColumns: '44px 1fr 36px 36px 50px', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', background: yr === year ? selectedColor + '10' : 'transparent', border: `0.5px solid ${yr === year ? selectedColor + '33' : 'transparent'}` }}>
+                                      <div style={{ fontSize: '12px', fontWeight: '700', color: yr === year ? selectedColor : '#555' }}>{yr}</div>
+                                      <div style={{ height: '4px', background: '#1a1a1a', borderRadius: '2px', overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', width: `${Math.min((d.points / 500) * 100, 100)}%`, background: selectedColor, borderRadius: '2px' }}></div>
+                                      </div>
+                                      <div style={{ fontSize: '11px', color: '#555', textAlign: 'center' }}>{Math.round(d.points)}pt</div>
+                                      <div style={{ fontSize: '11px', color: d.wins > 0 ? '#f5c842' : '#333', textAlign: 'center' }}>{d.wins}W</div>
+                                      <div style={{ fontSize: '10px', color: '#444', textAlign: 'right' }}>{d.races} races</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
