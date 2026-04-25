@@ -55,36 +55,34 @@ function teamColor(team) { return F1_TEAMS.find(t => t.id === team)?.color || '#
 
 function getActivityTags(votes, preds, ratings, hotTakesCount) {
   const tags = []
-  // DOTD voting
-  if (votes >= 30) tags.push({ label: 'DOTD Oracle', icon: '🔮', color: '#f5c842' })
-  else if (votes >= 15) tags.push({ label: 'DOTD Devotee', icon: '🗳️', color: '#00d2be' })
-  else if (votes >= 5) tags.push({ label: 'Regular Voter', icon: '✅', color: '#34d399' })
+  // DOTD voting (vote = 5pts, so 20 votes = 100pts = Team Principal)
+  if (votes >= 20) tags.push({ label: 'DOTD Oracle', icon: '🔮', color: '#f5c842' })
+  else if (votes >= 10) tags.push({ label: 'DOTD Devotee', icon: '🗳️', color: '#00d2be' })
+  else if (votes >= 3) tags.push({ label: 'Regular Voter', icon: '✅', color: '#34d399' })
   else if (votes >= 1) tags.push({ label: 'First Vote', icon: '🗳️', color: '#555' })
-  // Predictions
-  if (preds >= 15) tags.push({ label: 'Grid Guru', icon: '🎯', color: '#c0c0c0' })
-  else if (preds >= 5) tags.push({ label: 'Race Prophet', icon: '🎯', color: '#8b5cf6' })
+  // Predictions (prediction = 10pts)
+  if (preds >= 10) tags.push({ label: 'Grid Guru', icon: '🎯', color: '#c0c0c0' })
+  else if (preds >= 4) tags.push({ label: 'Race Prophet', icon: '🎯', color: '#8b5cf6' })
   else if (preds >= 1) tags.push({ label: 'Predictor', icon: '🎯', color: '#555' })
-  // Ratings
+  // Ratings (no points — just personal fun)
   if (ratings >= 20) tags.push({ label: 'Chief Analyst', icon: '📊', color: '#f59e0b' })
   else if (ratings >= 8) tags.push({ label: 'Driver Scout', icon: '👀', color: '#6692ff' })
-  else if (ratings >= 1) tags.push({ label: 'Analyst', icon: '📊', color: '#555' })
-  // Hot takes
-  if (hotTakesCount >= 10) tags.push({ label: 'Hot Takes Legend', icon: '🔥', color: '#ef4444' })
-  else if (hotTakesCount >= 3) tags.push({ label: 'Controversialist', icon: '🌶️', color: '#f97316' })
+  // Hot takes (hot take = 3pts)
+  if (hotTakesCount >= 15) tags.push({ label: 'Hot Takes Legend', icon: '🔥', color: '#ef4444' })
+  else if (hotTakesCount >= 5) tags.push({ label: 'Controversialist', icon: '🌶️', color: '#f97316' })
   else if (hotTakesCount >= 1) tags.push({ label: 'Takes Haver', icon: '💬', color: '#555' })
-  // Combined
-  const totalActions = votes + preds + ratings + hotTakesCount
-  if (totalActions >= 50) tags.push({ label: 'Paddock Veteran', icon: '🏆', color: '#f5c842' })
-  else if (totalActions >= 20) tags.push({ label: 'Paddock Regular', icon: '🏁', color: '#aaa' })
+  // Cross-category
+  const diversity = [votes > 0, preds > 0, hotTakesCount > 0, ratings > 0].filter(Boolean).length
+  if (diversity >= 4) tags.push({ label: 'All-Around Fan', icon: '🌍', color: '#a855f7' })
   return tags
 }
 
 function getPaddockRank(pts) {
-  if (pts >= 50) return { label: 'World Champion', color: '#f5c842', icon: '👑', next: null }
-  if (pts >= 25) return { label: 'Team Principal', color: '#c0c0c0', icon: '🏆', next: 50, nextLabel: 'World Champion' }
-  if (pts >= 10) return { label: 'Race Engineer', color: '#cd7f32', icon: '🎧', next: 25, nextLabel: 'Team Principal' }
-  if (pts >= 3) return { label: 'Junior Engineer', color: '#00d2be', icon: '🔧', next: 10, nextLabel: 'Race Engineer' }
-  return { label: 'Pit Lane Visitor', color: '#666', icon: '🪪', next: 3, nextLabel: 'Junior Engineer' }
+  if (pts >= 200) return { label: 'World Champion', color: '#f5c842', icon: '👑', next: null }
+  if (pts >= 100) return { label: 'Team Principal', color: '#c0c0c0', icon: '🏆', next: 200, nextLabel: 'World Champion' }
+  if (pts >= 50) return { label: 'Race Engineer', color: '#cd7f32', icon: '🎧', next: 100, nextLabel: 'Team Principal' }
+  if (pts >= 15) return { label: 'Junior Engineer', color: '#00d2be', icon: '🔧', next: 50, nextLabel: 'Race Engineer' }
+  return { label: 'Pit Lane Visitor', color: '#666', icon: '🪪', next: 15, nextLabel: 'Junior Engineer' }
 }
 
 function Avatar({ profile, size = 64, fontSize }) {
@@ -190,7 +188,7 @@ export default function Profile() {
     )
   }
 
-  const totalPoints = votes.length * 1 + preds.length * 2 + Math.floor(ratings.length * 0.5)
+  const totalPoints = votes.length * 5 + preds.length * 10 + hotTakesCount * 3
   const rank = getPaddockRank(totalPoints)
   const color = teamColor(profile?.fav_team)
   const fanId = profile?.fav_team ? FAN_IDENTITY[profile.fav_team] : null
