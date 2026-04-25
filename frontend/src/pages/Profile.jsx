@@ -6,8 +6,7 @@ import AuthModal from '../components/AuthModal'
 import { AVATAR_OPTIONS, CREATOR_AVATAR } from '../components/OnboardingModal'
 import { ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
 
-// Update this with your username after onboarding
-const CREATOR_USERNAMES = new Set(['arushbhise', 'arush', 'arushbhise-rgb'])
+const CREATOR_EMAILS = new Set(['arush.bhise@gmail.com'])
 
 const F1_TEAMS = [
   { id: 'Red Bull Racing', color: '#3671c6' }, { id: 'Ferrari', color: '#e8002d' },
@@ -196,7 +195,7 @@ export default function Profile() {
   const color = teamColor(profile?.fav_team)
   const fanId = profile?.fav_team ? FAN_IDENTITY[profile.fav_team] : null
   const circuit = F1_CIRCUITS.find(c => c.id === profile?.fav_circuit)
-  const isCreator = CREATOR_USERNAMES.has(profile?.username?.toLowerCase())
+  const isCreator = CREATOR_EMAILS.has(user?.email)
   const activityTags = getActivityTags(votes.length, preds.length, ratings.length, hotTakesCount)
 
   return (
