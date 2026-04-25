@@ -23,7 +23,7 @@ export const AVATAR_OPTIONS = [
 
 // Creator-exclusive avatar — not shown to regular users
 export const CREATOR_AVATAR = '🛠️'
-const CREATOR_USERNAMES = new Set(['arushbhise', 'arush', 'arushbhise-rgb'])
+const CREATOR_EMAILS = new Set(['arush.bhise@gmail.com'])
 
 const YEAR = String(new Date().getFullYear())
 const CURRENT_DRIVERS = ALL_DRIVERS_BY_YEAR[YEAR] || ALL_DRIVERS_BY_YEAR['2025'] || []
@@ -165,7 +165,7 @@ export default function OnboardingModal() {
                     }}>{emoji}</button>
                   )
                 })}
-                {CREATOR_USERNAMES.has(username.trim().toLowerCase()) && (
+                {CREATOR_EMAILS.has(user?.email) && (
                   <button onClick={() => setAvatar(a => a === CREATOR_AVATAR ? '' : CREATOR_AVATAR)} title="Creator exclusive 🛠️" style={{
                     height: '52px', background: avatar === CREATOR_AVATAR ? 'rgba(245,200,66,0.15)' : 'rgba(245,200,66,0.04)',
                     border: `1.5px solid ${avatar === CREATOR_AVATAR ? '#f5c842' : 'rgba(245,200,66,0.3)'}`,
