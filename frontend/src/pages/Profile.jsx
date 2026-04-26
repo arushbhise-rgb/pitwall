@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import AuthModal from '../components/AuthModal'
 import { AVATAR_OPTIONS, CREATOR_AVATAR } from '../components/OnboardingModal'
 import { ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
+import { useCountUpOnMount } from '../utils/animations'
 
 const CREATOR_EMAILS = new Set(['arush.bhise@gmail.com'])
 
@@ -86,18 +87,26 @@ function getPaddockRank(pts) {
 }
 
 function Avatar({ profile, size = 64, fontSize }) {
+  const [hov, setHov] = useState(false)
   const color = teamColor(profile?.fav_team)
   const label = profile?.username?.[0]?.toUpperCase() || '?'
   return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: `linear-gradient(135deg, ${color}, ${color}99)`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: profile?.avatar ? (fontSize || size * 0.45) : (fontSize || size * 0.35),
-      fontWeight: '800', color: '#fff',
-      boxShadow: `0 0 ${size * 0.4}px ${color}44`,
-      border: `${size * 0.04}px solid ${color}33`,
-    }}>
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        width: size, height: size, borderRadius: '50%', flexShrink: 0,
+        background: `linear-gradient(135deg, ${color}, ${color}99)`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: profile?.avatar ? (fontSize || size * 0.45) : (fontSize || size * 0.35),
+        fontWeight: '800', color: '#fff',
+        boxShadow: hov
+          ? `0 0 0 3px ${color}, 0 0 ${size * 0.5}px ${color}66`
+          : `0 0 ${size * 0.4}px ${color}44`,
+        border: `${size * 0.04}px solid ${color}33`,
+        transition: 'box-shadow 0.3s ease',
+        cursor: 'default',
+      }}>
       {profile?.avatar || label}
     </div>
   )
@@ -120,6 +129,7 @@ export default function Profile() {
   const [hotTakesCount, setHotTakesCount] = useState(0)
   const [dataLoading, setDataLoading] = useState(true)
 
+  const [barWidth, setBarWidth] = useState(0)
   const [editUsername, setEditUsername] = useState('')
   const [editAvatar, setEditAvatar] = useState('')
   const [editTeam, setEditTeam] = useState('')
@@ -140,6 +150,16 @@ export default function Profile() {
       setEditFanSince(profile.fan_since ? String(profile.fan_since) : '')
     }
   }, [profile])
+
+  // Animate progress bar after data loads
+  useEffect(() => {
+    if (dataLoading) return
+    const rank = getPaddockRank(votes.length * 5 + preds.length * 10 + hotTakesCount * 3)
+    if (!rank.next) return
+    const target = Math.min(100, ((votes.length * 5 + preds.length * 10 + hotTakesCount * 3) / rank.next) * 100)
+    const timer = setTimeout(() => setBarWidth(target), 400)
+    return () => clearTimeout(timer)
+  }, [dataLoading, votes.length, preds.length, hotTakesCount])
 
   useEffect(() => {
     if (!user) { setDataLoading(false); return }
@@ -189,6 +209,11 @@ export default function Profile() {
   }
 
   const totalPoints = votes.length * 5 + preds.length * 10 + hotTakesCount * 3
+  // Animated counters for stats — count up when data loads
+  const animPts = useCountUpOnMount(dataLoading ? 0 : totalPoints, 900, 300)
+  const animVotes = useCountUpOnMount(dataLoading ? 0 : votes.length, 700, 400)
+  const animPreds = useCountUpOnMount(dataLoading ? 0 : preds.length, 700, 500)
+  const animRatings = useCountUpOnMount(dataLoading ? 0 : ratings.length, 700, 600)
   const rank = getPaddockRank(totalPoints)
   const color = teamColor(profile?.fav_team)
   const fanId = profile?.fav_team ? FAN_IDENTITY[profile.fav_team] : null
@@ -199,6 +224,10 @@ export default function Profile() {
   return (
     <div style={{ padding: '20px 16px', maxWidth: '760px', margin: '0 auto', minHeight: 'calc(100vh - 52px)', background: 'var(--bg-primary)' }}>
       <Helmet><title>{profile?.username ? `${profile.username} — PitWall` : 'My Profile — PitWall'}</title></Helmet>
+      <style>{`
+        @keyframes popIn { 0%{opacity:0;transform:scale(0.7)} 65%{transform:scale(1.08)} 100%{opacity:1;transform:scale(1)} }
+        @keyframes ribbonFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+      `}</style>
 
       {/* Hero card */}
       <div style={{ ...card, padding: '24px', position: 'relative', overflow: 'hidden', marginBottom: '20px' }}>
@@ -219,9 +248,9 @@ export default function Profile() {
               </div>
               {/* Creator badge */}
               {isCreator && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'linear-gradient(135deg, rgba(225,6,0,0.2), rgba(245,200,66,0.12))', border: '0.5px solid rgba(245,200,66,0.5)', borderRadius: '20px', padding: '3px 10px', boxShadow: '0 0 10px rgba(245,200,66,0.15)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'linear-gradient(135deg, rgba(225,6,0,0.18), rgba(245,200,66,0.1))', border: '0.5px solid rgba(245,200,66,0.55)', borderRadius: '20px', padding: '3px 12px', boxShadow: '0 0 14px rgba(245,200,66,0.2), inset 0 0.5px 0 rgba(245,200,66,0.15)' }}>
                   <span style={{ fontSize: '11px' }}>🛠️</span>
-                  <span style={{ fontSize: '10px', fontWeight: '800', background: 'linear-gradient(90deg, #e10600, #f5c842)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Creator</span>
+                  <span style={{ fontSize: '10px', fontWeight: '800', background: 'linear-gradient(90deg, #e10600, #f5c842, #e10600)', backgroundSize: '200% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'ribbonFlow 2.5s ease infinite' }}>Creator</span>
                 </div>
               )}
             </div>
@@ -255,11 +284,14 @@ export default function Profile() {
             {/* Activity achievement tags */}
             {!dataLoading && activityTags.length > 0 && (
               <div style={{ display: 'flex', gap: '5px', marginTop: '7px', flexWrap: 'wrap' }}>
-                {activityTags.map(tag => (
+                {activityTags.map((tag, idx) => (
                   <div key={tag.label} title={tag.label} style={{
                     display: 'flex', alignItems: 'center', gap: '4px',
                     background: `${tag.color}12`, border: `0.5px solid ${tag.color}44`,
                     borderRadius: '20px', padding: '2px 9px',
+                    opacity: 0,
+                    animation: `popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards`,
+                    animationDelay: `${idx * 0.07 + 0.1}s`,
                   }}>
                     <span style={{ fontSize: '10px' }}>{tag.icon}</span>
                     <span style={{ fontSize: '10px', fontWeight: '700', color: tag.color }}>{tag.label}</span>
@@ -284,15 +316,18 @@ export default function Profile() {
         {/* Stats row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '8px', marginTop: '20px', paddingTop: '18px', borderTop: '0.5px solid #1a1a1a' }}>
           {[
-            { label: 'Paddock Pts', value: totalPoints, icon: rank.icon, color: rank.color },
-            { label: 'DOTD Votes', value: votes.length, icon: '🏆', color: '#e10600' },
-            { label: 'Predictions', value: preds.length, icon: '🔮', color: '#6692ff' },
-            { label: 'Ratings', value: ratings.length, icon: '⭐', color: '#f5c842' },
+            { label: 'Paddock Pts', value: animPts, icon: rank.icon, color: rank.color },
+            { label: 'DOTD Votes', value: animVotes, icon: '🏆', color: '#e10600' },
+            { label: 'Predictions', value: animPreds, icon: '🔮', color: '#6692ff' },
+            { label: 'Ratings', value: animRatings, icon: '⭐', color: '#f5c842' },
           ].map(s => (
-            <div key={s.label} style={{ textAlign: 'center', padding: '10px 4px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-              <div style={{ fontSize: '18px', marginBottom: '2px' }}>{s.icon}</div>
-              <div style={{ fontSize: '20px', fontWeight: '900', color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: '9px', color: '#444', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</div>
+            <div key={s.label} style={{ textAlign: 'center', padding: '12px 4px', background: 'rgba(255,255,255,0.025)', borderRadius: '10px', border: '0.5px solid rgba(255,255,255,0.05)', transition: 'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = `${s.color}33` }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.025)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)' }}
+            >
+              <div style={{ fontSize: '18px', marginBottom: '3px' }}>{s.icon}</div>
+              <div style={{ fontSize: '22px', fontWeight: '900', color: s.color, fontFamily: "'Space Mono', monospace" }}>{s.value}</div>
+              <div style={{ fontSize: '9px', color: '#444', marginTop: '3px', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -300,17 +335,24 @@ export default function Profile() {
         {/* Rank progress */}
         {rank.next !== null && (
           <div style={{ marginTop: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#444', marginBottom: '5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#444', marginBottom: '6px' }}>
               <span>{rank.icon} {rank.label}</span>
-              <span>{rank.next - totalPoints} pts to {rank.nextLabel}</span>
+              <span>{Math.max(0, rank.next - totalPoints)} pts to {rank.nextLabel}</span>
             </div>
-            <div style={{ height: '4px', background: '#1a1a1a', borderRadius: '2px', overflow: 'hidden' }}>
+            <div style={{ height: '5px', background: '#1a1a1a', borderRadius: '3px', overflow: 'visible', position: 'relative' }}>
               <div style={{
-                height: '100%', borderRadius: '2px',
-                width: `${Math.min(100, (totalPoints / rank.next) * 100)}%`,
-                background: `linear-gradient(90deg, ${rank.color}, ${color})`,
-                transition: 'width 1s ease',
-              }} />
+                height: '100%', borderRadius: '3px',
+                width: `${barWidth}%`,
+                background: `linear-gradient(90deg, ${rank.color}bb, ${rank.color}, ${color})`,
+                backgroundSize: '200% 100%',
+                animation: 'ribbonFlow 2s ease infinite',
+                transition: 'width 1.2s cubic-bezier(0.16,1,0.3,1)',
+                boxShadow: `0 0 8px ${rank.color}66`,
+                position: 'relative',
+              }}>
+                {/* Glowing cursor at bar end */}
+                <div style={{ position: 'absolute', right: '-3px', top: '50%', transform: 'translateY(-50%)', width: '8px', height: '8px', borderRadius: '50%', background: rank.color, boxShadow: `0 0 8px ${rank.color}, 0 0 16px ${rank.color}88`, opacity: barWidth > 2 ? 1 : 0, transition: 'opacity 0.5s 0.8s' }} />
+              </div>
             </div>
           </div>
         )}
