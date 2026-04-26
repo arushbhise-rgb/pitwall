@@ -320,7 +320,7 @@ function NextRaceCard({ visible }) {
         position: "absolute", top: 0, left: "10%", right: "10%", height: "1px",
         background: "linear-gradient(90deg, transparent, rgba(225,6,0,0.4), transparent)"
       }} />
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", rowGap: "20px" }}>
         <div>
           <div style={{ fontSize: "10px", color: "#e10600", textTransform: "uppercase", letterSpacing: "2px", marginBottom: "8px", fontFamily: "'Space Mono', monospace" }}>Next Race</div>
           <div style={{ fontSize: "18px", fontWeight: "800", marginBottom: "4px" }}>
@@ -548,7 +548,15 @@ export default function Landing() {
   const { user, profile, signOut } = useAuth()
   const [showAuth, setShowAuth] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768)
   const [heroRef, heroVisible] = useInView(0.1);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, []);
   const [featRef, featVisible] = useInView(0.1);
   const [statRef, statVisible] = useInView(0.2);
   const [ctaRef, ctaVisible] = useInView(0.2);
@@ -605,59 +613,75 @@ export default function Landing() {
         .cta-primary::after { content:''; position:absolute; top:50%; left:50%; width:300%; height:300%; background:radial-gradient(circle,rgba(255,255,255,0.15),transparent 60%); transform:translate(-50%,-50%) scale(0); transition:transform 0.5s; border-radius:50%; }
         .cta-primary:hover::after { transform:translate(-50%,-50%) scale(1); }
         .cta-primary:hover { transform: scale(1.03); }
-        .nav-link { position:relative; }
-        .nav-link::after { content:''; position:absolute; bottom:-2px; left:0; width:0; height:1px; background:#e10600; transition:width 0.3s; }
-        .nav-link:hover::after { width:100%; }
+        @keyframes ldFadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes ldSlideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes glowPulse { 0%,100%{box-shadow:0 0 20px rgba(225,6,0,0.3)} 50%{box-shadow:0 0 40px rgba(225,6,0,0.6)} }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        @keyframes scanline { 0%{top:-2px} 100%{top:100%} }
+        .next-race-countdown { flex-wrap: wrap; justify-content: center; }
+        .landing-result-banner { flex-wrap: wrap; gap: 8px !important; padding: 8px 16px !important; }
+        .result-drivers { flex-wrap: wrap; gap: 10px !important; }
+        .result-round { display: none; }
+        @media(min-width:600px) { .result-round { display:block } }
       `}</style>
 
       <GridCanvas />
       <SpeedLines />      
 
       {/* NAV */}
-      <nav className="landing-nav" style={{
+      <nav style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
-        padding: "0 40px", height: "64px",
+        padding: isMobile ? "0 16px" : "0 40px", height: "60px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: scrolledPast ? "rgba(5,5,5,0.9)" : "transparent",
+        background: scrolledPast ? "rgba(5,5,5,0.95)" : "transparent",
         backdropFilter: scrolledPast ? "blur(20px)" : "none",
         WebkitBackdropFilter: scrolledPast ? "blur(20px)" : "none",
         borderBottom: scrolledPast ? "1px solid rgba(255,255,255,0.05)" : "1px solid transparent",
-        transition: "all 0.4s",
+        transition: "all 0.4s", gap: "12px",
       }}>
-        <div onClick={() => navigate("/")} style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}>
+        {/* Logo */}
+        <div onClick={() => navigate("/")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", flexShrink: 0 }}>
           <div style={{
-            width: "34px", height: "34px",
+            width: "32px", height: "32px",
             background: "linear-gradient(135deg, #e10600, #b30500)",
-            borderRadius: "8px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "'Space Mono', monospace",
-            fontWeight: 700, fontSize: "12px", color: "#fff",
-            boxShadow: "0 0 20px rgba(225,6,0,0.3)",
+            borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center",
+            fontWeight: 700, fontSize: "11px", color: "#fff",
+            boxShadow: "0 0 16px rgba(225,6,0,0.35)",
           }}>PW</div>
-          <div>
-            <div style={{ fontSize: "15px", fontWeight: 700, letterSpacing: "-0.02em" }}>PitWall</div>
-            <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", letterSpacing: "2px", textTransform: "uppercase" }}>Race Intelligence</div>
-          </div>
+          {!isMobile && (
+            <div>
+              <div style={{ fontSize: "15px", fontWeight: 700, letterSpacing: "-0.02em" }}>PitWall</div>
+              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", letterSpacing: "2px", textTransform: "uppercase" }}>Race Intelligence</div>
+            </div>
+          )}
         </div>
-        <div className="landing-nav-links" style={{ display: "flex", gap: "28px", alignItems: "center" }}>
-          {[
-            { label: "Race Replay", path: "/replay" },
-            { label: "Head to Head", path: "/h2h" },
-            { label: "Drivers", path: "/drivers" },
-            { label: "Calendar", path: "/calendar" },
-            { label: "Support", path: "/support" },
-          ].map(({ label, path }) => (
-            <a key={label} className="nav-link" onClick={() => navigate(path)}
-              style={{
-                fontFamily: "'Outfit', sans-serif",
+
+        {/* Desktop nav links */}
+        {!isMobile && (
+          <div style={{ display: "flex", gap: "24px", alignItems: "center", flex: 1, justifyContent: "center" }}>
+            {[
+              { label: "Race Replay", path: "/replay" },
+              { label: "Head to Head", path: "/h2h" },
+              { label: "Drivers", path: "/drivers" },
+              { label: "Calendar", path: "/calendar" },
+              { label: "Paddock", path: "/community" },
+            ].map(({ label, path }) => (
+              <a key={label} onClick={() => navigate(path)} style={{
                 fontSize: "13px", color: "rgba(255,255,255,0.5)",
-                textDecoration: "none", cursor: "pointer",
-                transition: "color 0.2s",
+                textDecoration: "none", cursor: "pointer", transition: "color 0.2s", whiteSpace: "nowrap",
               }}
-              onMouseEnter={e => e.target.style.color = "#fff"}
-              onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.5)"}
-            >{label}</a>
-          ))}
+                onMouseEnter={e => e.target.style.color = "#fff"}
+                onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.5)"}
+              >{label}</a>
+            ))}
+          </div>
+        )}
+
+        {/* Right: auth + hamburger */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+          {/* Auth — always visible */}
           {user ? (
             <div style={{ position: "relative" }}>
               <button onClick={() => setShowUserMenu(s => !s)} style={{
@@ -668,8 +692,7 @@ export default function Landing() {
                 border: "none", color: "#fff", fontWeight: 800,
                 fontSize: profile?.avatar ? "18px" : "13px", cursor: "pointer", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                boxShadow: `0 0 14px ${TEAM_COLORS[profile?.fav_team] || '#e10600'}55`,
-                fontFamily: "'Outfit', sans-serif",
+                boxShadow: `0 0 14px ${TEAM_COLORS[profile?.fav_team] || '#e10600'}44`,
               }}>
                 {profile?.avatar || (profile?.username?.[0] || user.email[0]).toUpperCase()}
               </button>
@@ -678,10 +701,9 @@ export default function Landing() {
                   position: "absolute", top: "44px", right: 0,
                   background: "#111", border: "0.5px solid #2a2a2a",
                   borderRadius: "12px", padding: "6px", minWidth: "210px",
-                  zIndex: 201, boxShadow: "0 12px 40px rgba(0,0,0,0.7)",
-                  fontFamily: "'Outfit', sans-serif",
+                  zIndex: 201, boxShadow: "0 12px 40px rgba(0,0,0,0.8)",
+                  animation: "ldFadeIn .15s ease",
                 }}>
-                  {/* Profile header */}
                   <div style={{ padding: "10px 12px", borderBottom: "0.5px solid #1a1a1a", marginBottom: "4px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <div style={{
@@ -694,33 +716,25 @@ export default function Landing() {
                         <div style={{ fontSize: "13px", fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {profile?.username || user.email.split("@")[0]}
                         </div>
-                        {profile?.fav_team && (
-                          <div style={{ fontSize: "10px", color: TEAM_COLORS[profile.fav_team] || "#e10600", marginTop: "1px", fontWeight: 600 }}>{profile.fav_team}</div>
-                        )}
+                        {profile?.fav_team && <div style={{ fontSize: "10px", color: TEAM_COLORS[profile.fav_team] || "#e10600", marginTop: "1px", fontWeight: 600 }}>{profile.fav_team}</div>}
                       </div>
                     </div>
                   </div>
-                  {/* Menu items */}
-                  {[
-                    { icon: "👤", label: "My Profile", path: "/profile" },
-                    { icon: "🏁", label: "The Paddock", path: "/community" },
-                  ].map(item => (
-                    <button key={item.path} onClick={() => { navigate(item.path); setShowUserMenu(false); }} style={{
+                  {[{ icon: "👤", label: "My Profile", path: "/profile" }, { icon: "🏁", label: "The Paddock", path: "/community" }].map(item => (
+                    <button key={item.path} onClick={() => { navigate(item.path); setShowUserMenu(false) }} style={{
                       width: "100%", background: "transparent", border: "none",
                       color: "rgba(255,255,255,0.7)", padding: "9px 12px", borderRadius: "8px",
-                      fontSize: "12px", cursor: "pointer", textAlign: "left",
-                      fontFamily: "'Outfit', sans-serif", display: "flex", alignItems: "center", gap: "8px",
+                      fontSize: "12px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "8px",
                     }}
                       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                     ><span>{item.icon}</span>{item.label}</button>
                   ))}
                   <div style={{ height: "0.5px", background: "#1a1a1a", margin: "4px 0" }} />
-                  <button onClick={() => { signOut(); setShowUserMenu(false); }} style={{
+                  <button onClick={() => { signOut(); setShowUserMenu(false) }} style={{
                     width: "100%", background: "rgba(225,6,0,0.06)", border: "0.5px solid rgba(225,6,0,0.15)",
                     color: "#e10600", padding: "9px 12px", borderRadius: "8px",
-                    fontSize: "12px", fontWeight: 600, cursor: "pointer", textAlign: "left",
-                    fontFamily: "'Outfit', sans-serif", display: "flex", alignItems: "center", gap: "8px",
+                    fontSize: "12px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: "8px",
                   }}
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(225,6,0,0.12)"}
                     onMouseLeave={e => e.currentTarget.style.background = "rgba(225,6,0,0.06)"}
@@ -732,29 +746,80 @@ export default function Landing() {
             <button onClick={() => setShowAuth(true)} style={{
               background: "linear-gradient(135deg, #e10600, #c00500)",
               border: "none", color: "#fff",
-              padding: "8px 20px", borderRadius: "8px",
-              fontSize: "13px", fontWeight: 600, cursor: "pointer",
-              boxShadow: "0 0 20px rgba(225,6,0,0.3)",
-              transition: "all 0.2s",
-              fontFamily: "'Outfit', sans-serif",
-            }}
-              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
-              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-            >Sign In</button>
+              padding: "8px 18px", borderRadius: "8px",
+              fontSize: "13px", fontWeight: 700, cursor: "pointer",
+              boxShadow: "0 0 16px rgba(225,6,0,0.3)", flexShrink: 0,
+            }}>Sign In</button>
+          )}
+
+          {/* Hamburger — mobile only */}
+          {isMobile && (
+            <button onClick={() => setMobileMenuOpen(o => !o)} style={{
+              background: "none", border: "none", cursor: "pointer",
+              padding: "6px", display: "flex", flexDirection: "column", gap: "5px", alignItems: "center",
+            }}>
+              <div style={{ width: "20px", height: "2px", background: mobileMenuOpen ? "#e10600" : "#fff", transition: "all .2s", transform: mobileMenuOpen ? "rotate(45deg) translate(5px,5px)" : "none", borderRadius: "2px" }} />
+              <div style={{ width: "20px", height: "2px", background: "#fff", opacity: mobileMenuOpen ? 0 : 1, transition: "all .2s", borderRadius: "2px" }} />
+              <div style={{ width: "20px", height: "2px", background: mobileMenuOpen ? "#e10600" : "#fff", transition: "all .2s", transform: mobileMenuOpen ? "rotate(-45deg) translate(5px,-5px)" : "none", borderRadius: "2px" }} />
+            </button>
           )}
         </div>
       </nav>
 
+      {/* Mobile full-screen menu */}
+      {isMobile && mobileMenuOpen && (
+        <div style={{
+          position: "fixed", top: "60px", left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.97)", backdropFilter: "blur(20px)",
+          zIndex: 190, padding: "12px 16px 32px", overflowY: "auto",
+          animation: "ldSlideDown .2s ease",
+        }}>
+          {[
+            { label: "🏎️ Race Replay", path: "/replay" },
+            { label: "⚔️ Head to Head", path: "/h2h" },
+            { label: "📊 Standings", path: "/standings" },
+            { label: "👤 Drivers", path: "/drivers" },
+            { label: "📅 Calendar", path: "/calendar" },
+            { label: "🏁 The Paddock", path: "/community" },
+            { label: "💬 Support", path: "/support" },
+          ].map(({ label, path }) => (
+            <button key={path} onClick={() => { navigate(path); setMobileMenuOpen(false) }} style={{
+              display: "block", width: "100%", background: "transparent", border: "none",
+              borderBottom: "0.5px solid #111", color: "#ccc",
+              fontSize: "17px", padding: "18px 4px", cursor: "pointer", textAlign: "left",
+              fontFamily: "'Outfit', sans-serif", fontWeight: "500",
+            }}>{label}</button>
+          ))}
+          {!user && (
+            <button onClick={() => { setMobileMenuOpen(false); setShowAuth(true) }} style={{
+              marginTop: "24px", width: "100%",
+              background: "linear-gradient(135deg, #e10600, #c00500)", border: "none", color: "#fff",
+              padding: "16px", borderRadius: "12px", fontSize: "16px", fontWeight: 700,
+              cursor: "pointer", boxShadow: "0 0 24px rgba(225,6,0,0.35)",
+              fontFamily: "'Outfit', sans-serif",
+            }}>Sign In to PitWall</button>
+          )}
+          {user && (
+            <button onClick={() => { signOut(); setMobileMenuOpen(false) }} style={{
+              marginTop: "24px", width: "100%",
+              background: "rgba(225,6,0,0.06)", border: "0.5px solid rgba(225,6,0,0.2)",
+              color: "#e10600", padding: "14px", borderRadius: "10px",
+              fontSize: "14px", fontWeight: 600, cursor: "pointer",
+              fontFamily: "'Outfit', sans-serif",
+            }}>↩ Sign Out</button>
+          )}
+        </div>
+      )}
+
       <LatestResultBanner />
 
-
       {/* HERO */}
-      <section ref={heroRef} className="landing-hero-section" style={{
+      <section ref={heroRef} style={{
         position: "relative",
         minHeight: "92vh",
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
-        padding: "40px 40px 80px",
+        padding: isMobile ? "80px 20px 60px" : "40px 40px 80px",
         textAlign: "center",
       }}>
         <Particles />
@@ -902,10 +967,10 @@ export default function Landing() {
       </section>
 
       {/* NEXT RACE COUNTDOWN */}
-      <section ref={nextRaceRef} className="landing-next-race" style={{
+      <section ref={nextRaceRef} style={{
         position: "relative", zIndex: 1,
         maxWidth: "900px", margin: "0 auto",
-        padding: "0 40px 60px",
+        padding: isMobile ? "0 16px 40px" : "0 40px 60px",
       }}>
         <NextRaceCard visible={nextRaceVisible} />
       </section>
@@ -914,7 +979,7 @@ export default function Landing() {
       <section ref={previewRef} style={{
         position: "relative", zIndex: 1,
         maxWidth: "900px", margin: "0 auto",
-        padding: "0 40px 80px",
+        padding: isMobile ? "0 16px 48px" : "0 40px 80px",
         opacity: previewVisible ? 1 : 0,
         transform: previewVisible ? "translateY(0)" : "translateY(30px)",
         transition: "all 0.7s cubic-bezier(0.16,1,0.3,1)",
@@ -951,7 +1016,7 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="landing-preview-stats" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "10px", marginBottom: "20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: "10px", marginBottom: "20px" }}>
             {[
               { val: "ANT", lbl: "Race winner", color: "#00d2be" },
               { val: "56", lbl: "Total laps", color: "#fff" },
@@ -1019,7 +1084,7 @@ export default function Landing() {
       <section ref={teamsRef} style={{
         position: "relative", zIndex: 1,
         maxWidth: "1000px", margin: "0 auto",
-        padding: "0 40px 80px",
+        padding: isMobile ? "0 16px 48px" : "0 40px 80px",
       }}>
         <div style={{
           textAlign: "center", marginBottom: "32px",
@@ -1042,10 +1107,10 @@ export default function Landing() {
         position: "relative", zIndex: 1,
         maxWidth: "1000px",
         margin: "0 auto",
-        padding: "40px 40px 100px",
+        padding: isMobile ? "24px 16px 60px" : "40px 40px 100px",
       }}>
         <div style={{
-          textAlign: "center", marginBottom: "56px",
+          textAlign: "center", marginBottom: isMobile ? "32px" : "56px",
           opacity: featVisible ? 1 : 0,
           transform: featVisible ? "translateY(0)" : "translateY(20px)",
           transition: "all 0.6s cubic-bezier(0.16,1,0.3,1)",
@@ -1054,7 +1119,7 @@ export default function Landing() {
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "32px", fontWeight: 800, letterSpacing: "-0.02em" }}>Every tool you need</div>
         </div>
 
-        <div className="features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: "12px" }}>
           {features.map((f, i) => (
             <FeatureCard key={i} {...f} delay={i * 80} visible={featVisible} />
           ))}
@@ -1066,19 +1131,14 @@ export default function Landing() {
         position: "relative", zIndex: 1,
         borderTop: "1px solid rgba(255,255,255,0.05)",
         borderBottom: "1px solid rgba(255,255,255,0.05)",
-        padding: "56px 40px",
+        padding: isMobile ? "40px 20px" : "56px 40px",
       }}>
         <div style={{
-          position: "absolute", top: "50%", left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "600px", height: "200px",
-          background: "radial-gradient(ellipse, rgba(225,6,0,0.06), transparent 70%)",
-          pointerEvents: "none",
-        }} />
-        <div style={{
-          display: "flex", justifyContent: "center", gap: "80px",
+          display: "grid",
+          gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)",
+          gap: isMobile ? "32px" : "0",
+          justifyItems: "center",
           maxWidth: "900px", margin: "0 auto",
-          flexWrap: "wrap",
         }}>
           <StatItem value={<><AnimatedCounter end={9} duration={1200} />+ seasons</>} label="Race data" delay={0} visible={statVisible} />
           <StatItem value={<><AnimatedCounter end={200} duration={1500} />+</>} label="Races analyzed" delay={100} visible={statVisible} />
@@ -1090,7 +1150,7 @@ export default function Landing() {
       {/* CTA */}
       <section ref={ctaRef} style={{
         position: "relative", zIndex: 1,
-        padding: "100px 40px",
+        padding: isMobile ? "60px 20px" : "100px 40px",
         textAlign: "center",
         overflow: "hidden",
       }}>
@@ -1150,12 +1210,13 @@ export default function Landing() {
       <footer style={{
         position: "relative", zIndex: 1,
         borderTop: "1px solid rgba(255,255,255,0.05)",
-        padding: "28px 40px",
+        padding: isMobile ? "24px 20px" : "28px 40px",
         display: "flex",
+        flexDirection: isMobile ? "column" : "row",
         justifyContent: "space-between",
-        alignItems: "center",
+        alignItems: isMobile ? "flex-start" : "center",
         flexWrap: "wrap",
-        gap: "16px",
+        gap: "12px",
       }}>
         <div onClick={() => navigate("/")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
           <div style={{

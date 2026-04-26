@@ -282,7 +282,7 @@ export default function Profile() {
         )}
 
         {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: '20px', paddingTop: '18px', borderTop: '0.5px solid #1a1a1a' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '8px', marginTop: '20px', paddingTop: '18px', borderTop: '0.5px solid #1a1a1a' }}>
           {[
             { label: 'Paddock Pts', value: totalPoints, icon: rank.icon, color: rank.color },
             { label: 'DOTD Votes', value: votes.length, icon: '🏆', color: '#e10600' },
