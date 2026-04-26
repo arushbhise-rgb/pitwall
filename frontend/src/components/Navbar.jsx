@@ -51,9 +51,9 @@ export default function Navbar() {
       >Skip to content</a>
 
       <nav aria-label="Main navigation" style={{
-        background: 'rgba(10,10,10,0.97)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        background: 'rgba(10,10,10,0.92)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
         padding: '0 16px',
         height: '52px',
         display: 'flex',
@@ -73,7 +73,7 @@ export default function Navbar() {
             borderRadius: '7px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontWeight: '800', color: '#fff', fontSize: '12px',
-            boxShadow: '0 0 12px rgba(225,6,0,0.4)',
+            animation: 'logoGlow 2.5s ease-in-out infinite',
           }}>PW</div>
           <div>
             <div style={{ color: '#fff', fontSize: '14px', fontWeight: '700', letterSpacing: '-0.3px' }}>PitWall</div>
@@ -90,9 +90,10 @@ export default function Navbar() {
                 <Link key={t.path} to={t.path} style={{
                   color: isActive ? '#fff' : 'rgba(255,255,255,.45)',
                   fontSize: '12px', padding: '5px 10px', borderRadius: '6px',
-                  background: isActive ? 'rgba(225,6,0,0.15)' : 'transparent',
-                  border: `0.5px solid ${isActive ? 'rgba(225,6,0,0.3)' : 'transparent'}`,
-                  textDecoration: 'none', transition: 'all .15s',
+                  background: isActive ? 'rgba(225,6,0,0.12)' : 'transparent',
+                  border: `0.5px solid ${isActive ? 'rgba(225,6,0,0.25)' : 'transparent'}`,
+                  boxShadow: isActive ? '0 0 12px rgba(225,6,0,0.18), inset 0 -1.5px 0 rgba(225,6,0,0.5)' : 'none',
+                  textDecoration: 'none', transition: 'all .2s',
                   fontWeight: isActive ? '600' : '400', whiteSpace: 'nowrap',
                 }}>{t.label}</Link>
               )
@@ -251,6 +252,7 @@ export default function Navbar() {
       <style>{`
         @keyframes pwFadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
         @keyframes pwSlideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes logoGlow { 0%,100%{box-shadow:0 0 10px rgba(225,6,0,0.4)} 50%{box-shadow:0 0 22px rgba(225,6,0,0.75)} }
       `}</style>
     </>
   )

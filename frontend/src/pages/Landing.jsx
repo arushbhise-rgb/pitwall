@@ -362,24 +362,41 @@ function NextRaceCard({ visible }) {
 
 function FeatureCard({ icon, title, desc, color, delay, visible }) {
   const [hovered, setHovered] = useState(false);
+
+  const handleMouseMove = (e) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 11;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * -11;
+    el.style.transform = `perspective(700px) rotateX(${y}deg) rotateY(${x}deg) translateY(-4px) scale(1.01)`;
+  };
+
+  const handleMouseLeave = (e) => {
+    setHovered(false);
+    e.currentTarget.style.transform = '';
+  };
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       style={{
         position: "relative",
-        background: hovered ? `linear-gradient(135deg, ${color}08, ${color}04)` : "rgba(255,255,255,0.02)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: `1px solid ${hovered ? color + "44" : "rgba(255,255,255,0.06)"}`,
-        borderRadius: "16px",
+        background: hovered ? `linear-gradient(135deg, ${color}09, ${color}04)` : "rgba(255,255,255,0.025)",
+        backdropFilter: "blur(24px) saturate(160%)",
+        WebkitBackdropFilter: "blur(24px) saturate(160%)",
+        border: `0.5px solid ${hovered ? color + "55" : "rgba(255,255,255,0.07)"}`,
+        boxShadow: hovered ? `0 8px 32px rgba(0,0,0,0.5), 0 0 0 0.5px ${color}22, inset 0 0.5px 0 rgba(255,255,255,0.08)` : 'inset 0 0.5px 0 rgba(255,255,255,0.05)',
+        borderRadius: "18px",
         padding: "28px 24px",
         cursor: "default",
-        transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)",
-        transform: visible ? (hovered ? "translateY(-6px)" : "translateY(0)") : "translateY(40px)",
+        transition: hovered ? "background 0.3s, border-color 0.3s, box-shadow 0.3s" : "all 0.45s cubic-bezier(0.16,1,0.3,1)",
+        transform: visible ? "translateY(0)" : "translateY(40px)",
         opacity: visible ? 1 : 0,
-        transitionDelay: `${delay}ms`,
+        transitionDelay: visible ? '0ms' : `${delay}ms`,
         overflow: "hidden",
+        willChange: "transform",
       }}
     >
       <div style={{
@@ -618,6 +635,8 @@ export default function Landing() {
         @keyframes spin { to{transform:rotate(360deg)} }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @keyframes glowPulse { 0%,100%{box-shadow:0 0 20px rgba(225,6,0,0.3)} 50%{box-shadow:0 0 40px rgba(225,6,0,0.6)} }
+        @keyframes ribbonFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         @keyframes scanline { 0%{top:-2px} 100%{top:100%} }
         .next-race-countdown { flex-wrap: wrap; justify-content: center; }
@@ -912,30 +931,33 @@ export default function Landing() {
         }}>
           <button className="cta-primary" onClick={() => navigate("/replay")} style={{
             fontFamily: "'Outfit', sans-serif",
-            background: "linear-gradient(135deg, #e10600, #c00500)",
+            background: "linear-gradient(135deg, #e10600 0%, #ff2a2a 40%, #c00500 60%, #e10600 100%)",
+            backgroundSize: "250% 250%",
+            animation: "ribbonFlow 3s ease infinite, glowPulse 3s infinite",
             color: "#fff", border: "none",
             padding: "15px 36px", borderRadius: "12px",
             fontSize: "15px", fontWeight: 700,
             cursor: "pointer",
-            animation: "glowPulse 3s infinite",
             letterSpacing: "-0.01em",
+            boxShadow: "0 4px 24px rgba(225,6,0,0.4), 0 0 0 1px rgba(225,6,0,0.2)",
           }}>
             Analyze a race →
           </button>
           <button onClick={() => navigate("/drivers")} style={{
             fontFamily: "'Outfit', sans-serif",
-            background: "rgba(255,255,255,0.03)",
+            background: "rgba(255,255,255,0.04)",
             color: "rgba(255,255,255,0.7)",
-            border: "1px solid rgba(255,255,255,0.1)",
+            border: "0.5px solid rgba(255,255,255,0.1)",
             padding: "15px 36px", borderRadius: "12px",
             fontSize: "15px", fontWeight: 600,
             cursor: "pointer",
-            backdropFilter: "blur(10px)",
+            backdropFilter: "blur(12px)",
             transition: "all 0.3s",
             letterSpacing: "-0.01em",
+            boxShadow: "inset 0 0.5px 0 rgba(255,255,255,0.08)",
           }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "#fff"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.09)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.3), inset 0 0.5px 0 rgba(255,255,255,0.12)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; e.currentTarget.style.boxShadow = "inset 0 0.5px 0 rgba(255,255,255,0.08)"; }}
           >
             Driver profiles
           </button>
@@ -965,6 +987,35 @@ export default function Landing() {
           <div style={{ width: "1px", height: "24px", background: "linear-gradient(to bottom, rgba(255,255,255,0.3), transparent)" }} />
         </div>
       </section>
+
+      {/* ACTIVITY TICKER */}
+      <div style={{ position: 'relative', zIndex: 1, overflow: 'hidden', borderTop: '0.5px solid rgba(255,255,255,0.04)', borderBottom: '0.5px solid rgba(255,255,255,0.04)', background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(10px)', padding: '10px 0' }}>
+        <div style={{ display: 'flex', gap: '0', animation: 'marquee 28s linear infinite', width: 'max-content' }}>
+          {[
+            '🏆 Driver of the Day votes are live',
+            '🔥 Hot take: Verstappen is already GOAT',
+            '⚡ New prediction locked for Miami GP',
+            '🎯 Race Prediction: ANT takes the win',
+            '🏁 Leaderboard updated — who's #1?',
+            '🔮 Lock your podium prediction before race day',
+            '🔥 "Ferrari strategy cost them again" — trending take',
+            '⭐ Rate the drivers — season ratings now open',
+            '🏆 Driver of the Day votes are live',
+            '🔥 Hot take: Verstappen is already GOAT',
+            '⚡ New prediction locked for Miami GP',
+            '🎯 Race Prediction: ANT takes the win',
+            '🏁 Leaderboard updated — who's #1?',
+            '🔮 Lock your podium prediction before race day',
+            '🔥 "Ferrari strategy cost them again" — trending take',
+            '⭐ Rate the drivers — season ratings now open',
+          ].map((item, i) => (
+            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap', padding: '0 28px', fontFamily: "'Space Mono', monospace", letterSpacing: '0.3px' }}>
+              {item}
+              <span style={{ color: 'rgba(225,6,0,0.4)', fontSize: '8px' }}>◆</span>
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* NEXT RACE COUNTDOWN */}
       <section ref={nextRaceRef} style={{
@@ -1178,27 +1229,31 @@ export default function Landing() {
           <div style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
             <button className="cta-primary" onClick={() => navigate("/replay")} style={{
               fontFamily: "'Outfit', sans-serif",
-              background: "linear-gradient(135deg, #e10600, #c00500)",
+              background: "linear-gradient(135deg, #e10600 0%, #ff2a2a 40%, #c00500 60%, #e10600 100%)",
+              backgroundSize: "250% 250%",
+              animation: "ribbonFlow 3s ease infinite, glowPulse 3s infinite",
               color: "#fff", border: "none",
               padding: "16px 48px", borderRadius: "12px",
               fontSize: "16px", fontWeight: 700,
               cursor: "pointer",
-              animation: "glowPulse 3s infinite",
               letterSpacing: "-0.01em",
+              boxShadow: "0 4px 28px rgba(225,6,0,0.45), 0 0 0 1px rgba(225,6,0,0.2)",
             }}>
               Analyze a race →
             </button>
             <button onClick={() => navigate("/h2h")} style={{
               fontFamily: "'Outfit', sans-serif",
-              background: "rgba(255,255,255,0.03)",
+              background: "rgba(255,255,255,0.04)",
               color: "rgba(255,255,255,0.6)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              border: "0.5px solid rgba(255,255,255,0.1)",
               padding: "16px 48px", borderRadius: "12px",
               fontSize: "16px", fontWeight: 600,
               cursor: "pointer", transition: "all 0.3s",
+              backdropFilter: "blur(12px)",
+              boxShadow: "inset 0 0.5px 0 rgba(255,255,255,0.08)",
             }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#fff"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.09)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
             >
               Compare drivers
             </button>

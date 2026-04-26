@@ -5,6 +5,7 @@ import { ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import AuthModal from '../components/AuthModal'
+import { spawnConfetti } from '../utils/animations'
 
 const COUNTRY_FLAGS = {
   'Japan': '🇯🇵', 'Bahrain': '🇧🇭', 'Saudi Arabia': '🇸🇦', 'Australia': '🇦🇺',
@@ -59,10 +60,16 @@ function PaddockAvatar({ profile, size = 36 }) {
 }
 
 function SkeletonCard() {
+  const shimmer = {
+    background: 'linear-gradient(90deg, #111 0%, #1e1e1e 40%, #252525 50%, #1e1e1e 60%, #111 100%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmerSlide 1.5s ease-in-out infinite',
+    borderRadius: '8px',
+  }
   return (
-    <div style={{ background: '#0f0f0f', border: '0.5px solid #1a1a1a', borderRadius: '12px', padding: '18px', marginBottom: '12px', animation: 'pwPulse 1.5s ease-in-out infinite' }}>
-      <div style={{ height: '16px', background: '#1a1a1a', borderRadius: '8px', width: '60%', marginBottom: '10px' }} />
-      <div style={{ height: '12px', background: '#1a1a1a', borderRadius: '8px', width: '40%' }} />
+    <div style={{ background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.05)', borderRadius: '14px', padding: '18px', marginBottom: '10px' }}>
+      <div style={{ ...shimmer, height: '15px', width: '55%', marginBottom: '10px' }} />
+      <div style={{ ...shimmer, height: '11px', width: '38%' }} />
     </div>
   )
 }
@@ -190,11 +197,14 @@ export default function Community() {
         @keyframes pwFadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         @keyframes pwSlideIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
         @keyframes pwBarFill { from{width:0} to{width:var(--target-width)} }
-        @keyframes pwBounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+        @keyframes pwBounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
         @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes shimmerSlide { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        @keyframes popIn { 0%{opacity:0;transform:scale(0.7)} 65%{transform:scale(1.08)} 100%{opacity:1;transform:scale(1)} }
+        @keyframes ribbonFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         .tab-label { display:inline }
         @media(max-width:500px){.tab-label{display:none}}
-        .driver-card:hover { transform:translateY(-1px) !important; }
+        .driver-card:hover { transform:translateY(-2px) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important; }
       `}</style>
     </div>
   )
@@ -234,11 +244,20 @@ function DriverOfTheDay() {
   useEffect(() => { loadVotes() }, [loadVotes])
   useEffect(() => { setMyVote(null); setJustVoted(false) }, [selectedRace])
 
-  async function vote(code) {
+  async function vote(code, event) {
     if (!user || saving || myVote) return
     setSaving(true)
+    // Get click position for confetti
+    const rect = event?.currentTarget?.getBoundingClientRect()
+    const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2
+    const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 2
     const { error } = await supabase.from('votes').insert({ user_id: user.id, race_name: selectedRace, driver_code: code })
-    if (!error) { setMyVote(code); setJustVoted(true); await loadVotes() }
+    if (!error) {
+      setMyVote(code)
+      setJustVoted(true)
+      spawnConfetti(cx, cy, '#e10600')
+      await loadVotes()
+    }
     setSaving(false)
   }
 
@@ -325,7 +344,7 @@ function DriverOfTheDay() {
           const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
           const locked = !!myVote
           return (
-            <button key={d.code} className="driver-card" onClick={() => vote(d.code)}
+            <button key={d.code} className="driver-card" onClick={(e) => vote(d.code, e)}
               disabled={saving || locked}
               style={{
                 background: isVoted ? 'rgba(225,6,0,0.1)' : isLeader ? 'rgba(245,200,66,0.05)' : '#0f0f0f',
@@ -406,7 +425,11 @@ function RacePredictions() {
     const { error } = await supabase.from('predictions').insert(
       { user_id: user.id, race_name: selectedRace, p1: pick.p1, p2: pick.p2, p3: pick.p3 }
     )
-    if (!error) { setMyPreds(p => ({ ...p, [selectedRace]: { ...pick, locked: true } })); setJustLocked(true) }
+    if (!error) {
+      setMyPreds(p => ({ ...p, [selectedRace]: { ...pick, locked: true } }))
+      setJustLocked(true)
+      spawnConfetti(window.innerWidth / 2, window.innerHeight * 0.4, '#6692ff')
+    }
     setSaving(false)
   }
 
