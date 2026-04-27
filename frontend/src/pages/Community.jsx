@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { API } from '../config'
-import { ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
+import { ALL_DRIVERS_BY_YEAR, DRIVER_COLORS_BY_YEAR } from '../constants/driverData'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import AuthModal from '../components/AuthModal'
@@ -144,46 +144,57 @@ export default function Community() {
       </Helmet>
 
       {/* Header */}
-      <div style={{ position: 'relative', overflow: 'hidden', padding: '28px 20px 0', marginBottom: '0' }}>
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '300px', height: '200px', background: 'radial-gradient(circle, rgba(225,6,0,0.08), transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, #e10600, transparent)' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-          <div style={{ fontSize: '26px', fontWeight: '900', color: '#fff', letterSpacing: '-0.6px' }}>The Paddock</div>
-          <div style={{ fontSize: '11px', background: 'rgba(225,6,0,0.15)', color: '#e10600', border: '0.5px solid rgba(225,6,0,0.35)', borderRadius: '20px', padding: '3px 12px', fontWeight: '800', animation: 'pwPulse 2s ease-in-out infinite' }}>LIVE</div>
+      <div style={{ position: 'relative', overflow: 'hidden', padding: '32px 20px 24px' }}>
+        {/* Background atmosphere */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(225,6,0,0.06) 0%, transparent 60%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: 0, right: '-20px', width: '280px', height: '280px', background: 'radial-gradient(circle, rgba(225,6,0,0.1), transparent 70%)', pointerEvents: 'none' }} />
+        {/* Top accent */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #e10600 0%, #ff4040 30%, transparent 70%)' }} />
+
+        <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#e10600', boxShadow: '0 0 10px rgba(225,6,0,0.9)', animation: 'pwPulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
+            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#e10600', letterSpacing: '2px', textTransform: 'uppercase' }}>Live Community</span>
+          </div>
+          <div style={{ fontSize: '36px', fontWeight: '900', color: '#fff', letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '6px' }}>
+            The Paddock
+          </div>
+          <div style={{ fontSize: '13px', color: '#444', maxWidth: '340px' }}>Your picks, locked in forever. Your legacy, earned in real time.</div>
         </div>
-        <div style={{ fontSize: '12px', color: '#444', marginBottom: '20px' }}>Your picks, locked in. Your legacy, earned.</div>
       </div>
 
       {/* Tabs */}
-      <div style={{ padding: '0 20px', marginBottom: '20px', position: 'sticky', top: '52px', zIndex: 10, background: 'var(--bg-primary)', paddingTop: '12px', paddingBottom: '12px', borderBottom: '0.5px solid #111' }}>
-        <div style={{ display: 'flex', background: '#0a0a0a', border: '0.5px solid #1a1a1a', borderRadius: '12px', padding: '4px', gap: '2px', overflowX: 'auto' }}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
-              flex: '1 0 auto',
-              background: tab === t.id ? '#e10600' : 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              color: tab === t.id ? '#fff' : '#555',
-              padding: '9px 12px',
-              fontSize: '12px',
-              fontWeight: tab === t.id ? '800' : '500',
-              cursor: 'pointer',
-              transition: 'all .2s cubic-bezier(0.16,1,0.3,1)',
-              whiteSpace: 'nowrap',
-              boxShadow: tab === t.id ? '0 4px 16px rgba(225,6,0,0.3)' : 'none',
-              transform: tab === t.id ? 'scale(1.02)' : 'scale(1)',
-            }}
-              onMouseEnter={e => { if (tab !== t.id) e.currentTarget.style.color = '#aaa' }}
-              onMouseLeave={e => { if (tab !== t.id) e.currentTarget.style.color = '#555' }}
-            >
-              <span style={{ marginRight: '5px' }}>{t.label}</span>
-              <span className="tab-label">{t.full}</span>
-            </button>
-          ))}
+      <div style={{ padding: '0 20px 0', position: 'sticky', top: '52px', zIndex: 10, background: 'rgba(10,10,10,0.95)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '0.5px solid #1a1a1a' }}>
+        <div style={{ display: 'flex', gap: '0', overflowX: 'auto', scrollbarWidth: 'none' }}>
+          {tabs.map(t => {
+            const active = tab === t.id
+            return (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{
+                flex: '0 0 auto',
+                background: 'none',
+                border: 'none',
+                borderBottom: active ? '2px solid #e10600' : '2px solid transparent',
+                color: active ? '#fff' : '#444',
+                padding: '14px 16px 12px',
+                fontSize: '12px',
+                fontWeight: active ? '700' : '400',
+                cursor: 'pointer',
+                transition: 'all .2s',
+                whiteSpace: 'nowrap',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.color = '#888' }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.color = '#444' }}
+              >
+                <span>{t.label}</span>
+                <span className="tab-label">{t.full}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      <div style={{ padding: '0 20px 32px' }}>
+      <div style={{ padding: '20px 20px 40px' }}>
         {tab === 'dotd' && <DriverOfTheDay />}
         {tab === 'predict' && <RacePredictions />}
         {tab === 'rate' && <DriverRatings />}
@@ -215,6 +226,7 @@ function DriverOfTheDay() {
   const { user } = useAuth()
   const year = String(new Date().getFullYear())
   const drivers = ALL_DRIVERS_BY_YEAR[year] || ALL_DRIVERS_BY_YEAR['2025'] || []
+  const DRIVER_COLORS = DRIVER_COLORS_BY_YEAR[year] || DRIVER_COLORS_BY_YEAR['2025'] || {}
   const { past } = useCalendar()
   const [selectedRace, setSelectedRace] = useState(null)
   const [myVote, setMyVote] = useState(null)
@@ -335,50 +347,84 @@ function DriverOfTheDay() {
         </div>
       )}
 
-      {/* Driver grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))', gap: '8px' }}>
+      {/* Driver grid — F1 team color cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '8px' }}>
         {drivers.map((d, idx) => {
           const isVoted = myVote === d.code
           const isLeader = !myVote && leadCode === d.code && voteCounts[d.code] > 0
           const count = voteCounts[d.code] || 0
           const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
           const locked = !!myVote
+          const dClr = DRIVER_COLORS[d.code] || '#444'
           return (
             <button key={d.code} className="driver-card" onClick={(e) => vote(d.code, e)}
               disabled={saving || locked}
               style={{
-                background: isVoted ? 'rgba(225,6,0,0.1)' : isLeader ? 'rgba(245,200,66,0.05)' : '#0f0f0f',
-                border: `1.5px solid ${isVoted ? '#e10600' : isLeader ? 'rgba(245,200,66,0.4)' : '#1a1a1a'}`,
-                borderRadius: '12px', padding: '12px 14px', cursor: locked ? 'default' : 'pointer',
-                textAlign: 'left', transition: 'all .2s', color: '#fff',
+                background: isVoted
+                  ? `linear-gradient(160deg, rgba(225,6,0,0.18) 0%, #0a0a0a 100%)`
+                  : `linear-gradient(160deg, ${dClr}14 0%, #080808 100%)`,
+                border: `1px solid ${isVoted ? 'rgba(225,6,0,0.55)' : isLeader ? 'rgba(245,200,66,0.45)' : `${dClr}28`}`,
+                borderRadius: '12px', padding: '14px 12px 12px', cursor: locked ? 'default' : 'pointer',
+                textAlign: 'left', transition: 'all .18s', color: '#fff',
                 position: 'relative', overflow: 'hidden',
-                opacity: locked && !isVoted ? 0.4 : 1,
-                boxShadow: isVoted ? '0 0 20px rgba(225,6,0,0.2)' : isLeader ? '0 0 16px rgba(245,200,66,0.1)' : 'none',
-                animation: `pwFadeUp .3s ease ${idx * 0.02}s both`,
+                opacity: locked && !isVoted ? 0.3 : 1,
+                boxShadow: isVoted
+                  ? '0 0 24px rgba(225,6,0,0.28), inset 0 0.5px 0 rgba(255,255,255,0.06)'
+                  : locked ? 'none' : `0 2px 14px ${dClr}18, inset 0 0.5px 0 rgba(255,255,255,0.04)`,
+                animation: `pwFadeUp .25s ease ${idx * 0.016}s both`,
               }}>
-              {/* Vote bar background */}
-              {myVote && pct > 0 && (
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, height: '3px',
-                  width: `${pct}%`, background: isVoted ? '#e10600' : '#2a2a2a',
-                  transition: 'width 1s cubic-bezier(0.16,1,0.3,1)',
-                }} />
-              )}
+              {/* Team colour top strip */}
+              <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
+                background: isVoted ? 'linear-gradient(90deg, #e10600, #ff4040)' : `linear-gradient(90deg, ${dClr}, ${dClr}55)`,
+                boxShadow: isVoted ? '0 0 8px rgba(225,6,0,0.7)' : `0 0 6px ${dClr}55`,
+              }} />
+
+              {/* Leader / voted badge */}
               {isLeader && !myVote && count > 0 && (
-                <div style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '12px' }}>🔥</div>
+                <div style={{ position: 'absolute', top: '9px', right: '9px', fontSize: '12px', animation: 'pwFloat 2s ease-in-out infinite' }}>🔥</div>
               )}
-              <div style={{ fontSize: '13px', fontWeight: '900', color: isVoted ? '#e10600' : '#fff', letterSpacing: '-0.2px' }}>{d.code}</div>
-              <div style={{ fontSize: '11px', color: '#555', marginTop: '3px' }}>{d.name.split(' ').slice(1).join(' ')}</div>
+              {isVoted && (
+                <span style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '8px', background: 'rgba(225,6,0,0.22)', color: '#e10600', border: '0.5px solid rgba(225,6,0,0.45)', borderRadius: '8px', padding: '2px 6px', fontWeight: '900', letterSpacing: '0.5px' }}>VOTED</span>
+              )}
+
+              {/* Driver code — big, team colour */}
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: '17px', fontWeight: '700',
+                color: isVoted ? '#e10600' : dClr,
+                letterSpacing: '-0.3px',
+                marginTop: '4px',
+                textShadow: isVoted ? '0 0 16px rgba(225,6,0,0.5)' : `0 0 12px ${dClr}44`,
+              }}>{d.code}</div>
+
+              {/* Last name */}
+              <div style={{ fontSize: '10px', color: locked ? '#383838' : '#4a4a4a', marginTop: '3px', fontWeight: '500' }}>
+                {d.name.split(' ').slice(1).join(' ')}
+              </div>
+
+              {/* Vote bar + pct when voted */}
               {myVote && (
-                <div style={{ fontSize: '11px', fontWeight: '700', marginTop: '6px', color: isVoted ? '#e10600' : '#333' }}>
-                  {isVoted ? `🔒 ${pct}%` : pct > 0 ? `${pct}%` : '—'}
+                <div style={{ marginTop: '10px' }}>
+                  <div style={{ height: '2px', background: 'rgba(255,255,255,0.05)', borderRadius: '1px', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${pct}%`,
+                      background: isVoted ? '#e10600' : `${dClr}66`,
+                      transition: 'width 1s cubic-bezier(0.16,1,0.3,1)',
+                      borderRadius: '1px',
+                    }} />
+                  </div>
+                  <div style={{ fontSize: '10px', fontWeight: '800', marginTop: '5px', color: isVoted ? '#e10600' : '#2e2e2e', fontFamily: "'Space Mono', monospace" }}>
+                    {pct > 0 ? `${pct}%` : '—'}
+                  </div>
                 </div>
               )}
             </button>
           )
         })}
       </div>
-      {!myVote && <div style={{ fontSize: '11px', color: '#333', marginTop: '14px', textAlign: 'center' }}>Vote locks permanently · earns {PTS.vote} Paddock Points</div>}
+      {!myVote && <div style={{ fontSize: '11px', color: '#2a2a2a', marginTop: '14px', textAlign: 'center', letterSpacing: '0.3px' }}>Tap a driver to vote · locks permanently · +{PTS.vote} pts</div>}
     </div>
   )
 }
