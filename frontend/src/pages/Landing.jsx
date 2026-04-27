@@ -360,14 +360,20 @@ function NextRaceCard({ visible }) {
   );
 }
 
-function FeatureCard({ icon, title, desc, color, delay, visible }) {
+function FeatureCard({ icon, title, desc, color, delay, visible, large, small }) {
   const [hovered, setHovered] = useState(false);
+
+  const pad = large ? "36px 32px" : small ? "20px 18px" : "28px 24px";
+  const iconSz = large ? "38px" : small ? "22px" : "28px";
+  const titleSz = large ? "20px" : small ? "13px" : "15px";
+  const titleW = large ? 800 : 700;
+  const descSz = large ? "14px" : small ? "11px" : "13px";
 
   const handleMouseMove = (e) => {
     const el = e.currentTarget;
     const rect = el.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 11;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * -11;
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 10;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * -10;
     el.style.transform = `perspective(700px) rotateX(${y}deg) rotateY(${x}deg) translateY(-4px) scale(1.01)`;
   };
 
@@ -383,59 +389,89 @@ function FeatureCard({ icon, title, desc, color, delay, visible }) {
       onMouseLeave={handleMouseLeave}
       style={{
         position: "relative",
-        background: hovered ? `linear-gradient(135deg, ${color}09, ${color}04)` : "rgba(255,255,255,0.025)",
-        backdropFilter: "blur(24px) saturate(160%)",
-        WebkitBackdropFilter: "blur(24px) saturate(160%)",
+        background: hovered
+          ? `linear-gradient(145deg, ${color}12 0%, rgba(255,255,255,0.02) 100%)`
+          : "rgba(255,255,255,0.025)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
         border: `0.5px solid ${hovered ? color + "55" : "rgba(255,255,255,0.07)"}`,
-        boxShadow: hovered ? `0 8px 32px rgba(0,0,0,0.5), 0 0 0 0.5px ${color}22, inset 0 0.5px 0 rgba(255,255,255,0.08)` : 'inset 0 0.5px 0 rgba(255,255,255,0.05)',
+        boxShadow: hovered
+          ? `0 12px 40px rgba(0,0,0,0.6), 0 0 0 0.5px ${color}22, inset 0 0.5px 0 rgba(255,255,255,0.1)`
+          : 'inset 0 0.5px 0 rgba(255,255,255,0.05)',
         borderRadius: "18px",
-        padding: "28px 24px",
+        padding: pad,
         cursor: "default",
-        transition: hovered ? "background 0.3s, border-color 0.3s, box-shadow 0.3s" : "all 0.45s cubic-bezier(0.16,1,0.3,1)",
+        transition: hovered
+          ? "background 0.25s, border-color 0.25s, box-shadow 0.25s"
+          : "all 0.5s cubic-bezier(0.16,1,0.3,1)",
         transform: visible ? "translateY(0)" : "translateY(40px)",
         opacity: visible ? 1 : 0,
         transitionDelay: visible ? '0ms' : `${delay}ms`,
         overflow: "hidden",
         willChange: "transform",
+        height: large ? "100%" : "auto",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
+      {/* Left accent strip */}
       <div style={{
-        position: "absolute", top: "-50%", left: "-50%",
-        width: "200%", height: "200%",
-        background: `radial-gradient(circle at 50% 50%, ${color}08, transparent 70%)`,
+        position: "absolute", top: 0, left: 0, bottom: 0, width: "3px",
+        background: `linear-gradient(180deg, ${color} 0%, ${color}44 60%, transparent 100%)`,
+        borderRadius: "18px 0 0 18px",
+        opacity: hovered ? 1 : 0.45,
+        transition: "opacity 0.3s",
+      }} />
+
+      {/* Radial glow on hover */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: `radial-gradient(ellipse at 20% 50%, ${color}10, transparent 70%)`,
         opacity: hovered ? 1 : 0,
         transition: "opacity 0.4s",
         pointerEvents: "none",
       }} />
+
       <div style={{
-        position: "absolute", top: 0, left: "10%", right: "10%", height: "1px",
-        background: `linear-gradient(90deg, transparent, ${color}${hovered ? "66" : "22"}, transparent)`,
-        transition: "all 0.4s",
-      }} />
-      <div style={{
-        fontSize: "28px", marginBottom: "14px",
-        filter: hovered ? `drop-shadow(0 0 8px ${color}66)` : "none",
+        fontSize: iconSz, marginBottom: large ? "20px" : "12px",
+        filter: hovered ? `drop-shadow(0 0 10px ${color}88)` : "none",
         transition: "filter 0.3s",
+        lineHeight: 1,
       }}>{icon}</div>
+
       <div style={{
-        fontFamily: "'Outfit', sans-serif",
-        fontSize: "15px", fontWeight: 700, marginBottom: "8px",
+        fontSize: titleSz, fontWeight: titleW, marginBottom: small ? "4px" : "8px",
         color: hovered ? color : "#fff",
-        transition: "color 0.3s",
-        letterSpacing: "-0.01em",
+        transition: "color 0.25s",
+        letterSpacing: large ? "-0.03em" : "-0.01em",
+        lineHeight: 1.2,
       }}>{title}</div>
-      <div style={{
-        fontFamily: "'Outfit', sans-serif",
-        fontSize: "13px", color: "rgba(255,255,255,0.4)",
-        lineHeight: 1.7,
-      }}>{desc}</div>
-      <div style={{
-        position: "absolute", bottom: "12px", right: "12px",
-        width: "20px", height: "20px",
-        borderRight: `1.5px solid ${color}${hovered ? "44" : "11"}`,
-        borderBottom: `1.5px solid ${color}${hovered ? "44" : "11"}`,
-        transition: "all 0.3s",
-      }} />
+
+      {!small && (
+        <div style={{
+          fontSize: descSz,
+          color: "rgba(255,255,255,0.35)",
+          lineHeight: 1.75,
+          flex: 1,
+        }}>{desc}</div>
+      )}
+
+      {small && (
+        <div style={{ fontSize: "10px", color: color + "88", fontWeight: 600, marginTop: "2px" }}>
+          Explore →
+        </div>
+      )}
+
+      {/* Corner bracket decoration */}
+      {!small && (
+        <div style={{
+          position: "absolute", bottom: "14px", right: "14px",
+          width: large ? "24px" : "18px", height: large ? "24px" : "18px",
+          borderRight: `1.5px solid ${color}${hovered ? "55" : "18"}`,
+          borderBottom: `1.5px solid ${color}${hovered ? "55" : "18"}`,
+          transition: "border-color 0.3s",
+        }} />
+      )}
     </div>
   );
 }
@@ -1170,11 +1206,27 @@ export default function Landing() {
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "32px", fontWeight: 800, letterSpacing: "-0.02em" }}>Every tool you need</div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: "12px" }}>
-          {features.map((f, i) => (
-            <FeatureCard key={i} {...f} delay={i * 80} visible={featVisible} />
-          ))}
-        </div>
+        {isMobile ? (
+          <div style={{ display: "grid", gap: "10px" }}>
+            {features.map((f, i) => (
+              <FeatureCard key={i} {...f} delay={i * 60} visible={featVisible} />
+            ))}
+          </div>
+        ) : (
+          <div style={{ display: "grid", gap: "10px" }}>
+            {/* Top row — 2 large hero cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: "10px", alignItems: "stretch" }}>
+              <FeatureCard {...features[0]} delay={0} visible={featVisible} large />
+              <FeatureCard {...features[1]} delay={80} visible={featVisible} large />
+            </div>
+            {/* Bottom row — 4 small cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px" }}>
+              {features.slice(2).map((f, i) => (
+                <FeatureCard key={i + 2} {...f} delay={(i + 2) * 60} visible={featVisible} small />
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* STATS */}

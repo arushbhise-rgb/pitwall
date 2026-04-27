@@ -230,88 +230,105 @@ export default function Profile() {
       `}</style>
 
       {/* Hero card */}
-      <div style={{ ...card, padding: '24px', position: 'relative', overflow: 'hidden', marginBottom: '20px' }}>
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '250px', height: '250px', background: `radial-gradient(circle, ${color}15, transparent 70%)`, pointerEvents: 'none' }} />
+      <div style={{ position: 'relative', overflow: 'hidden', marginBottom: '16px', borderRadius: '16px', background: 'var(--bg-card)', border: '0.5px solid var(--border-subtle)' }}>
+        {/* Team color gradient header banner */}
+        <div style={{
+          height: '80px',
+          background: `linear-gradient(135deg, ${color}40 0%, ${color}18 50%, transparent 100%)`,
+          borderBottom: `0.5px solid ${color}25`,
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          {/* Racing stripes */}
+          <div style={{ position: 'absolute', inset: 0, background: `repeating-linear-gradient(135deg, transparent, transparent 20px, ${color}06 20px, ${color}06 21px)` }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, ${color} 0%, ${color}55 40%, transparent 100%)` }} />
+          {/* Corner decoration */}
+          <div style={{ position: 'absolute', top: '12px', right: '16px', fontFamily: "'Space Mono', monospace", fontSize: '9px', color: `${color}66`, letterSpacing: '2px', textTransform: 'uppercase' }}>F1 Fan Profile</div>
+        </div>
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '18px', flexWrap: 'wrap' }}>
-          <Avatar profile={profile} size={72} />
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <div style={{ fontSize: '22px', fontWeight: '900', color: '#fff', letterSpacing: '-0.4px' }}>
-                {profile?.username || 'Set a username'}
+        <div style={{ padding: '0 22px 22px' }}>
+          {/* Avatar overlapping the banner */}
+          <div style={{ marginTop: '-36px', marginBottom: '14px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <Avatar profile={profile} size={72} />
+            {/* Points chip */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: `${rank.color}15`, border: `0.5px solid ${rank.color}44`, borderRadius: '20px', padding: '6px 14px' }}>
+              <span style={{ fontSize: '14px' }}>{rank.icon}</span>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: '800', color: rank.color }}>{rank.label}</div>
+                <div style={{ fontSize: '9px', color: '#444', marginTop: '1px', fontFamily: "'Space Mono', monospace" }}>{animPts} pts</div>
               </div>
-              {/* Rank badge */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: `${rank.color}18`, border: `0.5px solid ${rank.color}55`, borderRadius: '20px', padding: '3px 10px' }}>
-                <span style={{ fontSize: '12px' }}>{rank.icon}</span>
-                <span style={{ fontSize: '10px', fontWeight: '700', color: rank.color }}>{rank.label}</span>
-              </div>
-              {/* Creator badge */}
-              {isCreator && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'linear-gradient(135deg, rgba(225,6,0,0.18), rgba(245,200,66,0.1))', border: '0.5px solid rgba(245,200,66,0.55)', borderRadius: '20px', padding: '3px 12px', boxShadow: '0 0 14px rgba(245,200,66,0.2), inset 0 0.5px 0 rgba(245,200,66,0.15)' }}>
-                  <span style={{ fontSize: '11px' }}>🛠️</span>
-                  <span style={{ fontSize: '10px', fontWeight: '800', background: 'linear-gradient(90deg, #e10600, #f5c842, #e10600)', backgroundSize: '200% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'ribbonFlow 2.5s ease infinite' }}>Creator</span>
-                </div>
-              )}
             </div>
-            <div style={{ fontSize: '12px', color: '#444', marginTop: '2px' }}>{user?.email}</div>
+          </div>
 
-            {/* Identity tags */}
-            <div style={{ display: 'flex', gap: '6px', marginTop: '10px', flexWrap: 'wrap' }}>
-              {profile?.fav_team && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: `${color}15`, border: `0.5px solid ${color}44`, borderRadius: '20px', padding: '3px 10px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
-                  <span style={{ fontSize: '11px', color: color, fontWeight: '700' }}>{profile.fav_team}</span>
-                </div>
-              )}
-              {profile?.fav_driver && (
-                <div style={{ background: '#1a1a1a', border: '0.5px solid #2a2a2a', borderRadius: '20px', padding: '3px 10px' }}>
-                  <span style={{ fontSize: '11px', color: '#aaa', fontWeight: '600' }}>#{profile.fav_driver}</span>
-                </div>
-              )}
-              {circuit && (
-                <div style={{ background: '#1a1a1a', border: '0.5px solid #2a2a2a', borderRadius: '20px', padding: '3px 10px' }}>
-                  <span style={{ fontSize: '11px', color: '#aaa' }}>{circuit.flag} {circuit.id}</span>
-                </div>
-              )}
-              {profile?.fan_since && (
-                <div style={{ background: '#1a1a1a', border: '0.5px solid #2a2a2a', borderRadius: '20px', padding: '3px 10px' }}>
-                  <span style={{ fontSize: '11px', color: '#555' }}>Fan since {profile.fan_since}</span>
-                </div>
-              )}
+          {/* Name + badges */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+            <div style={{ fontSize: '24px', fontWeight: '900', color: '#fff', letterSpacing: '-0.5px' }}>
+              {profile?.username || 'Set a username'}
             </div>
-
-            {/* Activity achievement tags */}
-            {!dataLoading && activityTags.length > 0 && (
-              <div style={{ display: 'flex', gap: '5px', marginTop: '7px', flexWrap: 'wrap' }}>
-                {activityTags.map((tag, idx) => (
-                  <div key={tag.label} title={tag.label} style={{
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                    background: `${tag.color}12`, border: `0.5px solid ${tag.color}44`,
-                    borderRadius: '20px', padding: '2px 9px',
-                    opacity: 0,
-                    animation: `popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards`,
-                    animationDelay: `${idx * 0.07 + 0.1}s`,
-                  }}>
-                    <span style={{ fontSize: '10px' }}>{tag.icon}</span>
-                    <span style={{ fontSize: '10px', fontWeight: '700', color: tag.color }}>{tag.label}</span>
-                  </div>
-                ))}
+            {/* Creator badge */}
+            {isCreator && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'linear-gradient(135deg, rgba(225,6,0,0.18), rgba(245,200,66,0.1))', border: '0.5px solid rgba(245,200,66,0.55)', borderRadius: '20px', padding: '3px 12px', boxShadow: '0 0 14px rgba(245,200,66,0.2)' }}>
+                <span style={{ fontSize: '11px' }}>🛠️</span>
+                <span style={{ fontSize: '10px', fontWeight: '800', background: 'linear-gradient(90deg, #e10600, #f5c842, #e10600)', backgroundSize: '200% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'ribbonFlow 2.5s ease infinite' }}>Creator</span>
               </div>
             )}
           </div>
-        </div>
+          <div style={{ fontSize: '11px', color: '#3a3a3a', marginBottom: '12px' }}>{user?.email}</div>
 
-        {/* Fan identity banner */}
-        {fanId && (
-          <div style={{ marginTop: '16px', padding: '12px 16px', background: `${color}0d`, border: `0.5px solid ${color}30`, borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ fontSize: '24px', flexShrink: 0 }}>{fanId.emoji}</div>
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: color }}>{fanId.label}</div>
-              <div style={{ fontSize: '11px', color: '#555', marginTop: '2px' }}>{fanId.desc}</div>
-            </div>
+          {/* Identity tags */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+            {profile?.fav_team && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: `${color}18`, border: `0.5px solid ${color}44`, borderRadius: '20px', padding: '4px 12px' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
+                <span style={{ fontSize: '11px', color: color, fontWeight: '700' }}>{profile.fav_team}</span>
+              </div>
+            )}
+            {profile?.fav_driver && (
+              <div style={{ background: '#1a1a1a', border: '0.5px solid #2a2a2a', borderRadius: '20px', padding: '4px 12px' }}>
+                <span style={{ fontSize: '11px', color: '#aaa', fontWeight: '600', fontFamily: "'Space Mono', monospace" }}>#{profile.fav_driver}</span>
+              </div>
+            )}
+            {circuit && (
+              <div style={{ background: '#1a1a1a', border: '0.5px solid #2a2a2a', borderRadius: '20px', padding: '4px 12px' }}>
+                <span style={{ fontSize: '11px', color: '#888' }}>{circuit.flag} {circuit.id}</span>
+              </div>
+            )}
+            {profile?.fan_since && (
+              <div style={{ background: '#1a1a1a', border: '0.5px solid #2a2a2a', borderRadius: '20px', padding: '4px 12px' }}>
+                <span style={{ fontSize: '11px', color: '#555' }}>Since {profile.fan_since}</span>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Activity achievement tags */}
+          {!dataLoading && activityTags.length > 0 && (
+            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '12px' }}>
+              {activityTags.map((tag, idx) => (
+                <div key={tag.label} title={tag.label} style={{
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                  background: `${tag.color}12`, border: `0.5px solid ${tag.color}44`,
+                  borderRadius: '20px', padding: '3px 9px',
+                  opacity: 0,
+                  animation: `popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards`,
+                  animationDelay: `${idx * 0.07 + 0.1}s`,
+                }}>
+                  <span style={{ fontSize: '10px' }}>{tag.icon}</span>
+                  <span style={{ fontSize: '10px', fontWeight: '700', color: tag.color }}>{tag.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Fan identity banner */}
+          {fanId && (
+            <div style={{ padding: '10px 14px', background: `${color}0d`, border: `0.5px solid ${color}25`, borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <div style={{ fontSize: '20px', flexShrink: 0 }}>{fanId.emoji}</div>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: '700', color: color }}>{fanId.label}</div>
+                <div style={{ fontSize: '11px', color: '#444', marginTop: '1px' }}>{fanId.desc}</div>
+              </div>
+            </div>
+          )}
 
         {/* Stats row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '8px', marginTop: '20px', paddingTop: '18px', borderTop: '0.5px solid #1a1a1a' }}>
@@ -334,7 +351,7 @@ export default function Profile() {
 
         {/* Rank progress */}
         {rank.next !== null && (
-          <div style={{ marginTop: '14px' }}>
+          <div style={{ marginTop: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#444', marginBottom: '6px' }}>
               <span>{rank.icon} {rank.label}</span>
               <span>{Math.max(0, rank.next - totalPoints)} pts to {rank.nextLabel}</span>
@@ -350,13 +367,13 @@ export default function Profile() {
                 boxShadow: `0 0 8px ${rank.color}66`,
                 position: 'relative',
               }}>
-                {/* Glowing cursor at bar end */}
                 <div style={{ position: 'absolute', right: '-3px', top: '50%', transform: 'translateY(-50%)', width: '8px', height: '8px', borderRadius: '50%', background: rank.color, boxShadow: `0 0 8px ${rank.color}, 0 0 16px ${rank.color}88`, opacity: barWidth > 2 ? 1 : 0, transition: 'opacity 0.5s 0.8s' }} />
               </div>
             </div>
           </div>
         )}
-      </div>
+        </div>{/* closes padding div */}
+      </div>{/* closes outer hero card */}
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '6px', marginBottom: '18px' }}>
