@@ -74,10 +74,12 @@ function SkeletonCard() {
   )
 }
 
-function PaddockNewsTicker() {
+function F1NewsPanel() {
   const [news, setNews] = useState([])
-  const [expanded, setExpanded] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const [collapsed, setCollapsed] = useState(false)
+  const PAGE_SIZE = 4
 
   useEffect(() => {
     fetch(`${API}/news/f1`)
@@ -92,48 +94,135 @@ function PaddockNewsTicker() {
     catch { return '' }
   }
 
+  const totalPages = Math.max(1, Math.ceil(news.length / PAGE_SIZE))
+  const pageItems = news.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
+  const featured = pageItems[0]
+  const rest = pageItems.slice(1)
+
+  const shimmer = {
+    background: 'linear-gradient(90deg,#111 0%,#1e1e1e 40%,#252525 50%,#1e1e1e 60%,#111 100%)',
+    backgroundSize: '200% 100%',
+    animation: 'pwShimmer 1.4s ease-in-out infinite',
+  }
+
   if (!loading && news.length === 0) return null
 
   return (
-    <div style={{ borderBottom: '0.5px solid #1a1a1a' }}>
-      {/* Collapsed ticker bar */}
-      <button onClick={() => setExpanded(e => !e)} style={{
-        width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-        padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left',
-      }}>
-        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '2px', textTransform: 'uppercase', color: '#e10600', flexShrink: 0 }}>F1 News</span>
-        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-          {loading ? (
-            <div style={{ height: '10px', width: '60%', background: 'linear-gradient(90deg,#111,#1e1e1e,#111)', backgroundSize: '200% 100%', animation: 'pwShimmer 1.4s infinite', borderRadius: '4px' }} />
-          ) : news[0] ? (
-            <span style={{ fontSize: '11px', color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{news[0].title}</span>
-          ) : null}
-        </div>
-        <span style={{ fontSize: '9px', color: '#333', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>▼</span>
-      </button>
+    <div style={{ borderBottom: '0.5px solid #1a1a1a', background: 'rgba(255,255,255,0.02)' }}>
+      <style>{`
+        @keyframes pwShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes pwNewsIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+      `}</style>
 
-      {/* Expanded cards */}
-      {expanded && (
-        <div style={{ padding: '0 20px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
-          <style>{`@keyframes pwShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}} @keyframes pwNewsIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}`}</style>
-          {loading ? [1,2,3].map(i => (
-            <div key={i} style={{ height: '80px', borderRadius: '10px', background: 'linear-gradient(90deg,#111,#1a1a1a,#111)', backgroundSize: '200% 100%', animation: 'pwShimmer 1.4s infinite' }} />
-          )) : news.slice(0, 6).map((item, i) => (
-            <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', animation: 'pwNewsIn .3s ease forwards', animationDelay: `${i * 0.05}s`, opacity: 0 }}>
-              <div style={{
-                background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.06)',
-                borderRadius: '10px', padding: '12px', cursor: 'pointer', transition: 'all .15s',
-              }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(225,6,0,0.2)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
-              >
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#ccc', lineHeight: 1.35, marginBottom: '6px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {item.title}
-                </div>
-                <div style={{ fontSize: '9px', color: '#333', fontFamily: "'Space Mono', monospace" }}>{formatDate(item.pubDate)}</div>
+      {/* Header bar */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10px 20px', borderBottom: collapsed ? 'none' : '0.5px solid rgba(255,255,255,0.04)',
+        background: 'rgba(0,0,0,0.3)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#e10600', boxShadow: '0 0 8px rgba(225,6,0,0.8)' }} />
+          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', color: '#e10600', fontWeight: '700' }}>F1 News</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {!collapsed && (
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{
+                width: '24px', height: '24px', background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.1)',
+                borderRadius: '5px', color: page === 0 ? '#333' : '#888', fontSize: '11px', cursor: page === 0 ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
+              }}>←</button>
+              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{
+                width: '24px', height: '24px', background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.1)',
+                borderRadius: '5px', color: page >= totalPages - 1 ? '#333' : '#888', fontSize: '11px', cursor: page >= totalPages - 1 ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
+              }}>→</button>
+            </div>
+          )}
+          <button onClick={() => setCollapsed(c => !c)} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: '10px', color: '#444', fontFamily: "'Space Mono', monospace",
+            letterSpacing: '1px', padding: '4px 8px', borderRadius: '4px',
+            transition: 'color .15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.color = '#888'}
+            onMouseLeave={e => e.currentTarget.style.color = '#444'}
+          >{collapsed ? '▼ F1 News' : '▲ Hide'}</button>
+        </div>
+      </div>
+
+      {/* Panel body */}
+      {!collapsed && (
+        <div style={{ padding: '16px 20px' }}>
+          {loading ? (
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ ...shimmer, height: '160px', borderRadius: '12px', flex: '1 1 280px', minWidth: '220px' }} />
+              <div style={{ display: 'flex', gap: '10px', flex: '2 1 400px', overflowX: 'auto' }}>
+                {[1,2,3].map(i => (
+                  <div key={i} style={{ ...shimmer, height: '160px', borderRadius: '10px', minWidth: '160px', flex: '1 1 160px' }} />
+                ))}
               </div>
-            </a>
-          ))}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              {/* Featured article */}
+              {featured && (
+                <a href={featured.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', flex: '1 1 260px', minWidth: '220px', maxWidth: '340px', animation: 'pwNewsIn .3s ease forwards' }}>
+                  <div style={{
+                    background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.07)',
+                    borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', transition: 'all .2s', height: '100%',
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(225,6,0,0.4)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+                  >
+                    {featured.thumbnail && (
+                      <div style={{ height: '160px', overflow: 'hidden', background: '#111' }}>
+                        <img src={featured.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }}
+                          onError={e => { e.target.parentElement.style.display = 'none' }} />
+                      </div>
+                    )}
+                    <div style={{ padding: '14px' }}>
+                      <div style={{ fontSize: '16px', fontWeight: '700', color: '#eee', lineHeight: 1.35, marginBottom: '8px', fontFamily: "'Outfit', sans-serif", display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {featured.title}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '10px', color: '#444', fontFamily: "'Space Mono', monospace" }}>{formatDate(featured.pubDate)}</span>
+                        <span style={{ fontSize: '11px', color: '#e10600', fontWeight: '700' }}>Read →</span>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              )}
+
+              {/* Smaller article cards */}
+              <div style={{ flex: '2 1 380px', display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+                {rest.map((item, i) => (
+                  <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', flex: '0 0 170px', animation: `pwNewsIn .3s ease ${(i + 1) * 0.07}s forwards`, opacity: 0 }}>
+                    <div style={{
+                      background: 'rgba(255,255,255,0.025)', border: '0.5px solid rgba(255,255,255,0.06)',
+                      borderRadius: '10px', overflow: 'hidden', cursor: 'pointer', transition: 'all .2s', height: '100%',
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(225,6,0,0.35)'; e.currentTarget.style.background = 'rgba(255,255,255,0.045)' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.background = 'rgba(255,255,255,0.025)' }}
+                    >
+                      {item.thumbnail && (
+                        <div style={{ height: '90px', overflow: 'hidden', background: '#111' }}>
+                          <img src={item.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
+                            onError={e => { e.target.parentElement.style.display = 'none' }} />
+                        </div>
+                      )}
+                      <div style={{ padding: '10px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#ccc', lineHeight: 1.35, marginBottom: '6px', fontFamily: "'Outfit', sans-serif", display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {item.title}
+                        </div>
+                        <div style={{ fontSize: '9px', color: '#333', fontFamily: "'Space Mono', monospace" }}>{formatDate(item.pubDate)}</div>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -150,6 +239,7 @@ export default function Community() {
     { id: 'predict', label: '🔮', full: 'Predictions' },
     { id: 'rate', label: '⭐', full: 'Driver Ratings' },
     { id: 'hottakes', label: '🔥', full: 'Hot Takes' },
+    { id: 'discuss', label: '💬', full: 'Discuss' },
     { id: 'leaderboard', label: '🥇', full: 'Leaderboard' },
   ]
 
@@ -229,8 +319,8 @@ export default function Community() {
         </div>
       </div>
 
-      {/* News ticker strip */}
-      <PaddockNewsTicker />
+      {/* News panel */}
+      <F1NewsPanel />
 
       {/* Tabs */}
       <div style={{ padding: '0 20px 0', position: 'sticky', top: '52px', zIndex: 10, background: 'rgba(10,10,10,0.95)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '0.5px solid #1a1a1a' }}>
@@ -268,7 +358,11 @@ export default function Community() {
         {tab === 'predict' && <RacePredictions />}
         {tab === 'rate' && <DriverRatings />}
         {tab === 'hottakes' && <HotTakes />}
+        {tab === 'discuss' && <Discussions />}
         {tab === 'leaderboard' && <Leaderboard />}
+
+        {/* What If Machine teaser — always visible */}
+        <WhatIfTeaser />
       </div>
 
       <style>{`
@@ -282,10 +376,361 @@ export default function Community() {
         @keyframes shimmerSlide { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
         @keyframes popIn { 0%{opacity:0;transform:scale(0.7)} 65%{transform:scale(1.08)} 100%{opacity:1;transform:scale(1)} }
         @keyframes ribbonFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes borderGlow { 0%,100%{border-color:rgba(225,6,0,0.25)} 50%{border-color:rgba(225,6,0,0.7)} }
         .tab-label { display:inline }
         @media(max-width:500px){.tab-label{display:none}}
         .driver-card:hover { transform:translateY(-2px) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important; }
+        .pw-discuss-form { animation: pwFadeUp .25s ease; }
       `}</style>
+    </div>
+  )
+}
+
+// ── Discussions ──────────────────────────────────────────────────────────────
+function Discussions() {
+  const { user, profile } = useAuth()
+  const [discussions, setDiscussions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
+  const [posting, setPosting] = useState(false)
+  const [myUpvotes, setMyUpvotes] = useState({}) // discussion_id -> true
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const PAGE = 10
+
+  const relTime = (str) => {
+    if (!str) return ''
+    const diff = Date.now() - new Date(str).getTime()
+    const m = Math.floor(diff / 60000)
+    if (m < 60) return `${m}m ago`
+    const h = Math.floor(m / 60)
+    if (h < 24) return `${h}h ago`
+    const d = Math.floor(h / 24)
+    return `${d}d ago`
+  }
+
+  async function loadDiscussions(reset = false) {
+    const start = reset ? 0 : offset
+    const { data } = await supabase
+      .from('discussions')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(start, start + PAGE - 1)
+    if (!data) return
+    setDiscussions(prev => reset ? data : [...prev, ...data])
+    setOffset(start + data.length)
+    setHasMore(data.length === PAGE)
+  }
+
+  async function loadMyUpvotes() {
+    if (!user) return
+    const { data } = await supabase
+      .from('discussion_upvotes')
+      .select('discussion_id')
+      .eq('user_id', user.id)
+    if (data) {
+      const map = {}
+      data.forEach(d => { map[d.discussion_id] = true })
+      setMyUpvotes(map)
+    }
+  }
+
+  useEffect(() => {
+    async function init() {
+      setLoading(true)
+      await loadDiscussions(true)
+      await loadMyUpvotes()
+      setLoading(false)
+    }
+    init()
+  }, [user])
+
+  async function submit() {
+    if (!user || !title.trim() || posting) return
+    setPosting(true)
+    const { data, error } = await supabase.from('discussions').insert({
+      user_id: user.id,
+      username: profile?.username || user.email?.split('@')[0] || 'Anonymous',
+      avatar: profile?.avatar || null,
+      title: title.trim().slice(0, 80),
+      body: body.trim().slice(0, 500),
+      upvotes: 0,
+    }).select().single()
+    if (!error && data) {
+      setDiscussions(prev => [data, ...prev])
+      spawnConfetti(window.innerWidth / 2, window.innerHeight * 0.4, '#e10600')
+      setTitle('')
+      setBody('')
+      setShowForm(false)
+    }
+    setPosting(false)
+  }
+
+  async function toggleUpvote(discussion) {
+    if (!user) return
+    const alreadyUpvoted = myUpvotes[discussion.id]
+    // Optimistic UI
+    setMyUpvotes(m => {
+      const next = { ...m }
+      if (alreadyUpvoted) delete next[discussion.id]
+      else next[discussion.id] = true
+      return next
+    })
+    setDiscussions(prev => prev.map(d =>
+      d.id === discussion.id ? { ...d, upvotes: d.upvotes + (alreadyUpvoted ? -1 : 1) } : d
+    ))
+    if (alreadyUpvoted) {
+      await supabase.from('discussion_upvotes').delete()
+        .eq('discussion_id', discussion.id).eq('user_id', user.id)
+      await supabase.from('discussions').update({ upvotes: Math.max(0, discussion.upvotes - 1) })
+        .eq('id', discussion.id)
+    } else {
+      await supabase.from('discussion_upvotes').insert({ discussion_id: discussion.id, user_id: user.id })
+      await supabase.from('discussions').update({ upvotes: discussion.upvotes + 1 })
+        .eq('id', discussion.id)
+    }
+  }
+
+  async function loadMore() {
+    setLoadingMore(true)
+    await loadDiscussions(false)
+    setLoadingMore(false)
+  }
+
+  return (
+    <div style={{ animation: 'pwFadeUp .3s ease' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div>
+          <div style={{ fontSize: '16px', fontWeight: '800', color: '#fff' }}>Community Discussions</div>
+          <div style={{ fontSize: '12px', color: '#444', marginTop: '2px' }}>Share thoughts, ask questions, spark debate</div>
+        </div>
+        {user && (
+          <button onClick={() => setShowForm(s => !s)} style={{
+            background: showForm ? 'rgba(225,6,0,0.15)' : 'linear-gradient(135deg,#e10600,#c00500)',
+            border: showForm ? '1px solid rgba(225,6,0,0.4)' : 'none',
+            color: '#fff', borderRadius: '10px', padding: '9px 18px',
+            fontSize: '13px', fontWeight: '800', cursor: 'pointer', transition: 'all .2s',
+          }}>
+            {showForm ? '✕ Cancel' : '+ New Discussion'}
+          </button>
+        )}
+      </div>
+
+      {/* Inline new discussion form */}
+      {showForm && user && (
+        <div className="pw-discuss-form" style={{ background: '#0a0a0a', border: '0.5px solid rgba(225,6,0,0.2)', borderRadius: '14px', padding: '18px', marginBottom: '16px' }}>
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '11px', color: '#555', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.5px' }}>Title <span style={{ color: '#333' }}>(max 80)</span></div>
+            <input
+              value={title}
+              onChange={e => setTitle(e.target.value.slice(0, 80))}
+              placeholder="What's on your mind?"
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                background: '#111', border: '1.5px solid #222', borderRadius: '8px',
+                color: '#fff', padding: '10px 14px', fontSize: '14px', fontWeight: '600',
+                outline: 'none', fontFamily: "'Outfit', sans-serif", transition: 'border-color .15s',
+              }}
+              onFocus={e => e.target.style.borderColor = '#e10600'}
+              onBlur={e => e.target.style.borderColor = '#222'}
+            />
+            <div style={{ fontSize: '10px', color: '#2a2a2a', marginTop: '4px', textAlign: 'right' }}>{title.length}/80</div>
+          </div>
+          <div style={{ marginBottom: '14px' }}>
+            <div style={{ fontSize: '11px', color: '#555', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.5px' }}>Body <span style={{ color: '#333' }}>(optional, max 500)</span></div>
+            <textarea
+              value={body}
+              onChange={e => setBody(e.target.value.slice(0, 500))}
+              placeholder="Add more context..."
+              rows={4}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                background: '#111', border: '1.5px solid #222', borderRadius: '8px',
+                color: '#fff', padding: '10px 14px', fontSize: '13px',
+                outline: 'none', resize: 'none', fontFamily: "'Outfit', sans-serif", lineHeight: 1.5,
+                transition: 'border-color .15s',
+              }}
+              onFocus={e => e.target.style.borderColor = '#e10600'}
+              onBlur={e => e.target.style.borderColor = '#222'}
+            />
+            <div style={{ fontSize: '10px', color: '#2a2a2a', marginTop: '4px', textAlign: 'right' }}>{body.length}/500</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: '11px', color: '#333' }}>Posting as <span style={{ color: '#888' }}>{profile?.username || 'you'}</span></div>
+            <button onClick={submit} disabled={!title.trim() || posting} style={{
+              background: !title.trim() ? '#111' : 'linear-gradient(135deg,#e10600,#c00500)',
+              color: !title.trim() ? '#333' : '#fff', border: 'none', borderRadius: '8px',
+              padding: '10px 22px', fontSize: '14px', fontWeight: '800',
+              cursor: title.trim() ? 'pointer' : 'not-allowed', transition: 'all .2s',
+              boxShadow: title.trim() ? '0 4px 16px rgba(225,6,0,0.3)' : 'none',
+            }}>
+              {posting ? 'Posting…' : '💬 Post Discussion'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Not logged in CTA */}
+      {!user && (
+        <div style={{ background: '#0a0a0a', border: '0.5px solid #1a1a1a', borderRadius: '14px', padding: '28px', textAlign: 'center', marginBottom: '16px' }}>
+          <div style={{ fontSize: '32px', marginBottom: '10px' }}>💬</div>
+          <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff', marginBottom: '6px' }}>Join the Paddock to start a discussion</div>
+          <div style={{ fontSize: '12px', color: '#444' }}>Sign in to post and upvote discussions</div>
+        </div>
+      )}
+
+      {/* Feed */}
+      {loading ? (
+        <><SkeletonCard /><SkeletonCard /><SkeletonCard /></>
+      ) : discussions.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '56px 20px', background: '#0a0a0a', border: '0.5px solid #1a1a1a', borderRadius: '14px' }}>
+          <div style={{ fontSize: '40px', marginBottom: '12px', animation: 'pwFloat 3s ease-in-out infinite' }}>💬</div>
+          <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff', marginBottom: '6px' }}>No discussions yet</div>
+          <div style={{ fontSize: '12px', color: '#444' }}>Be the first to start a conversation</div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {discussions.map((d, idx) => {
+            const upvoted = myUpvotes[d.id]
+            const avatarDisplay = d.avatar || (d.username ? d.username[0].toUpperCase() : '?')
+            return (
+              <div key={d.id} style={{
+                background: '#0a0a0a', border: '0.5px solid #1a1a1a',
+                borderRadius: '14px', padding: '16px', transition: 'border-color .2s',
+                animation: `pwFadeUp .3s ease ${Math.min(idx * 0.03, 0.3)}s both`,
+                position: 'relative', overflow: 'hidden',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)' }}
+              >
+                {/* top accent */}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, rgba(225,6,0,0.5), transparent)' }} />
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  {/* Avatar */}
+                  <div style={{
+                    width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+                    background: 'linear-gradient(135deg, #e10600, #c00500)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: d.avatar ? '18px' : '14px', fontWeight: '900', color: '#fff',
+                  }}>
+                    {avatarDisplay}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Meta row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '800', color: '#fff' }}>{d.username || 'Anonymous'}</span>
+                      <span style={{ fontSize: '10px', color: '#333', fontFamily: "'Space Mono', monospace", marginLeft: 'auto' }}>{relTime(d.created_at)}</span>
+                    </div>
+
+                    {/* Title */}
+                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#eee', marginBottom: d.body ? '6px' : '10px', fontFamily: "'Outfit', sans-serif", lineHeight: 1.3 }}>
+                      {d.title}
+                    </div>
+
+                    {/* Body preview */}
+                    {d.body && (
+                      <div style={{
+                        fontSize: '13px', color: '#666', lineHeight: 1.55, marginBottom: '10px',
+                        fontFamily: "'Outfit', sans-serif",
+                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      }}>
+                        {d.body}
+                      </div>
+                    )}
+
+                    {/* Upvote */}
+                    <button onClick={() => toggleUpvote(d)} style={{
+                      display: 'flex', alignItems: 'center', gap: '5px',
+                      background: upvoted ? 'rgba(225,6,0,0.12)' : '#111',
+                      border: `1px solid ${upvoted ? 'rgba(225,6,0,0.4)' : '#1a1a1a'}`,
+                      borderRadius: '20px', padding: '5px 14px', cursor: user ? 'pointer' : 'default',
+                      fontSize: '12px', fontWeight: '800',
+                      color: upvoted ? '#e10600' : '#444',
+                      transition: 'all .15s',
+                      transform: upvoted ? 'scale(1.05)' : 'scale(1)',
+                    }}>
+                      <span>{upvoted ? '♥' : '♡'}</span>
+                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '11px' }}>{d.upvotes || 0}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Load more */}
+      {hasMore && !loading && (
+        <button onClick={loadMore} disabled={loadingMore} style={{
+          display: 'block', margin: '16px auto 0', background: '#111', border: '0.5px solid #222',
+          color: loadingMore ? '#333' : '#666', borderRadius: '10px', padding: '10px 28px',
+          fontSize: '13px', fontWeight: '600', cursor: loadingMore ? 'default' : 'pointer', transition: 'all .2s',
+        }}
+          onMouseEnter={e => { if (!loadingMore) e.currentTarget.style.borderColor = '#333'; e.currentTarget.style.color = '#aaa' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#222'; e.currentTarget.style.color = '#666' }}
+        >
+          {loadingMore ? 'Loading…' : 'Load more'}
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── What If Machine Teaser ────────────────────────────────────────────────────
+function WhatIfTeaser() {
+  const [notified, setNotified] = useState(false)
+  return (
+    <div style={{
+      marginTop: '32px',
+      background: 'linear-gradient(135deg, rgba(225,6,0,0.04) 0%, rgba(102,146,255,0.04) 100%)',
+      border: '1px solid rgba(225,6,0,0.25)',
+      borderRadius: '16px', padding: '28px 24px', position: 'relative', overflow: 'hidden',
+      animation: 'borderGlow 3s ease-in-out infinite',
+    }}>
+      {/* Background glow */}
+      <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', background: 'radial-gradient(circle, rgba(225,6,0,0.08), transparent 65%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: '-40px', left: '-20px', width: '160px', height: '160px', background: 'radial-gradient(circle, rgba(102,146,255,0.06), transparent 65%)', pointerEvents: 'none' }} />
+
+      <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '28px' }}>🔮</span>
+          <div>
+            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '3px', textTransform: 'uppercase', color: '#e10600', marginBottom: '3px' }}>Coming Soon</div>
+            <div style={{ fontSize: '20px', fontWeight: '900', color: '#fff', letterSpacing: '-0.4px', lineHeight: 1.1 }}>What If Machine</div>
+          </div>
+        </div>
+
+        <div style={{ fontSize: '14px', color: '#666', marginBottom: '12px', fontFamily: "'Outfit', sans-serif", lineHeight: 1.65, maxWidth: '500px' }}>
+          Replay any season, change any result, see how the championship changes.
+        </div>
+
+        <div style={{
+          display: 'inline-block', background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)',
+          borderRadius: '8px', padding: '8px 14px', fontSize: '13px', color: '#888',
+          fontFamily: "'Outfit', sans-serif", fontStyle: 'italic', marginBottom: '18px',
+        }}>
+          "What if Norris won Abu Dhabi 2024?"
+        </div>
+
+        <div>
+          <button onClick={() => setNotified(true)} style={{
+            background: notified ? 'rgba(52,211,153,0.12)' : 'linear-gradient(135deg,#e10600,#c00500)',
+            border: notified ? '1px solid rgba(52,211,153,0.4)' : 'none',
+            color: notified ? '#34d399' : '#fff', borderRadius: '10px', padding: '10px 22px',
+            fontSize: '13px', fontWeight: '800', cursor: notified ? 'default' : 'pointer',
+            boxShadow: notified ? 'none' : '0 4px 20px rgba(225,6,0,0.3)',
+            transition: 'all .3s',
+          }}>
+            {notified ? '✓ You\'ll be the first to know' : 'Notify me when live →'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
