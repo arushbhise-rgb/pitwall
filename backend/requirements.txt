@@ -5,4 +5,5 @@ pandas
 openai
 python-dotenv
 pydantic
-slowapiPyJWT>=2.8.0
+slowapi
+PyJWT>=2.8.0
