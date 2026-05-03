@@ -517,17 +517,11 @@ function Tag({ text }) {
 
 function LatestResultBanner() {
   const [result, setResult] = useState(null)
-  const [sprint, setSprint] = useState(null)
-  const [activeTab, setActiveTab] = useState('total') // 'total' | 'race' | 'sprint'
 
   useEffect(() => {
     fetch(`${API}/standings/drivers?year=2026`)
       .then(r => r.json())
       .then(data => { if (data.standings) setResult(data) })
-      .catch(() => {})
-    fetch(`${API}/standings/sprint-breakdown?year=2026`)
-      .then(r => r.json())
-      .then(data => { if (data.breakdown) setSprint(data) })
       .catch(() => {})
   }, [])
 
@@ -539,21 +533,6 @@ function LatestResultBanner() {
 
   if (!result) return null
   const top3 = result.standings.slice(0, 3)
-  const sprintMap = sprint ? Object.fromEntries(sprint.breakdown.map(d => [d.code, d])) : {}
-  const hasSprint = sprint && sprint.sprint_rounds > 0
-
-  const getPoints = (d) => {
-    const s = sprintMap[d.code]
-    if (!s || activeTab === 'total') return Math.round(d.points)
-    if (activeTab === 'sprint') return s.sprint
-    if (activeTab === 'race') return s.race
-    return Math.round(d.points)
-  }
-
-  const tabs = [
-    { id: 'total', label: 'Total' },
-    ...(hasSprint ? [{ id: 'race', label: 'Race' }, { id: 'sprint', label: 'Sprint' }] : []),
-  ]
 
   return (
     <div className="landing-result-banner" style={{
@@ -573,27 +552,10 @@ function LatestResultBanner() {
         </span>
       </div>
 
-      {/* Session type tabs */}
-      {hasSprint && (
-        <div style={{ display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', padding: '2px' }}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-              background: activeTab === t.id ? 'rgba(225,6,0,0.18)' : 'transparent',
-              border: activeTab === t.id ? '0.5px solid rgba(225,6,0,0.3)' : '0.5px solid transparent',
-              color: activeTab === t.id ? '#e10600' : 'rgba(255,255,255,0.3)',
-              padding: '3px 9px', borderRadius: '4px', fontSize: '9px',
-              fontFamily: "'Space Mono', monospace", letterSpacing: '1px',
-              textTransform: 'uppercase', cursor: 'pointer', transition: 'all .15s',
-            }}>{t.label}</button>
-          ))}
-        </div>
-      )}
-
       {/* Drivers */}
       <div className="result-drivers" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         {top3.map((d, i) => {
           const clr = COLORS[d.code] || '#888'
-          const pts = getPoints(d)
           return (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
               <span style={{ fontSize: '9px', color: '#333', fontFamily: "'Space Mono', monospace" }}>P{d.position}</span>
@@ -607,8 +569,7 @@ function LatestResultBanner() {
                 fontSize: '11px', fontWeight: '700',
                 color: i === 0 ? '#fff' : '#555',
                 fontFamily: "'Space Mono', monospace",
-                transition: 'all .2s',
-              }}>{pts}<span style={{ fontSize: '8px', color: '#333', marginLeft: '2px' }}>pts</span></span>
+              }}>{Math.round(d.points)}<span style={{ fontSize: '8px', color: '#333', marginLeft: '2px' }}>pts</span></span>
             </div>
           )
         })}
@@ -616,7 +577,6 @@ function LatestResultBanner() {
 
       <div className="result-round" style={{ fontSize: '9px', color: '#333', fontFamily: "'Space Mono', monospace", letterSpacing: '1px' }}>
         After Race {result.round}
-        {hasSprint && activeTab === 'sprint' && <span style={{ color: '#ff8000', marginLeft: '4px' }}>· {sprint.sprint_rounds} sprints</span>}
       </div>
     </div>
   )
