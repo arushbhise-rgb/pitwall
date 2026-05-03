@@ -420,6 +420,90 @@ def get_constructor_standings(year: int = Query(..., ge=2018, le=2030)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/standings/sprint-breakdown")
+def get_sprint_breakdown(year: int = Query(..., ge=2021, le=2030)):
+    """Returns per-driver sprint points for the year, plus race-only points (total - sprint)."""
+    cache_key = f"sprint_breakdown_{year}"
+
+    def fetch():
+        # Fetch all sprint results for the year
+        r = req.get(f'https://api.jolpi.ca/ergast/f1/{year}/sprint.json?limit=200', timeout=15)
+        data = r.json()
+        races = data['MRData']['RaceTable']['Races']
+        sprint_pts = {}
+        for race in races:
+            for result in race.get('SprintResults', []):
+                code = result['Driver'].get('code', result['Driver']['driverId'][:3].upper())
+                pts = float(result.get('points', 0))
+                sprint_pts[code] = sprint_pts.get(code, 0) + pts
+        # Fetch total standings for race-only calc
+        r2 = req.get(f'https://api.jolpi.ca/ergast/f1/{year}/driverStandings/?limit=30', timeout=15)
+        data2 = r2.json()
+        standings = data2['MRData']['StandingsTable']['StandingsLists']
+        breakdown = []
+        if standings:
+            for d in standings[0]['DriverStandings']:
+                code = d['Driver'].get('code', d['Driver']['driverId'][:3].upper())
+                total = float(d['points'])
+                sprint = round(sprint_pts.get(code, 0), 1)
+                breakdown.append({
+                    'code': code,
+                    'total': total,
+                    'sprint': sprint,
+                    'race': round(total - sprint, 1),
+                    'sprint_count': len([r for r in races if any(
+                        sr['Driver'].get('code', sr['Driver']['driverId'][:3].upper()) == code
+                        for sr in r.get('SprintResults', [])
+                    )]),
+                })
+        return {'breakdown': breakdown, 'year': year, 'sprint_rounds': len(races)}
+
+    try:
+        if year >= CURRENT_SEASON:
+            return get_cached_ttl(cache_key, fetch, ttl_seconds=3600)
+        return get_cached(cache_key, fetch)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/news/f1")
+def get_f1_news():
+    """Proxy for F1 news from Autosport RSS feed."""
+    cache_key = "f1_news"
+    def fetch():
+        try:
+            r = req.get(
+                'https://api.rss2json.com/v1/api.json?rss_url=https://www.autosport.com/rss/f1/news/',
+                timeout=10
+            )
+            data = r.json()
+            items = data.get('items', [])[:8]
+            return {'news': [{
+                'title': it.get('title', ''),
+                'link': it.get('link', ''),
+                'pubDate': it.get('pubDate', ''),
+                'description': it.get('description', '')[:160] if it.get('description') else '',
+                'thumbnail': it.get('thumbnail', '') or it.get('enclosure', {}).get('link', ''),
+            } for it in items]}
+        except Exception:
+            # Fallback to motorsport.com RSS
+            r = req.get(
+                'https://api.rss2json.com/v1/api.json?rss_url=https://www.motorsport.com/rss/f1/news/',
+                timeout=10
+            )
+            data = r.json()
+            items = data.get('items', [])[:8]
+            return {'news': [{
+                'title': it.get('title', ''),
+                'link': it.get('link', ''),
+                'pubDate': it.get('pubDate', ''),
+                'description': it.get('description', '')[:160] if it.get('description') else '',
+                'thumbnail': it.get('thumbnail', ''),
+            } for it in items]}
+    try:
+        return get_cached_ttl(cache_key, fetch, ttl_seconds=900)  # 15 min cache
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/cache/clear-standings")
 def clear_standings_cache(x_admin_key: str = Header(default=None)):
     admin_key = os.environ.get("ADMIN_KEY")

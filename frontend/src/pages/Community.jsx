@@ -74,6 +74,72 @@ function SkeletonCard() {
   )
 }
 
+function PaddockNewsTicker() {
+  const [news, setNews] = useState([])
+  const [expanded, setExpanded] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${API}/news/f1`)
+      .then(r => r.json())
+      .then(d => { setNews(d.news || []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const formatDate = (str) => {
+    if (!str) return ''
+    try { return new Date(str).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) }
+    catch { return '' }
+  }
+
+  if (!loading && news.length === 0) return null
+
+  return (
+    <div style={{ borderBottom: '0.5px solid #1a1a1a' }}>
+      {/* Collapsed ticker bar */}
+      <button onClick={() => setExpanded(e => !e)} style={{
+        width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+        padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left',
+      }}>
+        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '8px', letterSpacing: '2px', textTransform: 'uppercase', color: '#e10600', flexShrink: 0 }}>F1 News</span>
+        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+          {loading ? (
+            <div style={{ height: '10px', width: '60%', background: 'linear-gradient(90deg,#111,#1e1e1e,#111)', backgroundSize: '200% 100%', animation: 'pwShimmer 1.4s infinite', borderRadius: '4px' }} />
+          ) : news[0] ? (
+            <span style={{ fontSize: '11px', color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{news[0].title}</span>
+          ) : null}
+        </div>
+        <span style={{ fontSize: '9px', color: '#333', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>▼</span>
+      </button>
+
+      {/* Expanded cards */}
+      {expanded && (
+        <div style={{ padding: '0 20px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+          <style>{`@keyframes pwShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}} @keyframes pwNewsIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}`}</style>
+          {loading ? [1,2,3].map(i => (
+            <div key={i} style={{ height: '80px', borderRadius: '10px', background: 'linear-gradient(90deg,#111,#1a1a1a,#111)', backgroundSize: '200% 100%', animation: 'pwShimmer 1.4s infinite' }} />
+          )) : news.slice(0, 6).map((item, i) => (
+            <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', animation: 'pwNewsIn .3s ease forwards', animationDelay: `${i * 0.05}s`, opacity: 0 }}>
+              <div style={{
+                background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.06)',
+                borderRadius: '10px', padding: '12px', cursor: 'pointer', transition: 'all .15s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(225,6,0,0.2)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
+              >
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#ccc', lineHeight: 1.35, marginBottom: '6px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {item.title}
+                </div>
+                <div style={{ fontSize: '9px', color: '#333', fontFamily: "'Space Mono', monospace" }}>{formatDate(item.pubDate)}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Community() {
   const [tab, setTab] = useState('dotd')
   const [showAuth, setShowAuth] = useState(false)
@@ -162,6 +228,9 @@ export default function Community() {
           <div style={{ fontSize: '13px', color: '#444', maxWidth: '340px' }}>Your picks, locked in forever. Your legacy, earned in real time.</div>
         </div>
       </div>
+
+      {/* News ticker strip */}
+      <PaddockNewsTicker />
 
       {/* Tabs */}
       <div style={{ padding: '0 20px 0', position: 'sticky', top: '52px', zIndex: 10, background: 'rgba(10,10,10,0.95)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '0.5px solid #1a1a1a' }}>
