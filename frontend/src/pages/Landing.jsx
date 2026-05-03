@@ -517,13 +517,17 @@ function Tag({ text }) {
 
 function LatestResultBanner() {
   const [result, setResult] = useState(null)
+  const [sprint, setSprint] = useState(null)
+  const [activeTab, setActiveTab] = useState('total') // 'total' | 'race' | 'sprint'
 
   useEffect(() => {
     fetch(`${API}/standings/drivers?year=2026`)
       .then(r => r.json())
-      .then(data => {
-        if (data.standings) setResult(data)
-      })
+      .then(data => { if (data.standings) setResult(data) })
+      .catch(() => {})
+    fetch(`${API}/standings/sprint-breakdown?year=2026`)
+      .then(r => r.json())
+      .then(data => { if (data.breakdown) setSprint(data) })
       .catch(() => {})
   }, [])
 
@@ -534,65 +538,162 @@ function LatestResultBanner() {
   }
 
   if (!result) return null
-
   const top3 = result.standings.slice(0, 3)
+  const sprintMap = sprint ? Object.fromEntries(sprint.breakdown.map(d => [d.code, d])) : {}
+  const hasSprint = sprint && sprint.sprint_rounds > 0
+
+  const getPoints = (d) => {
+    const s = sprintMap[d.code]
+    if (!s || activeTab === 'total') return Math.round(d.points)
+    if (activeTab === 'sprint') return s.sprint
+    if (activeTab === 'race') return s.race
+    return Math.round(d.points)
+  }
+
+  const tabs = [
+    { id: 'total', label: 'Total' },
+    ...(hasSprint ? [{ id: 'race', label: 'Race' }, { id: 'sprint', label: 'Sprint' }] : []),
+  ]
 
   return (
     <div className="landing-result-banner" style={{
       position: 'relative', zIndex: 2,
-      background: 'rgba(0,0,0,0.5)',
-      backdropFilter: 'blur(10px)',
+      background: 'rgba(0,0,0,0.55)',
+      backdropFilter: 'blur(12px)',
       borderBottom: '0.5px solid rgba(255,255,255,0.04)',
-      padding: '8px 40px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '32px',
-      marginTop: '64px',
+      padding: '10px 40px',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      gap: '28px', marginTop: '64px', flexWrap: 'wrap',
     }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '6px',
-      }}>
+      {/* Label */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#e10600', animation: 'pulse 2s infinite' }} />
-        <span style={{
-          fontSize: '9px', color: '#e10600',
-          fontFamily: "'Space Mono', monospace",
-          letterSpacing: '2px', textTransform: 'uppercase',
-        }}>2026 Championship</span>
+        <span style={{ fontSize: '9px', color: '#e10600', fontFamily: "'Space Mono', monospace", letterSpacing: '2px', textTransform: 'uppercase' }}>
+          2026 Championship
+        </span>
       </div>
 
+      {/* Session type tabs */}
+      {hasSprint && (
+        <div style={{ display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', padding: '2px' }}>
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+              background: activeTab === t.id ? 'rgba(225,6,0,0.18)' : 'transparent',
+              border: activeTab === t.id ? '0.5px solid rgba(225,6,0,0.3)' : '0.5px solid transparent',
+              color: activeTab === t.id ? '#e10600' : 'rgba(255,255,255,0.3)',
+              padding: '3px 9px', borderRadius: '4px', fontSize: '9px',
+              fontFamily: "'Space Mono', monospace", letterSpacing: '1px',
+              textTransform: 'uppercase', cursor: 'pointer', transition: 'all .15s',
+            }}>{t.label}</button>
+          ))}
+        </div>
+      )}
+
+      {/* Drivers */}
       <div className="result-drivers" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        {top3.map((d, i) => (
-          <div key={i} style={{
-            display: 'flex', alignItems: 'center', gap: '7px',
-          }}>
-            <span style={{
-              fontSize: '9px', color: '#333',
-              fontFamily: "'Space Mono', monospace",
-            }}>P{d.position}</span>
-            <div style={{
-              width: '22px', height: '22px', borderRadius: '50%',
-              background: (COLORS[d.code] || '#888') + '20',
-              border: `1.5px solid ${COLORS[d.code] || '#888'}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '7px', fontWeight: '900',
-              color: COLORS[d.code] || '#888',
-            }}>{d.code}</div>
-            <span style={{
-              fontSize: '11px', fontWeight: '700',
-              color: i === 0 ? '#fff' : '#555',
-              fontFamily: "'Space Mono', monospace",
-            }}>{Math.round(d.points)}<span style={{ fontSize: '8px', color: '#333', marginLeft: '2px' }}>pts</span></span>
-          </div>
-        ))}
+        {top3.map((d, i) => {
+          const clr = COLORS[d.code] || '#888'
+          const pts = getPoints(d)
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <span style={{ fontSize: '9px', color: '#333', fontFamily: "'Space Mono', monospace" }}>P{d.position}</span>
+              <div style={{
+                width: '22px', height: '22px', borderRadius: '50%',
+                background: clr + '20', border: `1.5px solid ${clr}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '7px', fontWeight: '900', color: clr,
+              }}>{d.code}</div>
+              <span style={{
+                fontSize: '11px', fontWeight: '700',
+                color: i === 0 ? '#fff' : '#555',
+                fontFamily: "'Space Mono', monospace",
+                transition: 'all .2s',
+              }}>{pts}<span style={{ fontSize: '8px', color: '#333', marginLeft: '2px' }}>pts</span></span>
+            </div>
+          )
+        })}
       </div>
 
-      <div className="result-round" style={{
-        fontSize: '9px', color: '#333',
-        fontFamily: "'Space Mono', monospace",
-        letterSpacing: '1px',
-      }}>After Round {result.round}</div>
+      <div className="result-round" style={{ fontSize: '9px', color: '#333', fontFamily: "'Space Mono', monospace", letterSpacing: '1px' }}>
+        After Race {result.round}
+        {hasSprint && activeTab === 'sprint' && <span style={{ color: '#ff8000', marginLeft: '4px' }}>· {sprint.sprint_rounds} sprints</span>}
+      </div>
     </div>
+  )
+}
+
+function F1NewsSection() {
+  const [news, setNews] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${API}/news/f1`)
+      .then(r => r.json())
+      .then(d => { setNews(d.news || []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const formatDate = (str) => {
+    if (!str) return ''
+    try {
+      const d = new Date(str)
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+    } catch { return '' }
+  }
+
+  if (!loading && news.length === 0) return null
+
+  return (
+    <section style={{ padding: '60px 40px', maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '28px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+        <div>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: '#e10600', marginBottom: '6px' }}>Latest</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '26px', fontWeight: 800, letterSpacing: '-0.02em' }}>F1 News</div>
+        </div>
+        <a href="https://www.autosport.com/f1/" target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', textDecoration: 'none', fontFamily: "'Space Mono', monospace" }}>
+          via Autosport ↗
+        </a>
+      </div>
+
+      {loading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
+          {[1,2,3,4].map(i => (
+            <div key={i} style={{ height: '130px', borderRadius: '12px', background: 'linear-gradient(90deg,#111 0%,#1a1a1a 50%,#111 100%)', backgroundSize: '200% 100%', animation: 'shimmerSlide 1.4s infinite' }} />
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
+          {news.slice(0, 6).map((item, i) => (
+            <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.07)',
+                borderRadius: '12px', overflow: 'hidden',
+                transition: 'all .2s', cursor: 'pointer',
+                animation: `popIn 0.4s ease forwards`, animationDelay: `${i * 0.06}s`, opacity: 0,
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(225,6,0,0.2)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.transform = '' }}
+              >
+                {item.thumbnail && (
+                  <div style={{ height: '130px', overflow: 'hidden', background: '#111' }}>
+                    <img src={item.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
+                      onError={e => { e.target.parentElement.style.display = 'none' }} />
+                  </div>
+                )}
+                <div style={{ padding: '14px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#e8e8e8', lineHeight: 1.35, marginBottom: '8px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {item.title}
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)', fontFamily: "'Space Mono', monospace" }}>
+                    {formatDate(item.pubDate)}
+                  </div>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -673,6 +774,8 @@ export default function Landing() {
         @keyframes glowPulse { 0%,100%{box-shadow:0 0 20px rgba(225,6,0,0.3)} 50%{box-shadow:0 0 40px rgba(225,6,0,0.6)} }
         @keyframes ribbonFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+        @keyframes shimmerSlide { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        @keyframes popIn { 0%{opacity:0;transform:scale(0.92)} 70%{transform:scale(1.02)} 100%{opacity:1;transform:scale(1)} }
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         @keyframes scanline { 0%{top:-2px} 100%{top:100%} }
         .next-race-countdown { flex-wrap: wrap; justify-content: center; }
@@ -1312,6 +1415,9 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* NEWS */}
+      <F1NewsSection />
 
       {/* FOOTER */}
       <footer style={{
