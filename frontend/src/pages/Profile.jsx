@@ -6,6 +6,7 @@ import AuthModal from '../components/AuthModal'
 import { AVATAR_OPTIONS, CREATOR_AVATAR } from '../components/OnboardingModal'
 import { ALL_DRIVERS_BY_YEAR } from '../constants/driverData'
 import { useCountUpOnMount } from '../utils/animations'
+import { API } from '../config'
 
 const CREATOR_EMAILS = new Set(['arush.bhise@gmail.com'])
 
@@ -119,7 +120,7 @@ const YEAR = String(new Date().getFullYear())
 const DRIVERS_NOW = ALL_DRIVERS_BY_YEAR[YEAR] || ALL_DRIVERS_BY_YEAR['2025'] || []
 
 export default function Profile() {
-  const { user, profile, updateProfile, loading } = useAuth()
+  const { user, profile, updateProfile, loading, signOut } = useAuth()
   const [showAuth, setShowAuth] = useState(false)
   const [tab, setTab] = useState('activity')
 
@@ -579,6 +580,90 @@ export default function Profile() {
               boxShadow: saving ? 'none' : '0 4px 20px rgba(225,6,0,0.25)', transition: 'all .2s',
             }}>{saving ? 'Saving…' : 'Save Changes'}</button>
           </div>
+
+          {/* Danger zone */}
+          <DeleteAccountSection user={user} signOut={signOut} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DeleteAccountSection({ user, signOut }) { // eslint-disable-line
+  const [step, setStep] = useState(0) // 0=hidden 1=confirm prompt 2=deleting 3=done
+  const [err, setErr] = useState('')
+
+  async function handleDelete() {
+    setStep(2); setErr('')
+    try {
+      // Delete all user content
+      const uid = user.id
+      await Promise.all([
+        supabase.from('votes').delete().eq('user_id', uid),
+        supabase.from('predictions').delete().eq('user_id', uid),
+        supabase.from('hot_takes').delete().eq('user_id', uid),
+        supabase.from('hot_take_reactions').delete().eq('user_id', uid),
+        supabase.from('discussions').delete().eq('user_id', uid),
+        supabase.from('discussion_upvotes').delete().eq('user_id', uid),
+        supabase.from('ratings').delete().eq('user_id', uid),
+      ])
+      await supabase.from('profiles').delete().eq('id', uid)
+      // Delete auth user via backend (needs service role key)
+      const { data: { session } } = await supabase.auth.getSession()
+      await fetch(`${API}/auth/delete-account`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      })
+      await supabase.auth.signOut()
+      setStep(3)
+    } catch (e) {
+      setErr('Something went wrong. Please contact support@pitwall-f1.com to delete your account.')
+      setStep(1)
+    }
+  }
+
+  if (step === 3) return (
+    <div style={{ marginTop: '32px', padding: '16px', background: 'rgba(52,211,153,0.07)', border: '0.5px solid rgba(52,211,153,0.2)', borderRadius: '10px', fontSize: '13px', color: '#34d399', textAlign: 'center' }}>
+      Account deleted. Goodbye 👋
+    </div>
+  )
+
+  return (
+    <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '0.5px solid #1a1a1a' }}>
+      <div style={{ fontSize: '11px', fontWeight: '700', color: '#333', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Danger Zone</div>
+      {step === 0 && (
+        <button onClick={() => setStep(1)} style={{
+          background: 'transparent', border: '0.5px solid rgba(225,6,0,0.3)',
+          color: '#e10600', padding: '10px 16px', borderRadius: '8px',
+          fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all .15s',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(225,6,0,0.06)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+        >Delete my account</button>
+      )}
+      {step === 1 && (
+        <div style={{ background: 'rgba(225,6,0,0.05)', border: '0.5px solid rgba(225,6,0,0.2)', borderRadius: '10px', padding: '16px' }}>
+          <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '6px' }}>Are you sure?</div>
+          <div style={{ fontSize: '12px', color: '#666', marginBottom: '16px', lineHeight: 1.5 }}>
+            This permanently deletes your profile, votes, predictions, hot takes, and discussions. This cannot be undone.
+          </div>
+          {err && <div style={{ fontSize: '11px', color: '#ff7070', marginBottom: '10px' }}>{err}</div>}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={handleDelete} style={{
+              background: '#e10600', color: '#fff', border: 'none',
+              padding: '9px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer',
+            }}>Yes, delete everything</button>
+            <button onClick={() => setStep(0)} style={{
+              background: '#141414', color: '#777', border: '0.5px solid #222',
+              padding: '9px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer',
+            }}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {step === 2 && (
+        <div style={{ fontSize: '12px', color: '#555', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '14px', height: '14px', border: '2px solid #333', borderTopColor: '#e10600', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
+          Deleting your account…
         </div>
       )}
     </div>

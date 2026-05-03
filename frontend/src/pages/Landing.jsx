@@ -1403,7 +1403,7 @@ export default function Landing() {
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.2)" }}>PitWall — F1 Race Intelligence</span>
         </div>
         <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-          {["Support", "Contact"].map(l => (
+          {["Support", "Contact", "Privacy"].map(l => (
             <a key={l} onClick={() => navigate(`/${l.toLowerCase()}`)} style={{
               fontFamily: "'Outfit', sans-serif",
               fontSize: "12px", color: "rgba(255,255,255,0.25)",

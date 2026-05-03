@@ -7,6 +7,38 @@ import { supabase } from '../lib/supabase'
 import AuthModal from '../components/AuthModal'
 import { spawnConfetti } from '../utils/animations'
 
+function ReportButton({ contentId, contentType, user }) {
+  const [state, setState] = useState('idle') // idle | sent | error
+
+  async function report() {
+    if (!user || state !== 'idle') return
+    setState('sent')
+    try {
+      await supabase.from('reports').insert({
+        content_id: contentId,
+        content_type: contentType,
+        reported_by: user.id,
+      })
+    } catch {
+      setState('error')
+      setTimeout(() => setState('idle'), 2000)
+    }
+  }
+
+  return (
+    <button onClick={report} title={state === 'sent' ? 'Reported' : 'Report this content'} style={{
+      background: 'none', border: 'none', cursor: state === 'sent' ? 'default' : 'pointer',
+      color: state === 'sent' ? '#34d399' : '#222', fontSize: '12px', padding: '4px 8px',
+      borderRadius: '6px', transition: 'color .15s', display: 'flex', alignItems: 'center', gap: '4px',
+    }}
+      onMouseEnter={e => { if (state === 'idle') e.currentTarget.style.color = '#e10600' }}
+      onMouseLeave={e => { if (state === 'idle') e.currentTarget.style.color = '#222' }}
+    >
+      {state === 'sent' ? '✓ reported' : '🚩'}
+    </button>
+  )
+}
+
 const COUNTRY_FLAGS = {
   'Japan': '🇯🇵', 'Bahrain': '🇧🇭', 'Saudi Arabia': '🇸🇦', 'Australia': '🇦🇺',
   'China': '🇨🇳', 'United States': '🇺🇸', 'Monaco': '🇲🇨', 'Canada': '🇨🇦',
@@ -643,20 +675,25 @@ function Discussions() {
                       </div>
                     )}
 
-                    {/* Upvote */}
-                    <button onClick={() => toggleUpvote(d)} style={{
-                      display: 'flex', alignItems: 'center', gap: '5px',
-                      background: upvoted ? 'rgba(225,6,0,0.12)' : '#111',
-                      border: `1px solid ${upvoted ? 'rgba(225,6,0,0.4)' : '#1a1a1a'}`,
-                      borderRadius: '20px', padding: '5px 14px', cursor: user ? 'pointer' : 'default',
-                      fontSize: '12px', fontWeight: '800',
-                      color: upvoted ? '#e10600' : '#444',
-                      transition: 'all .15s',
-                      transform: upvoted ? 'scale(1.05)' : 'scale(1)',
-                    }}>
-                      <span>{upvoted ? '♥' : '♡'}</span>
-                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '11px' }}>{d.upvotes || 0}</span>
-                    </button>
+                    {/* Upvote + report row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button onClick={() => toggleUpvote(d)} style={{
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                        background: upvoted ? 'rgba(225,6,0,0.12)' : '#111',
+                        border: `1px solid ${upvoted ? 'rgba(225,6,0,0.4)' : '#1a1a1a'}`,
+                        borderRadius: '20px', padding: '5px 14px', cursor: user ? 'pointer' : 'default',
+                        fontSize: '12px', fontWeight: '800',
+                        color: upvoted ? '#e10600' : '#444',
+                        transition: 'all .15s',
+                        transform: upvoted ? 'scale(1.05)' : 'scale(1)',
+                      }}>
+                        <span>{upvoted ? '♥' : '♡'}</span>
+                        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '11px' }}>{d.upvotes || 0}</span>
+                      </button>
+                      {user && user.id !== d.user_id && (
+                        <ReportButton contentId={d.id} contentType="discussion" user={user} />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1443,15 +1480,18 @@ function HotTakes() {
                           <span>{take.counts[key]}</span>
                         </button>
                       ))}
-                      {isOwn && (
-                        <button onClick={() => deleteTake(take.id)} style={{
-                          marginLeft: 'auto', background: 'none', border: 'none',
-                          color: '#222', fontSize: '11px', cursor: 'pointer', padding: '5px 8px', borderRadius: '6px', transition: 'color .15s',
-                        }}
-                          onMouseEnter={e => e.currentTarget.style.color = '#e10600'}
-                          onMouseLeave={e => e.currentTarget.style.color = '#222'}
-                        >delete</button>
-                      )}
+                      <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
+                        {!isOwn && <ReportButton contentId={take.id} contentType="hot_take" user={user} />}
+                        {isOwn && (
+                          <button onClick={() => deleteTake(take.id)} style={{
+                            background: 'none', border: 'none',
+                            color: '#222', fontSize: '11px', cursor: 'pointer', padding: '5px 8px', borderRadius: '6px', transition: 'color .15s',
+                          }}
+                            onMouseEnter={e => e.currentTarget.style.color = '#e10600'}
+                            onMouseLeave={e => e.currentTarget.style.color = '#222'}
+                          >delete</button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

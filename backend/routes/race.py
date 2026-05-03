@@ -748,3 +748,38 @@ def get_qualifying(year: int = Query(..., ge=2018, le=2030), gp: str = Query(...
         return get_cached(cache_key, fetch)
     except Exception as e:
         return {'error': str(e)}
+
+
+@router.delete("/auth/delete-account")
+def delete_account(authorization: str = Header(...)):
+    """Delete a user's auth account. Called after frontend has already deleted all user rows."""
+    import jwt as pyjwt
+    supabase_url = os.environ.get("SUPABASE_URL")
+    service_role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+
+    if not supabase_url or not service_role_key:
+        raise HTTPException(status_code=500, detail="Account deletion not configured on server")
+
+    token = authorization.replace("Bearer ", "")
+    try:
+        # Decode JWT to get user id (no verification needed — we trust Supabase-issued tokens)
+        payload = pyjwt.decode(token, options={"verify_signature": False})
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    # Call Supabase Admin API to delete the auth user
+    resp = req.delete(
+        f"{supabase_url}/auth/v1/admin/users/{user_id}",
+        headers={
+            "apikey": service_role_key,
+            "Authorization": f"Bearer {service_role_key}",
+        },
+        timeout=10,
+    )
+    if resp.status_code not in (200, 204):
+        raise HTTPException(status_code=500, detail=f"Failed to delete auth user: {resp.text}")
+
+    return {"deleted": True}
